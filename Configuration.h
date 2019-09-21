@@ -1,0 +1,36 @@
+#ifndef _CONFIGURATION_H
+#define _CONFIGURATION_H
+
+#include <string>
+
+class Configuration{
+public:
+	Configuration(){
+		goodq = 22.5;
+		performLocalRealignment = false;
+		uniqueModeAlignmentEnabled = false;
+		vext = 2;
+		minmatch = 0;
+		mismatch = 8;
+		disableSV = true;
+		trimBasesAfter = 0;
+		uniqueModeAlignmentEnabled = false;
+//chimeric = false;
+		chimeric = true;
+		fasta = "/home/haoz/workspace/data/hg19.fa";
+	}
+	double goodq;
+	bool performLocalRealignment ;
+	bool uniqueModeAlignmentEnabled;
+	int vext;
+	int minmatch;
+	bool disableSV;
+	int trimBasesAfter;
+	bool uniqueModeSecondInPairEnabled;
+	bool chimeric;
+	string fasta;
+	int mismatch;
+	
+};
+
+#endif
