@@ -1,24 +1,31 @@
 #include "htslib/sam.h"
 #include "data/BaseInsertion.h"
+#include "util.h"
 #include <stdint.h>
 #include <map>
 //#include <unordered_map>
 
-bool isEquals(uint8_t ch1, uint8_t ch2){
+//inline bool isEquals(uint8_t ch1, uint8_t ch2){
+//	return ch1 == ch2;
+//}
+//inline bool isNotEquals(uint8_t ch1, uint8_t ch2){
+//	return !(ch1 == ch2);
+//}
+
+inline bool isEquals(char ch1, char ch2){
 	return ch1 == ch2;
 }
-bool isNotEquals(uint8_t ch1, uint8_t ch2){
+inline bool isNotEquals(char ch1, char ch2){
 	return !(ch1 == ch2);
 }
-
-void replaceFirst(string& str, string source, string target){
+inline void replaceFirst(string& str, string source, string target){
 	int pos = str.find(source);
 	if(pos != string::npos){
 		str.replace(pos, source.length(), target);
 	}
 }
 
-bool isHasAndEquals(char ch1, map<int, char> &ref, int index) {
+inline bool isHasAndEquals(char ch1, unordered_map<int, char> &ref, int index) {
 	if(ref.find(index) == ref.end()){
 		return false;
     }else{
@@ -26,14 +33,14 @@ bool isHasAndEquals(char ch1, map<int, char> &ref, int index) {
 	}
 }
 
-bool isHasAndEquals(int index, map<int, char> &ref, int index2) {
+inline bool isHasAndEquals(int index, unordered_map<int, char> &ref, int index2) {
 	if((ref.find(index) == ref.end()) || (ref.find(index2) == ref.end())){
 		return false;
 	}
 	return ref[index] == ref[index2];
 }
 
-bool isHasAndEquals(map<int, char> &ref, int index1, string str, int index2) {
+inline bool isHasAndEquals(unordered_map<int, char> &ref, int index1, string str, int index2) {
 	if(ref.find(index1) == ref.end()){
         return false;
 	}
@@ -42,23 +49,24 @@ bool isHasAndEquals(map<int, char> &ref, int index1, string str, int index2) {
 	return ref[index1] == str[index2];
 }
 
-bool isHasAndNotEquals(char ch1, map<int, char> &ref, int index) {
+inline bool isHasAndNotEquals(char ch1, unordered_map<int, char> &ref, int index) {
 	if(ref.find(index) == ref.end())
         return false;
 	return !(ref[index] == ch1);
 }
 
-bool isHasAndNotEquals(map<int, char> &ref, int index1, string str, int index2) {
+inline bool isHasAndNotEquals(unordered_map<int, char> &ref, int index1, string str, int index2) {
 	if(ref.find(index1) == ref.end())
 		return false;
 	return !(ref[index1] == str[index2]);
 }
 
-bool isHasAndNotEquals(map<int, char> &ref, int index1, char* str, int index2) {
+inline bool isHasAndNotEquals(unordered_map<int, char> &ref, int index1, char* str, int index2) {
 	if(ref.find(index1) == ref.end())
 		return false;
 	return !(ref[index1] == str[index2]);
 }
+
 
 /**
  * Adjust the insertion position if necessary
@@ -67,7 +75,7 @@ bool isHasAndNotEquals(map<int, char> &ref, int index1, char* str, int index2) {
  * @param ref map of reference bases
  * @return Tuple of (int bi, String ins, int bi)
  */
-BaseInsertion adjInsPos(int bi, string ins, map<int, char> &ref) {
+BaseInsertion adjInsPos(int bi, string ins, unordered_map<int, char> &ref) {
     int n = 1;
     int len = ins.length();
     while (isEquals(ref[bi], ins[ins.length() - n])) {
@@ -78,12 +86,12 @@ BaseInsertion adjInsPos(int bi, string ins, map<int, char> &ref) {
         bi--;
     }
     if (n > 1) {
-        ins = string(ins, 1 - n) + string(ins, 0, 1 - n);
+        ins = vc_substr(ins, 1 - n) + vc_substr(ins, 0, 1 - n);
     }
     return BaseInsertion(bi, ins, bi);
 }
 
-Variation* getVariation(map<int, VariationMap* > &hash,
+inline Variation* getVariation(unordered_map<int, VariationMap* > &hash,
                                      int start,
                                      string descriptionString) {
 	//cout << "get variation: " << start << " ==> " << descriptionString << endl;
@@ -115,7 +123,30 @@ Variation* getVariation(map<int, VariationMap* > &hash,
     //}
     return variation;
 }
-Variation* getVariationMaybe(map<int, VariationMap* > &hash,
+
+//inline Variation* getVariation(unordered_map<int, VariationMap* > &hash,
+//                                     int start,
+//                                     string descriptionString) {
+//	//cout << "get variation: " << start << " ==> " << descriptionString << endl;
+//	VariationMap *vmap ;//= new VariationMap();
+//	pair<unordered_map<int, VariationMap*>::iterator, bool> ret1 =
+//		hash.insert(make_pair(start, vmap));
+//	//pair<int, VariationMap*> ret1 = hash.insert(unordered_map<int, VariationMap*>::value_type(start, vmap));
+//	if(ret1.second == false){
+//		vmap = ret1.first->second;
+//	}else{
+//	}
+//
+//	Variation* variation = new Variation();
+//	pair<unordered_map<string, Variation*>::iterator, bool>  ret2 =
+//		vmap->variation_map.insert(make_pair(descriptionString, variation));
+//	//pair<string, Variation*> ret2 = vmap->variation_map.insert(unordered_map<string, Variation*>::value_type(descriptionString, variation));
+//	if(ret2.second == false){
+//		variation = ret2.first->second;
+//	}
+//    return variation;
+//}
+inline Variation* getVariationMaybe(unordered_map<int, VariationMap* > &hash,
 							 int start,
 							 char refBase) {
 	if(refBase == (char)0)
@@ -138,7 +169,7 @@ Variation* getVariationMaybe(map<int, VariationMap* > &hash,
 	}
 }
 
-int getReferenceLength(bam1_t *record){
+inline int getReferenceLength(bam1_t *record){
 	int length = 0;
 	uint32_t *cigar = bam_get_cigar(record);
 	for(int i = 0; i < record->core.n_cigar; ++i){

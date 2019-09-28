@@ -40,18 +40,18 @@ public:
 	CigarParser(DataScope scope);
 	//~CigarParser();
 	void process(const char* infname);
-	void parseCigar(string chrName, bam1_t* record);
+	void parseCigar(string chrName, bam1_t* record, int count);
 	void addVariationForMathchingPart(uint8_t mappingQuality, int nm, bool dir,
 									  int rlen1, int nmoff, string s,
 									  bool startWithDeletion, double q, int qbases,
 									  int qibases, int ddlen, int pos);
 	void process_softclip(string chrName, bam1_t* record, char* querySequence, uint8_t mappingQuality,
-						  map<int, char> &ref, uint8_t* queryQuality, int numberOfMismatches,
+						  unordered_map<int, char> &ref, uint8_t* queryQuality, int numberOfMismatches,
 						  bool direction, int position, int totalLengthIncludingSoftClipped, int ci);
-	int  process_insertion(char* querySequence, uint8_t mappingQuality, map<int, char> ref,
+	int  process_insertion(char* querySequence, uint8_t mappingQuality, unordered_map<int, char> &ref,
 						  uint8_t* queryQuality, int numberOfMismatches, bool direction, int position,
 						  int readLengthIncludeMatchingAndInsertions, int ci);
-	int  process_deletion(char* querySequence, uint8_t mappingQuality, map<int, char> ref,
+	int  process_deletion(char* querySequence, uint8_t mappingQuality, unordered_map<int, char> &ref,
 						 uint8_t* queryQuality, int numberOfMismatches, bool direction,
 						 int readLengthIncludeMatchingAndInsertions, int ci);
 	void processNotMatched() ;
@@ -59,7 +59,7 @@ public:
 						string &descStringOfElement, string &qualitySegment,
 						int mLen, int indelLen, int begin, bool isInsertion);
 	bool isInsertionOrDeletionWithNextMatched(int ci) ;
-    bool isCloserThenVextAndGoodBase(char* querySequence, map<int, char> ref, uint8_t* queryQuality, int ci, int i, string ss, int CigatOperator);
+    bool isCloserThenVextAndGoodBase(char* querySequence, unordered_map<int, char> ref, uint8_t* queryQuality, int ci, int i, string ss, int CigatOperator);
     bool isNextMatched(int ci);
 	bool isPairedAndSameChromosome(bam1_t *record);
 	bool isNextAfterNumMatched(bam1_t *record, int ci, int number);
@@ -81,22 +81,23 @@ public:
 								   int cigarLength,
 								   char* querySequence,
 								   uint8_t* queryQuality,
-								   map<int, char> &reference,
-								   map<int, int> refCoverage);
+								   unordered_map<int, char> &reference,
+								   unordered_map<int, int> &refCoverage);
 	bool skipSitesOutRegionOfInterest();
     void makeReference(string fa_file_path, bam_hdr_t* header);
 private:
-	map<int, int> refCoverage;
+	unordered_map<int, int> refCoverage;
 	Configuration conf;
 	// Utils maps
-	map<int, VariationMap* > nonInsertionVariants;
-    map<int, VariationMap* > insertionVariants;
-    map<int, Sclip*> softClips3End; // soft clipped at 3'
-    map<int, Sclip*> softClips5End; // soft clipped at 5'
+	//------TODO: use pointer instead to save copy time ------//
+	unordered_map<int, VariationMap* > nonInsertionVariants;
+    unordered_map<int, VariationMap* > insertionVariants;
+    unordered_map<int, Sclip*> softClips3End; // soft clipped at 3'
+    unordered_map<int, Sclip*> softClips5End; // soft clipped at 5'
     unordered_map<int, map<string, int> > positionToInsertionCount;
-    map<int, map<string, int> > mnp; // Keep track of MNPs
+    unordered_map<int, map<string, int> > mnp; // Keep track of MNPs
     unordered_map<int, map<string, int> > positionToDeletionCount;
-    map<string, int> spliceCount;
+    unordered_map<string, int> spliceCount;
     //SVStructures svStructures;
 
     Region region;

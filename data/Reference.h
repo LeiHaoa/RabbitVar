@@ -19,7 +19,7 @@ struct LoadedRegion {
 class Reference {
 public:
     list<LoadedRegion*> loadedRegions;
-    map<int, char> referenceSequences;
+    unordered_map<int, char> referenceSequences;
     map<string, list<int>> seed;
 
     Reference() {

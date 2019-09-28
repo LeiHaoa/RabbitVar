@@ -7,7 +7,8 @@ class Configuration{
 public:
 	Configuration(){
 		goodq = 22.5;
-		performLocalRealignment = false;
+		//performLocalRealignment = false;
+		performLocalRealignment = true;
 		uniqueModeAlignmentEnabled = false;
 		vext = 2;
 		minmatch = 0;
@@ -17,7 +18,7 @@ public:
 		uniqueModeAlignmentEnabled = false;
 //chimeric = false;
 		chimeric = true;
-		fasta = "/home/haoz/workspace/data/hg19.fa";
+		fasta = "/home/haoz/workspace/data/NA12878/hg38.fa";
 	}
 	double goodq;
 	bool performLocalRealignment ;
