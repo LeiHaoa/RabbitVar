@@ -1,18 +1,23 @@
 TARGET=sam
-CC=g++ -std=c++0x
+CC=g++ -std=c++11
 
 INCLUDE=/home/haoz/tools/htslib/include
 
 LIBS=/home/haoz/tools/htslib/lib
 #LIBS=/home/haoz/tools/htslib/lib/libhts.a
 
-FLAGS= -lhts
+FLAGS= -std=c++11 parseCigar.cpp -lhts -I/home/haoz/tools/htslib/include -L/home/haoz/tools/htslib/lib -O3
 
-parseCigar:parseCigar.o
-	$(CC) parseCigar.o $(FLAGS) -I$(INCLUDE) -L$(LIBS)   -o parseCigar 
+parseCigar:parseCigar.o preprocess.o
+	#$(CC) parseCigar.o $(FLAGS) -I$(INCLUDE) -L$(LIBS)   -o parseCigar 
+	$(CC) parseCigar.o preprocess.o $(FLAGS)  -o parseCigar
 
-sam.o:readsam.c
-	$(CC) parseCigar.cpp -c $(FLAGS) -I$(INCLUDE) -L$(LIBS)   -o parseCigar.o 
+preprocess.o:recordPreprocessor.cpp
+	$(CC)  recordPreprocessor.cpp $(FLAGS)  -o preprocess.o
+
+parseCigar.o:parseCigar.cpp
+	$(CC)  parseCigar.cpp $(FLAGS)  -o parseCigar.o
+
 
 .PHONY:clean
 clean:

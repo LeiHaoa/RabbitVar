@@ -1,7 +1,7 @@
 #ifndef _REGION_H
 #define _REGION_H
 #include <string>
-
+using namespace std;
 class Region {
 public:
 	/**

@@ -3,8 +3,8 @@
 #include "util.h"
 #include <stdint.h>
 #include <map>
-//#include <unordered_map>
 
+using namespace std;
 //inline bool isEquals(uint8_t ch1, uint8_t ch2){
 //	return ch1 == ch2;
 //}
@@ -55,7 +55,7 @@ inline bool isHasAndNotEquals(char ch1, unordered_map<int, char> &ref, int index
 	return !(ref[index] == ch1);
 }
 
-inline bool isHasAndNotEquals(unordered_map<int, char> &ref, int index1, string str, int index2) {
+inline bool isHasAndNotEquals(unordered_map<int, char> &ref, int index1, string &str, int index2) {
 	if(ref.find(index1) == ref.end())
 		return false;
 	return !(ref[index1] == str[index2]);
@@ -91,27 +91,69 @@ BaseInsertion adjInsPos(int bi, string ins, unordered_map<int, char> &ref) {
     return BaseInsertion(bi, ins, bi);
 }
 
+//inline Variation* getVariation(unordered_map<int, VariationMap* > &hash,
+//                                     int start,
+//                                     string descriptionString) {
+//	//cout << "get variation: " << start << " ==> " << descriptionString << endl;
+//	VariationMap *vmap;
+//	if(hash.find(start) == hash.end()){
+//		//map  = new VariationMap<string, Variation*>();
+//		vmap = new VariationMap();
+//		hash[start] = vmap;
+//	}else{
+//		vmap = hash[start];
+//	}
+//	Variation* variation;
+//	if(vmap->variation_map.find(descriptionString) == vmap->variation_map.end()){
+//		variation = new Variation();
+//		//map[descriptionString] = variation;
+//		vmap->variation_map.insert(unordered_map<string, Variation*>::value_type(descriptionString, variation));
+//	}else{
+//		variation = vmap->variation_map.at(descriptionString);
+//	}
+//    //VariationMap<string, Variation> map = hash[start];
+//    //if (map == NULL) {
+//    //    map = new VariationMap<>();
+//    //    hash.put(start, map);
+//    //}
+//    //Variation variation = map[descriptionString];
+//    //if (variation == NULL) {
+//    //    variation = new Variation();
+//    //    map.put(descriptionString, variation);
+//    //}
+//    return variation;
+//}
+
 inline Variation* getVariation(unordered_map<int, VariationMap* > &hash,
                                      int start,
                                      string descriptionString) {
 	//cout << "get variation: " << start << " ==> " << descriptionString << endl;
 	VariationMap *vmap;
-	if(hash.find(start) == hash.end()){
+	Variation* variation;
+	unordered_map<int, VariationMap*>::iterator itr;
+	if((itr = hash.find(start)) != hash.end()){
 		//map  = new VariationMap<string, Variation*>();
+		vmap = itr->second;
+	}else{
 		vmap = new VariationMap();
 		hash[start] = vmap;
-	}else{
-		vmap = hash[start];
+		variation = new Variation();
+		vmap->variation_map[descriptionString] = variation;
+		return variation;
 	}
-	Variation* variation;
-	if(vmap->variation_map.find(descriptionString) == vmap->variation_map.end()){
+
+
+	unordered_map<string, Variation*>::iterator itr2;
+	if((itr2 = vmap->variation_map.find(descriptionString)) != vmap->variation_map.end()){
+		return itr2->second;
+	}else{
 		variation = new Variation();
 		//map[descriptionString] = variation;
-		vmap->variation_map.insert(unordered_map<string, Variation*>::value_type(descriptionString, variation));
-	}else{
-		variation = vmap->variation_map.at(descriptionString);
+		//vmap->variation_map.insert(unordered_map<string, Variation*>::value_type(descriptionString, variation));
+		vmap->variation_map[descriptionString] = variation;
+		return variation;
 	}
-    //VariationMap<string, Variation> map = hash[start];
+	//VariationMap<string, Variation> map = hash[start];
     //if (map == NULL) {
     //    map = new VariationMap<>();
     //    hash.put(start, map);
@@ -121,9 +163,7 @@ inline Variation* getVariation(unordered_map<int, VariationMap* > &hash,
     //    variation = new Variation();
     //    map.put(descriptionString, variation);
     //}
-    return variation;
 }
-
 //inline Variation* getVariation(unordered_map<int, VariationMap* > &hash,
 //                                     int start,
 //                                     string descriptionString) {

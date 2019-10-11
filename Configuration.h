@@ -2,7 +2,7 @@
 #define _CONFIGURATION_H
 
 #include <string>
-
+using namespace std;
 class Configuration{
 public:
 	Configuration(){
@@ -16,6 +16,7 @@ public:
 		disableSV = true;
 		trimBasesAfter = 0;
 		uniqueModeAlignmentEnabled = false;
+		samfilter = 0x504;
 //chimeric = false;
 		chimeric = true;
 		fasta = "/home/haoz/workspace/data/NA12878/hg38.fa";
@@ -31,6 +32,7 @@ public:
 	bool chimeric;
 	string fasta;
 	int mismatch;
+	int samfilter;
 	
 };
 

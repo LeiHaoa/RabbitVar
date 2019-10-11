@@ -20,9 +20,11 @@
 #include "Sclip.h"
 #include "Region.h"
 #include "data/Reference.h"
+#include "recordPreprocessor.h"
 #include <map>
 #include <unordered_map>
 #include <regex>
+
 using namespace std;
 
 struct Offset{
@@ -37,11 +39,11 @@ struct DataScope{
 };
 class CigarParser{
 public:
-	CigarParser(DataScope scope);
+	CigarParser(DataScope scope, RecordPreprocessor *preprocessor);
 	//~CigarParser();
-	void process(const char* infname);
+	void process();
 	void parseCigar(string chrName, bam1_t* record, int count);
-	void addVariationForMathchingPart(uint8_t mappingQuality, int nm, bool dir,
+	void addVariationForMatchingPart(uint8_t mappingQuality, int nm, bool dir,
 									  int rlen1, int nmoff, string s,
 									  bool startWithDeletion, double q, int qbases,
 									  int qibases, int ddlen, int pos);
@@ -72,10 +74,10 @@ public:
 	bool skipOverlappingReads(bam1_t *record, int position, bool dir, int mateAlignmentStart);
 	void addVariationForDeletion(uint8_t mappingQuality, int nm, bool dir, int rlen1,
 											  string descStringOfDeletedElement, string qualityOfSegment, int nmoff);
-	void subCnt(Variation *variation, bool direction, int readPosition, double baseQuality,
-				int mappingBaseQuality, int numberOfMismatches);
-	void addCnt(Variation *variation, bool direction, int readPosition, double baseQuality,
-				int mappingBaseQuality, int numberOfMismatches);
+	//void subCnt(Variation *variation, bool direction, int readPosition, double baseQuality,
+	//			int mappingBaseQuality, int numberOfMismatches);
+	//void addCnt(Variation *variation, bool direction, int readPosition, double baseQuality,
+	//			int mappingBaseQuality, int numberOfMismatches);
 	Offset findOffset(int referencePosition,
 								   int readPosition,
 								   int cigarLength,
@@ -116,6 +118,8 @@ private:
     int cigar_element_length;
     int readPositionIncludingSoftClipped; // keep track the read position, including softclipped
     int readPositionExcludingSoftClipped; // keep track the position in the alignment, excluding softclipped
+
+	RecordPreprocessor *preprocessor;
 };
 
 #endif
