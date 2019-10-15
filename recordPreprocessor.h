@@ -9,7 +9,9 @@
 class RecordPreprocessor{
 public:
 	RecordPreprocessor(const char* infname, Region region);
+	~RecordPreprocessor();
 	int next_record(bam1_t* record);
+	Configuration conf;
 
 //private:
 	samFile *in;
@@ -17,7 +19,6 @@ public:
 	hts_idx_t *idx;
 	hts_itr_t *iter;
 
-	Configuration conf;
 
 };
 

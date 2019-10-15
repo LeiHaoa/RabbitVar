@@ -20,6 +20,10 @@ RecordPreprocessor::RecordPreprocessor(const char* infname, Region region){
 		exit(0);
 	}
 }
+RecordPreprocessor::~RecordPreprocessor(){
+	bam_hdr_destroy(header);
+	if(in) sam_close(in);
+}
 int RecordPreprocessor::next_record(bam1_t *record){
 	int ret = 0;
 	while( (ret = sam_itr_next(in, iter, record)) >= 0 ){

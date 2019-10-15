@@ -87,6 +87,7 @@ public:
 								   unordered_map<int, int> &refCoverage);
 	bool skipSitesOutRegionOfInterest();
     void makeReference(string fa_file_path, bam_hdr_t* header);
+	char* getRefName(bam1_t* record);
 private:
 	unordered_map<int, int> refCoverage;
 	Configuration conf;
@@ -120,6 +121,7 @@ private:
     int readPositionExcludingSoftClipped; // keep track the position in the alignment, excluding softclipped
 
 	RecordPreprocessor *preprocessor;
+	//char seq[150];
 };
 
 #endif

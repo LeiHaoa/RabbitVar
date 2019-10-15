@@ -11,9 +11,7 @@
 
 #include "parseCigar.h"
 #include "patterns.h"
-#include "Variation.h"
 #include "VariationUtils.h"
-#include "Configuration.h"
 #include "data/BaseInsertion.h"
 #include <map>
 #include <sstream>
@@ -100,17 +98,20 @@ int getAlignedLength(uint32_t* cigar, int n_cigar){
 	return length;
 }
 
-//static string getMateReferenceName(bam1_t* record) {
-//	//if (record.getMateReferenceName() == null) {
-//	//	return "*";
-//	//}
-//
-//	//if (record.getReferenceName().equals(record.getMateReferenceName())) {
-//	//	return "=";
-//	//}
-//	//return record.getMateReferenceName();
-//	return "=";
-//}
+char* CigarParser::getRefName(bam1_t* record){
+	return preprocessor->header->target_name[record->core.tid];
+}
+static string getMateReferenceName(bam1_t* record) {
+	//if (record.getMateReferenceName() == null) {
+	//	return "*";
+	//}
+
+	//if (record.getReferenceName().equals(record.getMateReferenceName())) {
+	//	return "=";
+	//}
+	//return record.getMateReferenceName();
+	return "=";
+}
 bool CigarParser::isPairedAndSameChromosome(bam1_t *record){
 	return (record->core.flag & BAM_FPAIRED)
 		&& record->core.tid == record->core.mtid;
@@ -374,92 +375,48 @@ Variation* getVariationFromSeq(Sclip* softClip,
 }
 
 void CigarParser::process(){
-	/*
-	samFile *in = sam_open(infname, "r");
-	bam1_t *record = bam_init1();
-	bam_hdr_t *header = NULL;
-	hts_idx_t *idx = NULL;
-	hts_itr_t *iter = NULL;
-	int res;
 
-	if(in){
-		header = sam_hdr_read(in);
-		if(header == 0) return;
-		//for(int i = 0; i < header->n_targets; ++i){
-		//	
-		//}
-		//----------- for every sam record/cigar-----------------//
-		double start_time_mf = get_time();
-		makeReference(conf.fasta, header);
-		double end_time_mf = get_time();
-		printf("make reference time : %f\n", end_time_mf - start_time_mf);
-		//while((res = sam_read1(in, header, record)) >= 0 ){
-		//	char* qname = bam_get_qname(record);
-		//	//printf("qname: %s\n", qname);
-		//	
-		//	this->record = record;
-		//	parseCigar("chr7", record);
-		//	//
-		//}
-		idx = sam_index_load(in, infname);
-		if(idx == NULL) return;
-		iter = sam_itr_querys(idx, header, "chr1:3829691-3918526");
-		//int region_start = 0;
-		//int region_end = 1;
-		//char* region_str = hts_parse_reg("chr1:3,829,691-3,918,526", &region_start, &region_end);
-		//iter = sam_itr_querys(idx, header, region_str);
-		//printf("region info: %s, start: %d, end: %d\n", region_str, region_start, region_end);
-		int count = 0;
-		double start_time = get_time();
-		while(sam_itr_next(in, iter, record) >= 0){
-			//char* quname = bam_get_qname(record);
-			//cout << quname << endl;
-			this->record = record;
-			//if(count < 43294){
-			//---haoz: filter the record by samfilter
-			if((record->core.flag & conf.samfilter) != 0){
-				printf("return for samfilter!!\n");
-				continue;
-			}
-			if(count >= 0){
-				parseCigar("chr1", record, count);
-			}
-			count++;
-		}
-	*/
 	bam1_t *record = bam_init1();
 	int count = 0;
 	makeReference(conf.fasta, preprocessor->header);
 	double start_time = get_time();
 	while((preprocessor->next_record(record)) >= 0){
-	//while(sam_itr_next(preprocessor->in, preprocessor->iter, record) >= 0 ){
 		this->record = record;
+		//	printf("%s - %s\n", preprocessor->header->target_name[record->core.tid]);
 		parseCigar("chr1", record, count);
 		count++;
 	}
-		double end_time = get_time();
-		printf("totally %d record processed over! and time is %f: \n", count, end_time-start_time);
-		//-----------------------------------------------------//
-		cout << "non/Insertionvariants: " << nonInsertionVariants.size() << " - " << insertionVariants.size() << " - " << refCoverage.size() << " - " <<positionToDeletionCount.size() << " - " << positionToInsertionCount.size()<< endl;
-		for(auto &v: positionToInsertionCount){
-			int position = v.first;
-			map<string, int> insert_count = v.second;
-			for(auto &vm : insert_count){
-				printf("%d - %s - %d\n", position, vm.first.c_str(), vm.second);
-			}
-				
-		}	
-		//for(auto &v: insertionVariants){
-		//	int position = v.first;
-		//	VariationMap* var_map = v.second;
-		//	for(auto &vm : var_map -> variation_map){
-		//		printf("%d - %s - %d\n", position, vm.first.c_str(), vm.second->varsCount);
-		//	}
-		//		
+	double end_time = get_time();
+	printf("totally %d record processed over! and time is %f: \n", count, end_time-start_time);
+	//-----------------------------------------------------//
+	cout << "non/Insertionvariants: " << nonInsertionVariants.size() << " - " << insertionVariants.size() << " - " << refCoverage.size() << " - " <<positionToDeletionCount.size() << " - " << positionToInsertionCount.size()<< endl;
+	//for(auto &v: mnp){
+	//	int position = v.first;
+	//	map<string, int> insert_count = v.second;
+	//	for(auto &vm : insert_count){
+	//		printf("%d - %s - %d\n", position, vm.first.c_str(), vm.second);
+	//	}
+	//}	
+	int res[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	for(auto &v: nonInsertionVariants){
+		int position = v.first;
+		VariationMap* var_map = v.second;
+		res[var_map->variation_map.size()]++;
+		//printf("%d - %d\n", position, var_map->variation_map.size());
+		//for(auto &vm : var_map -> variation_map){
+		//	printf("%d - %s - %d\n", position, vm.first.c_str(), vm.second->varsCount);
 		//}
-		//bam_hdr_destroy(header);
-		//if(in) sam_close(in);
-		bam_destroy1(record);
+			
+	}
+	for(int i = 1; i <= 10; i++){
+		printf("i : %d, num: %d\n", i, res[i]);
+	}
+	//for(auto &v: refCoverage){
+	//	printf("%d - %d\n", v.first, v.second);
+	//}
+	//bam_hdr_destroy(header);
+	//if(in) sam_close(in);
+	bam_destroy1(record);
 }
 
 void inline get_record_form_samtool_resulet(uint8_t* seq_sam, int len, char* seq){
@@ -518,7 +475,7 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 		//if (instance().conf.y && !record.getCigarString().equals("*")) {
 		//	System.err.println("No NM tag for mismatches. " + record.getSAMString());
 		//}
-		if(record->core.flag & 4 ){//record.getCigarString().equals(SAMRecord.NO_ALIGNMENT_CIGAR)) // TODO
+		if(record->core.flag & BAM_FUNMAP ){//record.getCigarString().equals(SAMRecord.NO_ALIGNMENT_CIGAR)) // TODO
 			return;
 		}
 	}
@@ -534,7 +491,7 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 	int position = 0;
 	readPositionIncludingSoftClipped = 0;
 	readPositionExcludingSoftClipped = 0;
-	if(conf.performLocalRealignment){
+	if(!conf.performLocalRealignment){
 		//cigar_modifier(cigar); //TODO
 		position = getAlignmentStart(record);
 		cigar = bam_get_cigar(record);
@@ -714,7 +671,7 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 				}
 				char nuc = seq[readPositionIncludingSoftClipped + 1];				
 				if(nuc == 'N') break;
-				if(isHasAndNotEquals('N', ref, start+1)) break;
+				if(isHasAndEquals('N', ref, start+1)) break;//---10/12:妈的检查出了一个错误
 
 				//Condition: base at n+1 dose not match reference base at start+1
 				if(isNotEquals(ref[start+1], nuc)){
@@ -734,7 +691,7 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 					nmoff++;
 				}else{ //look ahead to see whether there's more mismatches, if yes, add reverence to grow MNV
 					int ssn = 0;
-					for(int ssi = 1; i <= conf.vext; ssi++){
+					for(int ssi = 1; ssi <= conf.vext; ssi++){ //10/12: 妈的又找到一个
 						if(i+1+ssi >= cigar_element_length) break;
 						if(readPositionIncludingSoftClipped + 1 + ssi < lseq
 						   && isHasAndNotEquals(seq[readPositionIncludingSoftClipped + 1 + ssi],
@@ -775,7 +732,7 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 			if( conf.performLocalRealignment &&
 				cigar_element_length - i <= conf.vext &&
 				ci + 1 < record->core.n_cigar &&
-				bam_cigar_op(cigar[ci+1]) == 2&&
+				bam_cigar_op(cigar[ci+1]) == BAM_CDEL &&
 				//ref.containsKey(start) && ///-------???-----
 				ref.find(start) != ref.end() &&
 				(ss.length() > 0 || isNotEquals(seq[readPositionIncludingSoftClipped], ref[start])) &&
@@ -815,7 +772,7 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 				if(record->core.n_cigar > ci + 1 && bam_cigar_op(cigar[ci+1]) == 1) {
 					cout << "isCloserThenVextAndGoodBase - ifTwoinsertionahead" << endl;
 					//append '^' + next-next segment sequence
-					s += "^" + string((char*)seq, readPositionIncludingSoftClipped+1, bam_cigar_oplen(cigar[ci + 1]));					
+					s += "^" + string(seq, readPositionIncludingSoftClipped+1, bam_cigar_oplen(cigar[ci + 1]));					
 					// loop over next-next segment
 					int next_len = bam_cigar_oplen(cigar[ci + 1]);
 					for(int qi = 1; qi <= next_len; qi++){
@@ -845,11 +802,12 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 						}
 					}
 				}
-			}//else if(isCloserThenVextAndGoodBase(seq, ref, query_quality, ci, i, ss, 1)){
+			}
+            //else if(isCloserThenVextAndGoodBase(seq, ref, query_quality, ci, i, ss, 1)){
 			else if( conf.performLocalRealignment &&
 					 cigar_element_length - i <= conf.vext &&
 					 ci + 1 < record->core.n_cigar &&
-					 bam_cigar_op(cigar[ci+1]) == 1 &&
+					 bam_cigar_op(cigar[ci+1]) == BAM_CINS &&
 					 //ref.containsKey(start) && ///-------???-----
 					 ref.find(start) != ref.end() &&
 					 (ss.length() > 0 || isNotEquals(seq[readPositionIncludingSoftClipped], ref[start])) &&
@@ -869,7 +827,7 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 				//remove '&' delmiter form s
 				replaceFirst(s, "&", "");
 				int nextLen = bam_cigar_oplen(cigar[ci + 1]);
-				s += string((char*)seq, readPositionIncludingSoftClipped+1, nextLen);
+				s += string(seq, readPositionIncludingSoftClipped+1, nextLen);
 				s.insert(nextLen, "&"); //need to be checking correct
 				s = "+" + s;
 
@@ -884,6 +842,7 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 				qibases--;
 				qbases++;
 			}
+
 			if(!trim){
 				//cout << "istrm" << endl;
 				const int pos = start - qbases + 1;
@@ -1044,7 +1003,7 @@ void CigarParser::addVariationForMatchingPart(uint8_t mappingQuality, int nm, bo
 void CigarParser::addVariationForDeletion(uint8_t mappingQuality, int nm, bool dir, int rlen1,
                                      string descStringOfDeletedElement, string qualityOfSegment, int nmoff) {
     //add variant structure for deletion at this position
-    Variation* hv = getVariation(nonInsertionVariants, start, descStringOfDeletedElement); //variation structure
+	Variation* hv = getVariation(nonInsertionVariants, start, descStringOfDeletedElement); //variation structure [v]
     //add record for deletion in deletions map
     //increment(positionToDeletionCount, start, descStringOfDeletedElement.toString());
 	positionToDeletionCount[start][descStringOfDeletedElement]++;
@@ -1100,13 +1059,72 @@ bool CigarParser::isNextAfterNumMatched( int ci, int number) {
 }
 
 
+inline bool isReadChimericWithSA(bam1_t* record, int positon, char* saTagString,
+						  bool dir, bool is5Side, char* refName){
+	char delim[] = ",";
+	char* ptr = strtok(saTagString, delim);
+	char* saChromosome = strtok(NULL, delim);
+	int saPosition = stoi(strtok(NULL, delim));
+	char* saDirectionString = strtok(NULL, delim);
+	char* saCigar = strtok(NULL, delim);
+	bool saDirectionIsForward = strcmp(saDirectionString, "+");
+
+	bool mm;
+	if(is5Side){
+		mm = regex_match(saCigar, regex(SA_CIGAR_D_S_5clip));
+	}else{
+		mm = regex_match(saCigar, regex(SA_CIGAR_D_S_3clip));
+	}
+	return (((dir && saDirectionString) || (!dir && !saDirectionString))
+			&& strcmp(saChromosome, refName)
+			//&& (abs(saPosition - positon) < 2 * maxReadLength)
+			&& mm);
+		
+
+}
+
 void CigarParser::process_softclip(string chrName, bam1_t* record, char* querySequence, uint8_t mappingQuality,
 					  unordered_map<int, char> &ref, uint8_t* queryQuality, int numberOfMismatches,
 					  bool direction, int position, int totalLengthIncludingSoftClipped, int ci){
 	if(ci == 0){ //5' soft clipped
 		//ignore large soft clip due to chimeric reads in libraty construction
 		if(!conf.chimeric){
-			
+			//string saTagString( bam_aux2Z(bam_aux_get(record, "SA")) );
+			char* saTagString = bam_aux2Z(bam_aux_get(record, "SA"));
+
+			if (cigar_element_length >= 20 && saTagString != NULL) {
+				if (isReadChimericWithSA(record, position, saTagString, direction, true, getRefName(record))) {
+					readPositionIncludingSoftClipped += cigar_element_length;
+					offset = 0;
+					// Had to reset the start due to softclipping adjustment
+					start = position;
+
+					return;
+				}
+			}
+			////trying to detect chimeric reads even when there's no supplementary
+			//// alignment from aligner
+			//else if (cigar_element_length >= Configuration.SEED_1) {
+			//	Map<String, List<Integer>> referenceSeedMap = reference.seed;
+			//	String sequence = getReverseComplementedSequence(record, 0, cigarElementLength);
+			//	String reverseComplementedSeed = sequence.substring(0, Configuration.SEED_1);
+			//
+			//	if (referenceSeedMap.containsKey(reverseComplementedSeed)) {
+			//		List<Integer> positions = referenceSeedMap.get(reverseComplementedSeed);
+			//		if (positions.size() == 1 &&
+			//			abs(start - positions.get(0)) <  2 * maxReadLength) {
+			//			readPositionIncludingSoftClipped += cigarElementLength;
+			//			offset = 0;
+			//			// Had to reset the start due to softclipping adjustment
+			//			start = position;
+			//			if (instance().conf.y) {
+			//				System.err.println(sequence + " at 5' is a chimeric at "
+			//								   + start + " by SEED " + Configuration.SEED_1);
+			//			}
+			//			return;
+			//		}
+			//	}
+			//}
 		}
 		// Align softclipped but matched sequences due to mis-softclipping
 		/*
@@ -1122,8 +1140,8 @@ void CigarParser::process_softclip(string chrName, bam1_t* record, char* querySe
 			  && isHasAndEquals(querySequence[cigar_element_length-1], ref, start-1)
 			  && queryQuality[cigar_element_length-1]  > 10){
 			//create variant if it is not present
-
-			Variation* variation = getVariation(nonInsertionVariants, start-1, string(1,ref[start-1]));//ref[start-1] as string
+			
+			Variation* variation = getVariation(nonInsertionVariants, start-1, string(1,ref[start-1]));//ref[start-1] as string [v]
 			//add count
 			addCnt(variation, direction, cigar_element_length, queryQuality[cigar_element_length-1], mappingQuality, numberOfMismatches, conf.goodq);
 			//increase -> incCnt(refCoverage, start-1, 1);
@@ -1205,8 +1223,8 @@ void CigarParser::process_softclip(string chrName, bam1_t* record, char* querySe
 			   && isHasAndEquals(querySequence[readPositionIncludingSoftClipped], ref, start)
 			   && queryQuality[readPositionIncludingSoftClipped]  > 10){
 			//create variant if it is not present
-			//Variation variation = getVariation(nonInsertionVariants, start, string(1, ref[start-1]));
-			Variation* variation = getVariation(nonInsertionVariants, start, string(1, ref.at(start-1)));
+			//printf("add variation nonInsert : %d-%c\n", readPositionIncludingSoftClipped, ref.at(start));
+			Variation* variation = getVariation(nonInsertionVariants, start, string(1, ref.at(start)));
 			//add count
 			addCnt(variation, direction, totalLengthIncludingSoftClipped - readPositionIncludingSoftClipped,
 				   queryQuality[readPositionIncludingSoftClipped], mappingQuality, numberOfMismatches, conf.goodq);
@@ -1456,6 +1474,7 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
         if (ci == 1 && (bam_cigar_op(cigar[0]) == 4
 						|| bam_cigar_op(cigar[0]) == 5)) { // if cigar[0] operator is S or H
             //Add one more variant corresponding to base at start - 1 to hash
+			//[haoz:] bookmark here
             Variation* ttref = getVariation(nonInsertionVariants, insertion_pointion, string(1, ref[insertion_pointion]));
             ttref->incDir(direction);
             ttref->varsCount++;
