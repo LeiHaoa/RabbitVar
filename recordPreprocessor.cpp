@@ -5,10 +5,11 @@
 
 using namespace std;
 
-RecordPreprocessor::RecordPreprocessor(Region& region, Configuration &conf){
+RecordPreprocessor::RecordPreprocessor(Region& region, Configuration *conf){
 	this->region = region;
+	this->conf = conf;
 	string infname;
-	if( (infname = conf.bam.getBam1()) != ""){
+	if( (infname = conf->bam.getBam1()) != ""){
 		in = sam_open(infname.c_str(), "r");
 	}else{
 		cerr << "no vailde bam file!" << endl;
@@ -25,8 +26,9 @@ RecordPreprocessor::RecordPreprocessor(Region& region, Configuration &conf){
 		printf("open file %s error!!\n", infname.c_str());
 		exit(0);
 	}
-	makeReference(conf.fasta);
+	makeReference(conf->fasta);
 }
+
 RecordPreprocessor::~RecordPreprocessor(){
 	bam_hdr_destroy(header);
 	if(in) sam_close(in);
@@ -35,18 +37,18 @@ RecordPreprocessor::~RecordPreprocessor(){
 }
 
 void RecordPreprocessor::makeReference(string fa_file_path){
-	int extension = conf.referenceExtension;
-	int sequenceStart = region.start - conf.numberNucleotideToExtend - extension < 1 ?
-					 1: region.start - conf.numberNucleotideToExtend - extension;
+	int extension = conf->referenceExtension;
+	int sequenceStart = region.start - conf->numberNucleotideToExtend - extension < 1 ?
+					 1: region.start - conf->numberNucleotideToExtend - extension;
 	int len = 248956422;
-	int sequenceEnd = region.end + conf.numberNucleotideToExtend + extension > len ?
-				len : region.end + conf.numberNucleotideToExtend + extension;
+	int sequenceEnd = region.end + conf->numberNucleotideToExtend + extension > len ?
+				len : region.end + conf->numberNucleotideToExtend + extension;
 
 	int ref_len = 0;
 	int ref_len2 = 0;
 	printf("info: %d - %d\n", sequenceStart, sequenceEnd);
 	reference.ref_start = sequenceStart;
-	reference.ref_end = sequenceEnd - conf.SEED_1;
+	reference.ref_end = sequenceEnd - conf->SEED_1;
 	faidx_t * fasta_reference = fai_load(fa_file_path.c_str());
 	//char* seq = faidx_fetch_seq(fasta_reference, "chr1", reference.ref_start, reference.ref_end, &ref_len);
 	printf("info: %d - %d\n", reference.ref_start, reference.ref_end);
@@ -99,25 +101,26 @@ int RecordPreprocessor::next_record(bam1_t *record){
 	int ret = 0;
 	while( (ret = sam_itr_next(in, iter, record)) >= 0 ){
 		//---haoz: filter the record by samfilter
-		if((record->core.flag & std::stoi(conf.samfilter)) != 0){
+		//printf("samfilter: %s, samfilter_int: %d, flag: %d, result: %d\n",conf->samfilter.c_str(), std::stoi(conf->samfilter), record->core.flag, record->core.flag & std::stoi(conf->samfilter));
+		if((record->core.flag & std::stoi(conf->samfilter)) != 0){
 			printf("return for samfilter!!\n");
 			continue;
 		}
 		/*
-		if (conf.isDownsampling && RND.nextDouble() <= conf.downsampling) {
+		if (conf->isDownsampling && RND.nextDouble() <= conf->downsampling) {
 			printf("return false due to downsampling\n");
 			continue;
 		}
         int mappingQuality = record->core.qual;
 
         // Ignore low mapping quality reads
-        if (conf.hasMappingQuality() && mappingQuality < conf.mappingQuality) {
+        if (conf->hasMappingQuality() && mappingQuality < conf->mappingQuality) {
 			printf("return false due to mapping quality!!\n");
 			continue;
         }
 
         //Skip not primary alignment reads
-        if ((record->core.flag & BAM_FSECONDARY) && !(conf.samfilter == 0)) {
+        if ((record->core.flag & BAM_FSECONDARY) && !(conf->samfilter == 0)) {
 			printf("return false due to not primary alignment!!\n");
 			continue;
         }
@@ -125,13 +128,14 @@ int RecordPreprocessor::next_record(bam1_t *record){
         // Skip reads where sequence is not stored in read
         if (record->core.l_qseq == 1){//&& seq_nt16_str[bam_get_seq(record)] == "*") {
 			printf("return false due to not stored\n");
-            return false;
+            //return false;
+			continue;
         }
 
         string mateReferenceName = getMateReferenceName(header, record);
 
         // filter duplicated reads if option -t is set
-        if (conf.removeDuplicatedReads) {
+        if (conf->removeDuplicatedReads) {
             if (getAlignmentStart(record) != firstMatchingPosition) {
                 duplicates.clear();
             }

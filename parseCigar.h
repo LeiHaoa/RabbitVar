@@ -90,7 +90,7 @@ public:
 	char* getRefName(bam1_t* record);
 private:
 	unordered_map<int, int> refCoverage;
-	Configuration conf;
+	Configuration *conf;
 	// Utils maps
 	//------TODO: use pointer instead to save copy time ------//
 	unordered_map<int, VariationMap* > nonInsertionVariants;

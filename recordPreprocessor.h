@@ -11,14 +11,14 @@
 
 class RecordPreprocessor{
 public:
-	RecordPreprocessor(Region &region, Configuration &conf);
+	RecordPreprocessor(Region &region, Configuration *conf);
 	~RecordPreprocessor();
 	void makeReference(string fa_file_path);
 	int next_record(bam1_t* record);
 
 
 //private:
-	Configuration conf;
+	Configuration *conf;
 	Reference reference;
 	Region region;
 	samFile *in;

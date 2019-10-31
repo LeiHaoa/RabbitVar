@@ -267,7 +267,8 @@ std::tuple<string, string> VarDictLauncher::getSampleNamesSomatic(Configuration 
 void init_conf(Configuration& conf){
 	conf.bam = BamNames("/home/haoz/workspace/data/NA12878/NA12878_S1.bam");
 	conf.sampleName = "sample_name";
-	conf.regionOfInterest = "chr1:3,828,491-3,919,709";
+	//conf.regionOfInterest = "chr1:3,828,491-3,919,709";
+	conf.regionOfInterest = "chr1:3,829,690-3,918,526";
 	//conf.bed = "/home/haoz/workspace/data/NA12878/NA12878_S1.ROH.bed";
 	conf.delimiter = "\t";
 	conf.bedRowFormat = BedRowFormat(0,1,2,3,1,2);
@@ -298,7 +299,7 @@ int main_single(){
 		cout << "i have not write the bed file version!!" << endl;
 		exit(0);
 	}
-	RecordPreprocessor *preprocessor = new RecordPreprocessor(region, conf);
+	RecordPreprocessor *preprocessor = new RecordPreprocessor(region, &conf);
 	CigarParser cp(dscope, preprocessor);
 	cp.process();
 
