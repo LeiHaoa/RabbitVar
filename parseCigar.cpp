@@ -24,14 +24,7 @@
 #include "htslib/faidx.h"
 #include "htslib/kstring.h"
 #include "htslib/hts_defs.h"
-#include <sys/time.h>
 using namespace std;
-
-double get_time(){
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
-	return (double)tv.tv_sec + (double)tv.tv_usec/1000000;
-}
 
 
 char table[16] = {'x','A','C','x','G','x','x','x','T','x','x','x','x','x','x','N'};
@@ -1088,7 +1081,8 @@ void CigarParser::process_softclip(string chrName, bam1_t* record, char* querySe
 					  bool direction, int position, int totalLengthIncludingSoftClipped, int ci){
 	if(ci == 0){ //5' soft clipped
 		//ignore large soft clip due to chimeric reads in libraty construction
-		if(!conf.chimeric){
+		//if(!conf.chimeric){
+		if(false){
 			//string saTagString( bam_aux2Z(bam_aux_get(record, "SA")) );
 			char* saTagString = bam_aux2Z(bam_aux_get(record, "SA"));
 
@@ -1832,24 +1826,24 @@ void CigarParser::cleanupCigar(uint32_t* cigar, int n_cigar){
 	}
 }
 
-int main_single(){
-	const char* infname = "/home/haoz/workspace/data/NA12878/NA12878_S1.bam";
-	DataScope dscope;
-	dscope.region = Region("chr1",3829691, 3918526, "unname");
-	//char* seq = fai_fetch(fasta_reference, "CHR1:3,829,691-3,918,526", &REF_LEN); 
-	RecordPreprocessor *preprocessor = new RecordPreprocessor(infname, dscope.region);
-	CigarParser cp(dscope, preprocessor);
-	//dscope.reference
-	cp.process();
-
-	delete preprocessor;
-}
-
-int main(){
-	double start_time = get_time();
-	for(int i = 0; i < 1; i++){
-		main_single();
-	}
-	double end_time = get_time();
-	printf("total time: %f s \n", (end_time - start_time));
-}
+//int main_single(){
+//	const char* infname = "/home/haoz/workspace/data/NA12878/NA12878_S1.bam";
+//	DataScope dscope;
+//	dscope.region = Region("chr1",3829691, 3918526, "unname");
+//	//char* seq = fai_fetch(fasta_reference, "CHR1:3,829,691-3,918,526", &REF_LEN); 
+//	RecordPreprocessor *preprocessor = new RecordPreprocessor(infname, dscope.region);
+//	CigarParser cp(dscope, preprocessor);
+//	//dscope.reference
+//	cp.process();
+//
+//	delete preprocessor;
+//}
+//
+//int main(){
+//	double start_time = get_time();
+//	for(int i = 0; i < 1; i++){
+//		main_single();
+//	}
+//	double end_time = get_time();
+//	printf("total time: %f s \n", (end_time - start_time));
+//}

@@ -7,17 +7,27 @@ LIBS=/home/haoz/tools/htslib/lib
 #LIBS=/home/haoz/tools/htslib/lib/libhts.a
 
 #FLAGS= -std=c++11 -lhts -I/home/haoz/tools/htslib/include -L/home/haoz/tools/htslib/lib -O3
-FLAGS= -std=c++11 -lhts -O3
+FLAGS= -std=c++11 -lhts -O3 -g
 
 #$(CC) parseCigar.o $(FLAGS) -I$(INCLUDE) -L$(LIBS)   -o parseCigar 
-parseCigar:parseCigar.o recordPreprocessor.o
-	$(CC)  -o parseCigar parseCigar.o recordPreprocessor.o $(FLAGS) -I$(INCLUDE) -L$(LIBS) 
+launcher:Launcher.o RegionBuilder.o parseCigar.o recordPreprocessor.o
+	$(CC) -o launcher Launcher.o RegionBuilder.o parseCigar.o recordPreprocessor.o $(FLAGS) -I$(INCLUDE) -L$(LIBS) 
 
 recordPreprocessor.o:recordPreprocessor.cpp
 	$(CC) -c recordPreprocessor.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
 
 parseCigar.o:parseCigar.cpp
 	$(CC) -c parseCigar.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
+
+##launcher:Launcher.o RegionBuilder.o
+##	$(CC) -o launcher Launcher.o RegionBuilder.o  $(FLAGS) -I$(INCLUDE) -L$(LIBS) 
+
+RegionBuilder.o: RegionBuilder.cpp
+	$(CC) -c RegionBuilder.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
+
+Launcher.o: Launcher.cpp
+	$(CC) -c Launcher.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
+
 
 
 .PHONY:clean

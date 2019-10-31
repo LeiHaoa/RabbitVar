@@ -20,7 +20,9 @@ class Reference {
 public:
     list<LoadedRegion*> loadedRegions;
     unordered_map<int, char> referenceSequences;
-    map<string, list<int>> seed;
+    unordered_map<string, list<int>> seed;
+	int ref_start;
+	int ref_end;
 
     Reference() {
         //this->loadedRegions = new ArrayList<>();

@@ -18,12 +18,6 @@ inline bool isEquals(char ch1, char ch2){
 inline bool isNotEquals(char ch1, char ch2){
 	return !(ch1 == ch2);
 }
-inline void replaceFirst(string& str, string source, string target){
-	int pos = str.find(source);
-	if(pos != string::npos){
-		str.replace(pos, source.length(), target);
-	}
-}
 
 inline bool isHasAndEquals(char ch1, unordered_map<int, char> &ref, int index) {
 	if(ref.find(index) == ref.end()){
