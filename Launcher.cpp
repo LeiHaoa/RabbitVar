@@ -2,6 +2,7 @@
 #include "RegionBuilder.h"
 #include "recordPreprocessor.h"
 #include "parseCigar.h"
+#include "VariationRealigner.h"
 
 #include "htslib/hts.h"
 #include "htslib/sam.h"
@@ -89,8 +90,8 @@ void VarDictLauncher::initResources(Configuration &conf) {
         unordered_map<string, int> adaptorReverse;
         if (!conf.adaptor.size()) {
             for(string sequence : conf.adaptor) {
-                for (int i = 0; i <= 6 && i + conf.ADSEED < sequence.length(); i++) {
-                    string forwardSeed = vc_substr(sequence, i, conf.ADSEED);
+                for (int i = 0; i <= 6 && i + CONF_ADSEED < sequence.length(); i++) {
+                    string forwardSeed = vc_substr(sequence, i, CONF_ADSEED);
 					string ftmp = forwardSeed;
 					reverse(ftmp.begin(), ftmp.end());
                     string reverseSeed = complement(ftmp); //TODO maybe do not need ftmp;
@@ -150,7 +151,7 @@ std::tuple<string, bool, vector<string> > VarDictLauncher::readBedFile(Configura
 						if (startAmplicon_a6 >= startRegion_a1 && endAmplicon_a7 <= endRegion_a2) {
 							// Read pair is considered belonging the amplicon if the edges are less than 10 bp
 							// to the amplicon and overlap fraction is at least 0.95 by default
-							ampliconParameters = conf.DEFAULT_AMPLICON_PARAMETERS;
+							ampliconParameters = CONF_DEFAULT_AMPLICON_PARAMETERS;
 							//if (!conf.isZeroBasedDefined()) {
 							//	zeroBased = true;
 							//}
@@ -301,7 +302,9 @@ int main_single(){
 	}
 	RecordPreprocessor *preprocessor = new RecordPreprocessor(region, &conf);
 	CigarParser cp(dscope, preprocessor);
-	cp.process();
+	Scope<VariationData> svd =  cp.process();
+	VariationRealigner var_realinger(&conf);
+	var_realinger.process(svd);
 
 	delete preprocessor;
 }

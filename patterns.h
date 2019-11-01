@@ -2,12 +2,12 @@
 
     //Variation patterns
     #define BEGIN_DIGITS  "^(\\d+)"
-    #define UP_NUMBER_END "\\^(\\d+)$";
+    #define UP_NUMBER_END "\\^(\\d+)$"
     #define BEGIN_MINUS_NUMBER_ANY "^-\\d+(.*)"
     #define BEGIN_MINUS_NUMBER_CARET "^-\\d+\\^"
     #define BEGIN_MINUS_NUMBER "^-(\\d+)"
-    #define attern MINUS_NUM_NUM "-\\d\\d";
-    #define HASH_GROUP_CARET_GROUP "#(.+)\\^(.+)";
+    #define MINUS_NUM_NUM "-\\d\\d"
+    #define HASH_GROUP_CARET_GROUP "#(.+)\\^(.+)"
 
     //Sclip patterns
     #define B_A7 "^.AAAAAAA"

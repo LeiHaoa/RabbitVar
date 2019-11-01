@@ -48,7 +48,7 @@ void RecordPreprocessor::makeReference(string fa_file_path){
 	int ref_len2 = 0;
 	printf("info: %d - %d\n", sequenceStart, sequenceEnd);
 	reference.ref_start = sequenceStart;
-	reference.ref_end = sequenceEnd - conf->SEED_1;
+	reference.ref_end = sequenceEnd - CONF_SEED_1;
 	faidx_t * fasta_reference = fai_load(fa_file_path.c_str());
 	//char* seq = faidx_fetch_seq(fasta_reference, "chr1", reference.ref_start, reference.ref_end, &ref_len);
 	printf("info: %d - %d\n", reference.ref_start, reference.ref_end);
@@ -56,17 +56,19 @@ void RecordPreprocessor::makeReference(string fa_file_path){
 	//char* seq = faidx_fetch_seq(fasta_reference, "chr1", reference.ref_start, reference.ref_end, &ref_len);
 	//char* seq = fai_fetch(fasta_reference, "chr7:55,269,101-55,271,548", &ref_len);
 	//dscope.region = Region("chr1",3829691, 3918526, "unname");
-	char* seq = fai_fetch(fasta_reference, "chr1:3828491-3919709", &ref_len2);	
+	string ref_string = region.chr + ":" + std::to_string(sequenceStart) + "-" + std::to_string(sequenceEnd);
+		//char* seq = fai_fetch(fasta_reference, "chr1:3828490-3919726", &ref_len2);	
+	char* seq = fai_fetch(fasta_reference, ref_string.c_str(), &ref_len2);	
 	printf("ref_len: %d - ref_len2: %d\n", ref_len, ref_len2);
 	//**********char* seq = faidx_fetch_seq(fasta_reference, "chr1", 3828491, 3919709, &ref_len);
 	printf("reference length is: %d\n", ref_len);
 	//for(int i = 0; i < reference.ref_end - reference.ref_start; ++i){//java里面是到了55271531，截断了一块先不管,先造出数据来
-	for(int i = reference.ref_start; i < reference.ref_end; ++i){//java里面是到了55271531，截断了一块先不管,先造出数据来
+	for(int i = reference.ref_start; i < reference.ref_end - CONF_SEED_1; ++i){
 		reference.referenceSequences[i] = toupper(seq[i - reference.ref_start]);
 		//printf("%c", i, seq[i]);
 		//printf("%d-%c\n",i + reference.ref_start, seq[i]);
 	}
-	printf("\n");
+	//printf("\n");
 	//reference.referenceSequences = seq;
 }	
 

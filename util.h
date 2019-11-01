@@ -125,4 +125,19 @@ inline string erase_all_char(string str, char from){
 	return str;
 }
 
+    /**
+     * Method finds character on specified index in string. If index is negative, it counts index from right end of string.
+     * @param str string where to search character
+     * @param index position in sequence
+     * @return founded character on specified position
+     */
+inline char charAt(string str, int index) {
+        if (index < 0) {
+            int i = str.length() + index;
+            if (i < 0)
+                return (char)-1; //
+            return str[i];
+        }
+        return str[index];
+};
 #endif

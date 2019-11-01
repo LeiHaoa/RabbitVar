@@ -1,7 +1,11 @@
 #include "htslib/sam.h"
 #include "data/BaseInsertion.h"
 #include "util.h"
+#include "VariationMap.h"
+#include "Sclip.h"
 #include <stdint.h>
+#include "Configuration.h"
+#include <regex>
 #include <map>
 
 using namespace std;
@@ -219,4 +223,224 @@ inline int getReferenceLength(bam1_t *record){
 		}
 	}
 	return length;
+}
+//----song----
+/**
+ * Correct counts for negative values
+ * @param varToCorrect variant   $ref
+ */
+inline void correctCnt(Variation *varToCorrect) {
+    if (varToCorrect->varsCount < 0)
+        varToCorrect->varsCount = 0;
+    if (varToCorrect->highQualityReadsCount < 0)
+        varToCorrect->highQualityReadsCount = 0;
+    if (varToCorrect->lowQualityReadsCount < 0)
+        varToCorrect->lowQualityReadsCount = 0;
+    if (varToCorrect->meanPosition < 0)
+        varToCorrect->meanPosition = 0;
+    if (varToCorrect->meanQuality < 0)
+        varToCorrect->meanQuality = 0;
+    if (varToCorrect->meanMappingQuality < 0)
+        varToCorrect->meanMappingQuality = 0;
+    if (varToCorrect->getDir(true) < 0)
+        varToCorrect->addDir(true, -varToCorrect->getDir(true));
+    if (varToCorrect->getDir(false) < 0)
+        varToCorrect->addDir(false, -varToCorrect->getDir(false));
+}
+
+
+
+/**
+ * Adjust the count,  If ref is not NULL, the count for reference is also adjusted.
+ * Variant counts of tv are added to vref and removed from ref
+ * @param varToAdd variant to add counts    $vref
+ * @param variant variant    $tv
+ * @param referenceVar reference variant  $ref
+ */
+inline void adjCnt(Variation *varToAdd, Variation *variant, Variation *referenceVar) {
+    varToAdd->varsCount += variant->varsCount;
+    varToAdd->extracnt += variant->varsCount;
+    varToAdd->highQualityReadsCount += variant->highQualityReadsCount;
+    varToAdd->lowQualityReadsCount += variant->lowQualityReadsCount;
+    varToAdd->meanPosition += variant->meanPosition;
+    varToAdd->meanQuality += variant->meanQuality;
+    varToAdd->meanMappingQuality += variant->meanMappingQuality;
+    varToAdd->numberOfMismatches += variant->numberOfMismatches;
+    varToAdd->pstd = true;
+    varToAdd->qstd = true;
+    varToAdd->addDir(true, variant->getDir(true));
+    varToAdd->addDir(false, variant->getDir(false));
+
+    referenceVar->varsCount -= variant->varsCount;
+    referenceVar->highQualityReadsCount -= variant->highQualityReadsCount;
+    referenceVar->lowQualityReadsCount -= variant->lowQualityReadsCount;
+    referenceVar->meanPosition -= variant->meanPosition;
+    referenceVar->meanQuality -= variant->meanQuality;
+    referenceVar->meanMappingQuality -= variant->meanMappingQuality;
+    referenceVar->numberOfMismatches -= variant->numberOfMismatches;
+    referenceVar->subDir(true, variant->getDir(true));
+    referenceVar->subDir(false, variant->getDir(false));
+    correctCnt(referenceVar);
+}
+
+inline void adjCnt(Variation *varToAdd, Variation *variant) {
+    varToAdd->varsCount += variant->varsCount;
+    varToAdd->extracnt += variant->varsCount;
+    varToAdd->highQualityReadsCount += variant->highQualityReadsCount;
+    varToAdd->lowQualityReadsCount += variant->lowQualityReadsCount;
+    varToAdd->meanPosition += variant->meanPosition;
+    varToAdd->meanQuality += variant->meanQuality;
+    varToAdd->meanMappingQuality += variant->meanMappingQuality;
+    varToAdd->numberOfMismatches += variant->numberOfMismatches;
+    varToAdd->pstd = true;
+    varToAdd->qstd = true;
+    varToAdd->addDir(true, variant->getDir(true));
+    varToAdd->addDir(false, variant->getDir(false));
+}
+
+
+
+inline string joinRef(unordered_map<int, char> &baseToPosition, int from,int to){
+    string res="";
+    for(int i=from; i<to; i++){
+        res+=baseToPosition[i];
+    }
+    return res;
+}
+    /**
+     * Counts the total count of base presence in the string
+     * @param str string to count characters
+     * @param chr character to seek in the string
+     * @return number of characters in the string
+     */
+    inline int count(string str, char chr) {
+        int cnt = 0;
+        for (int i = 0; i < str.length(); i++) {
+            if (str[i] == chr) {
+                cnt++;
+            }
+        }
+        return cnt;
+    }
+inline bool islowcomplexseq(string seq) {
+        int len = seq.length();
+        if (len == 0)
+            return true;
+        int ntcnt = 0;
+
+        int a = count(seq, 'A');
+        if (a > 0) ntcnt++;
+        if (a / (double)len > 0.75)
+            return true;
+
+        int t = count(seq, 'T');
+        if (t > 0) ntcnt++;
+        if (t / (double)len > 0.75)
+            return true;
+
+        int g = count(seq, 'G');
+        if (g > 0) ntcnt++;
+        if (g / (double)len > 0.75)
+            return true;
+
+        int c = count(seq, 'C');
+        if (c > 0) ntcnt++;
+        if (c / (double)len > 0.75)
+            return true;
+
+        return ntcnt < 3;
+    }
+
+/**
+ * Find the consensus sequence in soft-clipped reads. Consensus is called if
+ * the matched nucleotides are &gt;90% of all softly clipped nucleotides.
+ * @param softClip soft-clipped sequences    $scv
+ * @param dir not used now, will be used when adaptor option will be added
+ * @return consensus sequence
+ */
+string findconseq(Sclip *softClip, int dir) {
+    //if (softClip->sequence != NULL) {
+    if (softClip->sequence != "") {
+        return softClip->sequence;
+    }
+
+    int total = 0;
+    int match = 0;
+    string seqq;
+    bool flag = false;
+    for (auto& nve : softClip->nt) {
+        int positionInSclip = nve.first;
+        unordered_map<char, int> nv = nve.second;
+        int maxCount = 0; //$max
+        double maxQuality = 0; //$maxq
+        char chosenBase = 0; //$mnt
+        int totalCount = 0; //$tt
+        for (auto& ent : nv) {
+            char currentBase = ent.first; //$nt
+            int currentCount = ent.second; //$ncnt
+            totalCount += currentCount;
+            if (currentCount > maxCount || (softClip->seq.count(positionInSclip) && softClip->seq[positionInSclip].count(currentBase)
+                    && softClip->seq[positionInSclip][currentBase]->meanQuality > maxQuality)) {
+                maxCount = currentCount;
+                chosenBase = currentBase;
+                maxQuality = softClip->seq[positionInSclip][currentBase]->meanQuality;
+            }
+        }
+        if (positionInSclip == 3 && softClip->nt.size() >= 6 && totalCount/(double)softClip->varsCount < 0.2 && totalCount <= 2) {
+            break;
+        }
+        if ((totalCount - maxCount > 2 || maxCount <= totalCount - maxCount) && maxCount / (double)totalCount < 0.8) {
+            if (flag) {
+                break;
+            }
+            flag = true;
+        }
+        total += totalCount;
+        match += maxCount;
+        if (chosenBase != 0) {
+            seqq+=chosenBase;
+        }
+    }
+    string SEQ;
+    int ntSize = softClip->nt.size();
+    if (total != 0
+            && match / (double)total > 0.9
+            && seqq.length() / 1.5 > ntSize - seqq.length()
+            && (seqq.length() / (double)ntSize > 0.8
+            || ntSize - seqq.length() < 10
+            || seqq.length() > 25)) {
+        SEQ = seqq;
+    } else {
+        SEQ = "";
+    }
+
+    //if (!SEQ.empty() && SEQ.length() > Configuration.SEED_2) {
+    if (!SEQ.empty() && SEQ.length() > 17) {
+        bool mm1 = regex_match(SEQ, regex(B_A7));
+        bool mm2 = regex_match(SEQ, regex(B_T7));
+        
+        if (mm1 || mm2) {
+            softClip->used = true;
+        }
+        if (islowcomplexseq(SEQ)) {
+            softClip->used = true;
+        }
+    }
+    //-------------------------TODO:instance?
+    /*
+    if (!SEQ.empty() && SEQ.length() >= Configuration.ADSEED) {
+        if ( dir == 3 ) { // 3'
+            if (instance().adaptorForward.count(SEQ.substr(0, Configuration.ADSEED))) {
+                SEQ = "";
+            }
+        } else if ( dir == 5 ) { // 5'
+            if (instance().adaptorReverse.count(reverse(SEQ.substr(0, Configuration.ADSEED)))) {
+                SEQ = "";
+            }
+        }
+    }
+    */
+    softClip->sequence = SEQ;
+
+    return SEQ;
 }

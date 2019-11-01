@@ -21,6 +21,8 @@
 #include "Region.h"
 #include "data/Reference.h"
 #include "recordPreprocessor.h"
+#include "scopedata/Scope.h"
+#include "scopedata/VariationData.h"
 #include <map>
 #include <unordered_map>
 #include <regex>
@@ -41,7 +43,7 @@ class CigarParser{
 public:
 	CigarParser(DataScope scope, RecordPreprocessor *preprocessor);
 	//~CigarParser();
-	void process();
+	Scope<VariationData> process();
 	void parseCigar(string chrName, bam1_t* record, int count);
 	void addVariationForMatchingPart(uint8_t mappingQuality, int nm, bool dir,
 									  int rlen1, int nmoff, string s,

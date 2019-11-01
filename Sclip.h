@@ -9,7 +9,7 @@
 class Sclip : public Variation{
 public:
 	unordered_map<int, unordered_map<char, int> > nt;
-	unordered_map<int, unordered_map<char, Variation*>* > seq;
+	unordered_map<int, unordered_map<char, Variation*> > seq;
 
 	string sequence;
 	bool used;

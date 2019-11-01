@@ -6,6 +6,19 @@
 #include "util.h"
 #include <iostream>
 
+#define CONF_LOWQUAL     10
+#define CONF_LOWQUAL     10
+#define CONF_SEED_1      17
+#define CONF_SEED_2      12
+#define CONF_ADSEED      6
+#define CONF_MINSVCDIST  1.5
+#define CONF_SVMAXLEN  150000
+#define CONF_SVFLANK  50
+#define CONF_DISCPAIRQUAL  35
+#define CONF_EXTENSION  5000
+#define CONF_DEFAULT_AMPLICON_PARAMETERS  "10:0.95"
+#define CONF_MAX_EXCEPTION_COUNT  10
+
 //using namespace std;
 class BedRowFormat {
 public:
@@ -218,7 +231,7 @@ public:
     /**
      * Any base with quality &lt;=10 will be consider low quality in soft-clipped seq and extension will stop.
      */
-     int LOWQUAL = 10;
+     static int LOWQUAL;
 
     /**
      * The minimum matches for a read to be considered
@@ -259,17 +272,17 @@ public:
     /**
      * The larger seed size
      */
-     int SEED_1 = 17;
+     static int SEED_1;
 
     /**
      * The smaller seed size
      */
-     int SEED_2 = 12;
+     static int SEED_2;
 
     /**
      * The adaptor size
      */
-     int ADSEED = 6;
+     static int ADSEED;
     /**
      *
      * Indicate to turn off chimeric reads filtering.  Chimeric reads are artifacts from library construction,
@@ -293,7 +306,7 @@ public:
     /**
      * The minimum distance between two SV clusters in term of read length
      */
-     double MINSVCDIST = 1.5;
+     static double MINSVCDIST;
     /**
      * Mean Insert size
      */
@@ -313,19 +326,19 @@ public:
     /**
      * Max Structure variant size to be called in realignment step
      */
-     int SVMAXLEN = 150000;
+     static int SVMAXLEN;
     /**
      * the flanking sequence length for SV
      */
-     int SVFLANK = 50;
+     static int SVFLANK;
     /**
      * The minimum mapping quality when structural variant is only supported by discordant pairs
      */
-     int DISCPAIRQUAL = 35;
+     static int DISCPAIRQUAL;
 
-     int EXTENSION = 5000;
+     static int EXTENSION;
 
-     string DEFAULT_AMPLICON_PARAMETERS = "10:0.95";
+     static string DEFAULT_AMPLICON_PARAMETERS;
 
     /**
      * Default reference extension $REFEXT
@@ -345,7 +358,7 @@ public:
     /**
      * Maximum of exception to continue work
      */
-     int MAX_EXCEPTION_COUNT = 10;
+     static int MAX_EXCEPTION_COUNT;
 
     /**
      * List of adaptor sequences

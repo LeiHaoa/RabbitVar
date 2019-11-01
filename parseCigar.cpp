@@ -116,7 +116,7 @@ CigarParser::CigarParser(DataScope scope, RecordPreprocessor *preprocessor){
 	this->region = scope.region;
 	this->preprocessor = preprocessor;
 	this->conf = preprocessor->conf;
-	//this->reference = makeReference();
+	this->reference = preprocessor->reference;
 }
 inline char toupper(char c){
 	if(c >= 'a' && c <= 'z'){
@@ -335,15 +335,16 @@ Variation* getVariationFromSeq(Sclip* softClip,
 	unordered_map<char, Variation*>* seq_map; //= softClip->seq[idx];
 	Variation* variation;
 
-	unordered_map<int ,unordered_map<char, Variation*>* >::iterator itr;
+	unordered_map<int ,unordered_map<char, Variation*> >::iterator itr;
 	if((itr = softClip->seq.find(idx)) != softClip->seq.end()){
-		seq_map = itr->second;
+		seq_map = &((softClip->seq)[idx]);
 	}else{
 		seq_map = new unordered_map<char, Variation*>();
-		softClip->seq[idx] = seq_map;
+
 		variation = new Variation();
 		//(*seq_map)[ch] = variation;
 		seq_map->insert(unordered_map<char, Variation*>::value_type(ch, variation));
+		softClip->seq[idx] = *seq_map;
 		return variation;
 	}
 
@@ -367,16 +368,17 @@ Variation* getVariationFromSeq(Sclip* softClip,
     return variation;
 }
 
-void CigarParser::process(){
+Scope<VariationData> CigarParser::process(){
+//void CigarParser::process(){
 
 	bam1_t *record = bam_init1();
 	int count = 0;
-	makeReference(conf->fasta, preprocessor->header);
+	//makeReference(conf->fasta, preprocessor->header);
 	double start_time = get_time();
 	while((preprocessor->next_record(record)) >= 0){
 		this->record = record;
 		//	printf("%s - %s\n", preprocessor->header->target_name[record->core.tid]);
-		parseCigar("chr1", record, count);
+		parseCigar(region.chr, record, count);
 		count++;
 	}
 	double end_time = get_time();
@@ -391,25 +393,31 @@ void CigarParser::process(){
 	//	}
 	//}	
 	int res[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-	for(auto &v: nonInsertionVariants){
-		int position = v.first;
-		VariationMap* var_map = v.second;
-		res[var_map->variation_map.size()]++;
-		//printf("%d - %d\n", position, var_map->variation_map.size());
-		//for(auto &vm : var_map -> variation_map){
-		//	printf("%d - %s - %d\n", position, vm.first.c_str(), vm.second->varsCount);
-		//}
-			
-	}
+	//for(auto &v: nonInsertionVariants){
+	//	int position = v.first;
+	//	VariationMap* var_map = v.second;
+	//	//res[var_map->variation_map.size()]++;
+	//	printf("%d - %d\n", position, var_map->variation_map.size());
+	//	for(auto &vm : var_map -> variation_map){
+	//		printf("%d - %s - %d\n", position, vm.first.c_str(), vm.second->varsCount);
+	//	}
+	//		
+	//}
 	for(int i = 1; i <= 10; i++){
 		printf("i : %d, num: %d\n", i, res[i]);
 	}
 	//for(auto &v: refCoverage){
 	//	printf("%d - %d\n", v.first, v.second);
 	//}
+	//------------------------------------
+	VariationData vardata(nonInsertionVariants, insertionVariants, positionToInsertionCount, positionToDeletionCount, refCoverage, softClips5End, softClips3End, maxReadLength, splice, mnp, spliceCount, duprate);
+	Scope<VariationData> toData(conf->bam, this->region, this->reference, this->maxReadLength, this->splice, &vardata);
+	//------------------------------------
 	//bam_hdr_destroy(header);
 	//if(in) sam_close(in);
 	bam_destroy1(record);
+
+	return toData;
 }
 
 void inline get_record_form_samtool_resulet(uint8_t* seq_sam, int len, char* seq){
@@ -1130,7 +1138,8 @@ void CigarParser::process_softclip(string chrName, bam1_t* record, char* querySe
 		  5). read quality is more than 10
 		*/
 		//while(cigar_element_length - 1 >= 0 && start - 1 > 0 && start - 1 <= conf.chrLengths.get(chrName)
-		while(cigar_element_length - 1 >= 0 && start - 1 > 0 && start - 1 <= 248956422
+		while(cigar_element_length - 1 >= 0
+			  && start - 1 > 0 && start - 1 <= conf->chrLengths[chrName]
 			  && isHasAndEquals(querySequence[cigar_element_length-1], ref, start-1)
 			  && queryQuality[cigar_element_length-1]  > 10){
 			//create variant if it is not present
