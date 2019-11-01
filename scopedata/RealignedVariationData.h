@@ -1,5 +1,5 @@
 #ifndef _REALIGNMENT_VAR_DARA_H
-#define _INITIALDATA_H
+#define _REALIGNMENT_VAR_DARA_H
 
 #include "../VariationMap.h"
 #include "../CurrentSegment.h"

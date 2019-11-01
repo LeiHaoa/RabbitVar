@@ -1,3 +1,6 @@
+#ifndef _VARS_H
+#define _VARS_H
+
 #include<Variation.h>
 #include<unordered_map>
 #include<string.h>
@@ -24,3 +27,5 @@ class Vars {
 
     	string sv = "";
 };
+
+#endif

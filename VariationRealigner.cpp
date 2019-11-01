@@ -93,7 +93,7 @@ VariationRealigner::VariationRealigner(Configuration* conf){
         this->nonInsertionVariants = scope.data->nonInsertionVariants;
         this->insertionVariants = scope.data->insertionVariants;
         this->positionToInsertionCount = scope.data->positionToInsertionCount;
-        this->positionToDeletionsCount = scope.data->positionToDeletionsCount;
+        this->positionToDeletionCount = scope.data->positionToDeletionCount;
         this->refCoverage = scope.data->refCoverage;
         this->softClips5End = scope.data->softClips5End;
         this->softClips3End = scope.data->softClips3End;
@@ -370,7 +370,7 @@ VariationRealigner::VariationRealigner(Configuration* conf){
     void VariationRealigner::realignIndels()  {
         //if (conf.y) printf("Start Realigndel");
         
-        realigndel(&bams, positionToDeletionsCount);
+        realigndel(&bams, positionToDeletionCount);
    
    		//if (conf.y) printf("Start Realignins");
 
@@ -394,7 +394,7 @@ VariationRealigner::VariationRealigner(Configuration* conf){
      * @param positionToDeletionsCount deletion variants count on positions
      * @param bamsParameter BAM file list (can be NULL in few cases of running realigndel)
     */
-    void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map<int, unordered_map<string, int> > positionToDeletionsCount) {
+    void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map<int, unordered_map<string, int> > positionToDeletionCount) {
         unordered_map<int, char> ref = reference.referenceSequences;
         vector<string> *bams;
         if (bamsParameter->size()==0) {
@@ -404,7 +404,7 @@ VariationRealigner::VariationRealigner(Configuration* conf){
         }
         // In perl it doesn't commented, but it doesn't used
         // int longmm = 3; //Longest continued mismatches typical aligned at the end
-        vector<SortPositionDescription*> tmp = fillAndSortTmp(positionToDeletionsCount);
+        vector<SortPositionDescription*> tmp = fillAndSortTmp(positionToDeletionCount);
         int lastPosition = 0;
         for (SortPositionDescription* tpl : tmp) {
             try {
@@ -2126,28 +2126,6 @@ VariationRealigner::VariationRealigner(Configuration* conf){
         return cnt;
     }
 
-    /**
-     * Adjust the insertion position if necessary
-     * @param bi starting position of insert
-     * @param ins insert sequence
-     * @param ref map of reference bases
-     * @return Tuple of (int bi, string ins, int bi)
-     */
-    BaseInsertion* VariationRealigner::adjInsPos(int bi, string &ins, unordered_map<int, char> &ref) {
-        int n = 1;
-        int len = ins.length();
-        while (ref[bi] == ins[ins.length() - n]) {
-            n++;
-            if (n > len) {
-                n = 1;
-            }
-            bi--;
-        }
-        if (n > 1) {
-            ins = vc_substr(ins, 1 - n) + vc_substr(ins, 0, 1 - n);
-        }
-        return new BaseInsertion(bi, ins, bi);
-    }
 
     /**
      * Find the insertion position

@@ -116,7 +116,7 @@ class VariationRealigner {
 	    unordered_map<int, VariationMap*> nonInsertionVariants;
 	    unordered_map<int, VariationMap*> insertionVariants;
 	    unordered_map<int, unordered_map<string, int> > positionToInsertionCount;
-	    unordered_map<int, unordered_map<string, int> > positionToDeletionsCount;
+	    unordered_map<int, unordered_map<string, int> > positionToDeletionCount;
 	    unordered_map<int, int> refCoverage;
 	    unordered_map<int, Sclip*> softClips5End;
 	    unordered_map<int, Sclip*> softClips3End;
@@ -154,7 +154,7 @@ class VariationRealigner {
     	Cluster* checkCluster(vector<Mate> mates, int rlen) ;
     	void adjustMNP() ;
     	void realignIndels();
-    	void realigndel(vector<string> *bamsParameter,unordered_map<int,unordered_map<string, int> > positionToDeletionsCount); 
+    	void realigndel(vector<string> *bamsParameter,unordered_map<int,unordered_map<string, int> > positionToDeletionCount); 
     	string realignins(unordered_map<int,unordered_map<string, int> > &positionToInsertionCount) ;
     	void realignlgdel(vector<Sclip> svfdel, vector<Sclip> svrdel) ;
     	void realignlgins30() ;
@@ -172,7 +172,7 @@ class VariationRealigner {
 		void addVarFactor(Variation *vref, double factor_f);
 		int findbp(string &sequence, int startPosition, unordered_map<int, char> &ref, int direction, string &chr);
 		BaseInsertion* findbi(string &seq, int position, unordered_map<int, char> &ref, int dir, string &chr) ;
-		BaseInsertion* adjInsPos(int bi, string &ins, unordered_map<int, char> &ref);
+		//BaseInsertion* adjInsPos(int bi, string &ins, unordered_map<int, char> &ref);
 		int count(string &str, char chr);
 		//bool islowcomplexseq(string &seq);
 		bool ismatch(string seq1, string seq2, int dir, int MM);

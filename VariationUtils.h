@@ -1,3 +1,6 @@
+#ifndef _VARIATION_UTILS_H
+#define _VARIATION_UTILS_H
+
 #include "htslib/sam.h"
 #include "data/BaseInsertion.h"
 #include "util.h"
@@ -73,10 +76,10 @@ inline bool isHasAndNotEquals(unordered_map<int, char> &ref, int index1, char* s
  * @param ref map of reference bases
  * @return Tuple of (int bi, String ins, int bi)
  */
-BaseInsertion adjInsPos(int bi, string ins, unordered_map<int, char> &ref) {
+inline BaseInsertion* adjInsPos(int bi, string &ins, unordered_map<int, char> &ref) {
     int n = 1;
     int len = ins.length();
-    while (isEquals(ref[bi], ins[ins.length() - n])) {
+    while(ref[bi] == ins[ins.length() - n]) {
         n++;
         if (n > len) {
             n = 1;
@@ -86,7 +89,7 @@ BaseInsertion adjInsPos(int bi, string ins, unordered_map<int, char> &ref) {
     if (n > 1) {
         ins = vc_substr(ins, 1 - n) + vc_substr(ins, 0, 1 - n);
     }
-    return BaseInsertion(bi, ins, bi);
+    return new BaseInsertion(bi, ins, bi);
 }
 
 //inline Variation* getVariation(unordered_map<int, VariationMap* > &hash,
@@ -358,7 +361,7 @@ inline bool islowcomplexseq(string seq) {
  * @param dir not used now, will be used when adaptor option will be added
  * @return consensus sequence
  */
-string findconseq(Sclip *softClip, int dir) {
+inline string findconseq(Sclip *softClip, int dir) {
     //if (softClip->sequence != NULL) {
     if (softClip->sequence != "") {
         return softClip->sequence;
@@ -444,3 +447,5 @@ string findconseq(Sclip *softClip, int dir) {
 
     return SEQ;
 }
+
+#endif

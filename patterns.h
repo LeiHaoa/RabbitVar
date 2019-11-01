@@ -1,4 +1,7 @@
-    #define MC_Z_NUM_S_ANY_NUM_S  "\\d+S\\S*\\d+S"
+   #ifndef _PATTERNS_H
+   #define _PATTERNS_H
+   
+	#define MC_Z_NUM_S_ANY_NUM_S  "\\d+S\\S*\\d+S"
 
     //Variation patterns
     #define BEGIN_DIGITS  "^(\\d+)"
@@ -140,3 +143,5 @@
     #define BEGIN_dig_dig_S_ANY_dig_dig_S_END "^\\d\\dS.*\\d\\dS$"
     #define BEGIN_NUM_S_OR_BEGIN_NUM_H "^(\\d+)S|^\\d+H"
     #define END_NUM_S_OR_NUM_H "(\\d+)S$|H$"
+
+#endif

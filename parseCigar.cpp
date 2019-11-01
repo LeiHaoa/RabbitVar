@@ -410,8 +410,8 @@ Scope<VariationData> CigarParser::process(){
 	//	printf("%d - %d\n", v.first, v.second);
 	//}
 	//------------------------------------
-	VariationData vardata(nonInsertionVariants, insertionVariants, positionToInsertionCount, positionToDeletionCount, refCoverage, softClips5End, softClips3End, maxReadLength, splice, mnp, spliceCount, duprate);
-	Scope<VariationData> toData(conf->bam, this->region, this->reference, this->maxReadLength, this->splice, &vardata);
+	VariationData vardata(nonInsertionVariants, insertionVariants, positionToInsertionCount, positionToDeletionCount, refCoverage, softClips5End, softClips3End, maxReadLength, splice, mnp, spliceCount, 0);
+	Scope<VariationData> toData(conf->bam.getBamRaw(), this->region, this->reference, this->maxReadLength, this->splice, &vardata);
 	//------------------------------------
 	//bam_hdr_destroy(header);
 	//if(in) sam_close(in);
@@ -1395,9 +1395,10 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
 	   && desc_string_of_insertion_segment.find("N") == string::npos){
 		int insertion_pointion = start - 1;
 		if(regex_match(desc_string_of_insertion_segment, regex(BEGIN_ATGC_END))){
-			BaseInsertion tpl = adjInsPos(start - 1, desc_string_of_insertion_segment, ref);
-			insertion_pointion = tpl.baseInsert;
-			desc_string_of_insertion_segment = tpl.insertionSequence;
+			BaseInsertion *tpl = adjInsPos(start - 1, desc_string_of_insertion_segment, ref);
+			insertion_pointion = tpl->baseInsert;
+			desc_string_of_insertion_segment = tpl->insertionSequence;
+			delete tpl;
 		}
 		//add '+' + s to insertions at inspos
 		//incCnt(getOrElse(positionToInsertionCount, insertionPosition, new HashMap<>()), "+" + descStringOfInsertionSegment, 1);
@@ -1701,7 +1702,12 @@ void CigarParser::processNotMatched() {
 	//ss << start - 1 << "-" << start + cigar_element_length - 1;
     string key = std::to_string(start - 1) + "-" + std::to_string(start + cigar_element_length - 1);
     splice.insert(key); //it samely no use 
-    spliceCount[key]++;
+
+	if(spliceCount.find(key) == spliceCount.end()){
+		spliceCount[key] = vector<int>();
+		spliceCount[key].push_back(0);
+	}
+    spliceCount[key][0]++;
     //if (cnt == null) {
     //    cnt = new int[] { 0 }; // it is wrong
     //    spliceCount.put(key, cnt);

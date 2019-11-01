@@ -2,7 +2,7 @@
 #include "RegionBuilder.h"
 #include "recordPreprocessor.h"
 #include "parseCigar.h"
-#include "VariationRealigner.h"
+#include "./VariationRealigner.h"
 
 #include "htslib/hts.h"
 #include "htslib/sam.h"

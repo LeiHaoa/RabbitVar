@@ -99,10 +99,10 @@ private:
     unordered_map<int, VariationMap* > insertionVariants;
     unordered_map<int, Sclip*> softClips3End; // soft clipped at 3'
     unordered_map<int, Sclip*> softClips5End; // soft clipped at 5'
-    unordered_map<int, map<string, int> > positionToInsertionCount;
-    unordered_map<int, map<string, int> > mnp; // Keep track of MNPs
-    unordered_map<int, map<string, int> > positionToDeletionCount;
-    unordered_map<string, int> spliceCount;
+    unordered_map<int, unordered_map<string, int> > positionToInsertionCount;
+    unordered_map<int, unordered_map<string, int> > mnp; // Keep track of MNPs
+    unordered_map<int, unordered_map<string, int> > positionToDeletionCount;
+    unordered_map<string, vector<int> > spliceCount;
     //SVStructures svStructures;
 
     Region region;
