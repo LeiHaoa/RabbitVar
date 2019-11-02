@@ -410,8 +410,9 @@ Scope<VariationData> CigarParser::process(){
 	//	printf("%d - %d\n", v.first, v.second);
 	//}
 	//------------------------------------
-	VariationData vardata(nonInsertionVariants, insertionVariants, positionToInsertionCount, positionToDeletionCount, refCoverage, softClips5End, softClips3End, maxReadLength, splice, mnp, spliceCount, 0);
-	Scope<VariationData> toData(conf->bam.getBamRaw(), this->region, this->reference, this->maxReadLength, this->splice, &vardata);
+	VariationData *vardata = new VariationData(nonInsertionVariants, insertionVariants, positionToInsertionCount, positionToDeletionCount, refCoverage, softClips5End, softClips3End, maxReadLength, splice, mnp, spliceCount, 0);
+	cout << "refcov in parsecigar: " << vardata->refCoverage.size() << endl;;
+	Scope<VariationData> toData(conf->bam.getBamRaw(), this->region, this->reference, this->maxReadLength, this->splice, vardata);
 	//------------------------------------
 	//bam_hdr_destroy(header);
 	//if(in) sam_close(in);

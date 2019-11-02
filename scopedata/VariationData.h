@@ -43,6 +43,7 @@ class VariationData {
 			this->nonInsertionVariants = nonInsertionVariants;
 			this->insertionVariants = insertionVariants;
 			this->positionToInsertionCount = positionToDeletionCount;
+			this->positionToDeletionCount = positionToDeletionCount;
 			this->refCoverage = refCoverage;
 			this->softClips5End;
 			this->softClips3End;

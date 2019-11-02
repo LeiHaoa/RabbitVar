@@ -50,135 +50,135 @@ using namespace std;
  * The step of pipeline which try to realign variations: softclips, indels, long insertions.
  */
 class SortPositionDescription {
-    		public:
-        		int position;
-        		string descriptionstring;
-        		int count;
+public:
+	int position;
+	string descriptionstring;
+	int count;
 
-        		SortPositionDescription(int position, string descriptionstring, int count) {
-            		this->position = position;
-            		this->descriptionstring = descriptionstring;
-            		this->count = count;
-        		};
-		};
+	SortPositionDescription(int position, string descriptionstring, int count) {
+		this->position = position;
+		this->descriptionstring = descriptionstring;
+		this->count = count;
+	};
+};
 class Mismatch {
-				public:
-       				string mismatchSequence; //$mm
-       				int mismatchPosition; //$mp
-       				int end; //# or 5
-        			Mismatch(string mismatchSequence, int mismatchPosition, int end){
-						this->mismatchSequence = mismatchSequence;
-            			this->mismatchPosition = mismatchPosition;
-            			this->end = end;
-					}; 
-       
-		};
+public:
+	string mismatchSequence; //$mm
+	int mismatchPosition; //$mp
+	int end; //# or 5
+	Mismatch(string mismatchSequence, int mismatchPosition, int end){
+		this->mismatchSequence = mismatchSequence;
+		this->mismatchPosition = mismatchPosition;
+		this->end = end;
+	}; 
+	   
+};
 		
-		class MismatchResult {
-        		private :
-					vector<Mismatch*> mismatches;
-       				vector<int> scp;
-        			int nm;
-        			int misp;
-        			string misnt;
+class MismatchResult {
+private :
+	vector<Mismatch*> mismatches;
+	vector<int> scp;
+	int nm;
+	int misp;
+	string misnt;
 
-        		public :
-					MismatchResult(vector<Mismatch*> mismatches, vector<int> scp, int nm, int misp, string misnt){
-						this->mismatches = mismatches;
-            			this->scp = scp;
-            			this->nm = nm;
-            			this->misp = misp;
-            			this->misnt = misnt;
-					};
-       				vector<int> getScp() {
-			            return scp;
-			        };
+public :
+	MismatchResult(vector<Mismatch*> mismatches, vector<int> scp, int nm, int misp, string misnt){
+		this->mismatches = mismatches;
+		this->scp = scp;
+		this->nm = nm;
+		this->misp = misp;
+		this->misnt = misnt;
+	};
+	vector<int> getScp() {
+		return scp;
+	};
 
-			        vector<Mismatch*> getMismatches() {
-			            return mismatches;
-			        };
+	vector<Mismatch*> getMismatches() {
+		return mismatches;
+	};
 
-			        int getNm() {
-			            return nm;
-			        };
+	int getNm() {
+		return nm;
+	};
 
-			        int getMisp() {
-			            return misp;
-			        };
+	int getMisp() {
+		return misp;
+	};
 
-			        string getMisnt() {
-			            return misnt;
-			        };
-		};
+	string getMisnt() {
+		return misnt;
+	};
+};
 class VariationRealigner {
-	private:
-		unordered_map<int, vector<Sclip*> > SOFTP2SV;
-	    unordered_map<int, VariationMap*> nonInsertionVariants;
-	    unordered_map<int, VariationMap*> insertionVariants;
-	    unordered_map<int, unordered_map<string, int> > positionToInsertionCount;
-	    unordered_map<int, unordered_map<string, int> > positionToDeletionCount;
-	    unordered_map<int, int> refCoverage;
-	    unordered_map<int, Sclip*> softClips5End;
-	    unordered_map<int, Sclip*> softClips3End;
+private:
+	unordered_map<int, vector<Sclip*> > SOFTP2SV;
+	unordered_map<int, VariationMap*> nonInsertionVariants;
+	unordered_map<int, VariationMap*> insertionVariants;
+	unordered_map<int, unordered_map<string, int> > positionToInsertionCount;
+	unordered_map<int, unordered_map<string, int> > positionToDeletionCount;
+	unordered_map<int, int> refCoverage;
+	unordered_map<int, Sclip*> softClips5End;
+	unordered_map<int, Sclip*> softClips3End;
 
-	    //ReferenceResource referenceResource;
-	    Reference reference;
-	    Region region;
-	    set<string> splice;
-	    string chr;
-	    int maxReadLength;
-	    double duprate;
-	    vector<string> bams;
-	    string bam;
-	    unordered_map<int, unordered_map<string, int> > mnp;
-	    //SVStructures svStructures;
-	    //VariantPrinter variantPrinter;
-		Configuration* conf;
+    //ReferenceResource referenceResource;
+    Reference reference;
+    Region region;
+    set<string> splice;
+    string chr;
+    int maxReadLength;
+    double duprate;
+    vector<string> bams;
+    string bam;
+    unordered_map<int, unordered_map<string, int> > mnp;
+    //SVStructures svStructures;
+    //VariantPrinter variantPrinter;
+	Configuration* conf;
 
 
-    public:
-		
+public:
+	void print_result(); //only for debug
+	VariationRealigner(Configuration* conf);
+	//Scope<RealignedVariationData> process(Scope<VariationData> scope);
+	void process(Scope<VariationData> &scope);
 
-		VariationRealigner(Configuration* conf);
-		Scope<RealignedVariationData> process(Scope<VariationData> scope);
+	//bool COMP2(SortPositionSclip &o1, SortPositionSclip &o2);
+	//bool COMP3(SortPositionSclip &o1, SortPositionSclip &o2);
+	//bool COMP_mate(Mate &m1, Mate &m2);
+	//bool CMP_reClu(Cluster *c1, Cluster *c2);
+	//bool CMP_tmp(SortPositionDescription *o1, SortPositionDescription *o2);
 
-		//bool COMP2(SortPositionSclip &o1, SortPositionSclip &o2);
-		//bool COMP3(SortPositionSclip &o1, SortPositionSclip &o2);
-		//bool COMP_mate(Mate &m1, Mate &m2);
-		//bool CMP_reClu(Cluster *c1, Cluster *c2);
-		//bool CMP_tmp(SortPositionDescription *o1, SortPositionDescription *o2);
+	void initFromScope(Scope<VariationData> scope);
+	void filterAllSVStructures(); 
+	void filterSV(vector<Sclip> svvector_sva);
+	Cluster* checkCluster(vector<Mate> mates, int rlen) ;
+	void adjustMNP() ;
+	void realignIndels();
+	void realigndel(vector<string> *bamsParameter,unordered_map<int,unordered_map<string, int> > positionToDeletionCount); 
+	string realignins(unordered_map<int,unordered_map<string, int> > &positionToInsertionCount) ;
+	void realignlgdel(vector<Sclip> svfdel, vector<Sclip> svrdel) ;
+	void realignlgins30() ;
+	void realignlgins(vector<Sclip> svfdup, vector<Sclip> svrdup) ;
+	vector<SortPositionDescription*> fillAndSortTmp(unordered_map<int,unordered_map<string, int> > &changes); 
 
-    	void initFromScope(Scope<VariationData> scope);
-    	void filterAllSVStructures(); 
-    	void filterSV(vector<Sclip> svvector_sva);
-    	Cluster* checkCluster(vector<Mate> mates, int rlen) ;
-    	void adjustMNP() ;
-    	void realignIndels();
-    	void realigndel(vector<string> *bamsParameter,unordered_map<int,unordered_map<string, int> > positionToDeletionCount); 
-    	string realignins(unordered_map<int,unordered_map<string, int> > &positionToInsertionCount) ;
-    	void realignlgdel(vector<Sclip> svfdel, vector<Sclip> svrdel) ;
-    	void realignlgins30() ;
-    	void realignlgins(vector<Sclip> svfdup, vector<Sclip> svrdup) ;
-    	vector<SortPositionDescription*> fillAndSortTmp(unordered_map<int,unordered_map<string, int> > &changes); 
-
-		MismatchResult* findMM3(unordered_map<int, char> &ref, int p, string sanpseq);
-		MismatchResult* findMM5(unordered_map<int, char> &ref, int position, string wupseq);
-		void rmCnt(Variation *vref, Variation *tv);
-		bool ismtchref(string &sequence, unordered_map<int, char> &ref, int position, int dir);
-		void adjRefFactor(Variation *ref, double factor_f);
-		void adjRefCnt(Variation *tv, Variation *ref, int len);
-		bool ismatchref(string sequence, unordered_map<int, char> &ref, int position,int dir) ;
-		bool ismatchref(string sequence, unordered_map<int, char> &ref, int position,int dir, int MM) ;
-		void addVarFactor(Variation *vref, double factor_f);
-		int findbp(string &sequence, int startPosition, unordered_map<int, char> &ref, int direction, string &chr);
-		BaseInsertion* findbi(string &seq, int position, unordered_map<int, char> &ref, int dir, string &chr) ;
-		//BaseInsertion* adjInsPos(int bi, string &ins, unordered_map<int, char> &ref);
-		int count(string &str, char chr);
-		//bool islowcomplexseq(string &seq);
-		bool ismatch(string seq1, string seq2, int dir, int MM);
-    	bool ismatch(string seq1, string seq2, int dir);
-		bool noPassingReads(string &chr, int start, int end, vector<string> bams);
-		Match35* find35match(string &seq5, string &seq3);
+	MismatchResult* findMM3(unordered_map<int, char> &ref, int p, string sanpseq);
+	MismatchResult* findMM5(unordered_map<int, char> &ref, int position, string wupseq);
+	void rmCnt(Variation *vref, Variation *tv);
+	bool ismtchref(string &sequence, unordered_map<int, char> &ref, int position, int dir);
+	void adjRefFactor(Variation *ref, double factor_f);
+	void adjRefCnt(Variation *tv, Variation *ref, int len);
+	bool ismatchref(string sequence, unordered_map<int, char> &ref, int position,int dir) ;
+	bool ismatchref(string sequence, unordered_map<int, char> &ref, int position,int dir, int MM) ;
+	void addVarFactor(Variation *vref, double factor_f);
+	int findbp(string &sequence, int startPosition, unordered_map<int, char> &ref, int direction, string &chr);
+	BaseInsertion* findbi(string &seq, int position, unordered_map<int, char> &ref, int dir, string &chr) ;
+	//BaseInsertion* adjInsPos(int bi, string &ins, unordered_map<int, char> &ref);
+	int count(string &str, char chr);
+	//bool islowcomplexseq(string &seq);
+	bool ismatch(string seq1, string seq2, int dir, int MM);
+	bool ismatch(string seq1, string seq2, int dir);
+	bool noPassingReads(string &chr, int start, int end, vector<string> bams);
+	Match35* find35match(string &seq5, string &seq3);
 
 };
 #endif

@@ -303,6 +303,8 @@ int main_single(){
 	RecordPreprocessor *preprocessor = new RecordPreprocessor(region, &conf);
 	CigarParser cp(dscope, preprocessor);
 	Scope<VariationData> svd =  cp.process();
+	cout << "bam: " << svd.bam << endl;
+	cout << "refcov: " << svd.data->refCoverage.size() << endl;
 	VariationRealigner var_realinger(&conf);
 	var_realinger.process(svd);
 
