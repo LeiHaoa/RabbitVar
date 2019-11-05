@@ -392,26 +392,29 @@ Scope<VariationData> CigarParser::process(){
 	//		printf("%d - %s - %d\n", position, vm.first.c_str(), vm.second);
 	//	}
 	//}	
-	int res[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-	//for(auto &v: nonInsertionVariants){
+	//int res[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	//for(auto &v: insertionVariants){
 	//	int position = v.first;
 	//	VariationMap* var_map = v.second;
 	//	//res[var_map->variation_map.size()]++;
-	//	printf("%d - %d\n", position, var_map->variation_map.size());
+	//	//printf("%d - %d\n", position, var_map->variation_map.size());
 	//	for(auto &vm : var_map -> variation_map){
 	//		printf("%d - %s - %d\n", position, vm.first.c_str(), vm.second->varsCount);
 	//	}
 	//		
 	//}
-	for(int i = 1; i <= 10; i++){
-		printf("i : %d, num: %d\n", i, res[i]);
-	}
 	//for(auto &v: refCoverage){
 	//	printf("%d - %d\n", v.first, v.second);
 	//}
+	//printf("---sc3e size: %d---\n",softClips3End.size());
+	//for(auto& v: softClips3End){
+	//	int pos = v.first;
+	//	Sclip* sc = v.second;
+	//	//printf("%d - %s - %d\n", pos, sc->sequence.c_str(), sc->varsCount);
+	//	printf("%d - %d\n", pos, sc->varsCount);
+	//}
 	//------------------------------------
 	VariationData *vardata = new VariationData(nonInsertionVariants, insertionVariants, positionToInsertionCount, positionToDeletionCount, refCoverage, softClips5End, softClips3End, maxReadLength, splice, mnp, spliceCount, 0);
-	cout << "refcov in parsecigar: " << vardata->refCoverage.size() << endl;;
 	Scope<VariationData> toData(conf->bam.getBamRaw(), this->region, this->reference, this->maxReadLength, this->splice, vardata);
 	//------------------------------------
 	//bam_hdr_destroy(header);
@@ -1248,7 +1251,7 @@ void CigarParser::process_softclip(string chrName, bam1_t* record, char* querySe
 			//loop over remaing soft-clipped sequence
 			for(int si = 0; si < cigar_element_length; si++){
 				//stop if N is found
-				if(querySequence[si] == 'N'){
+				if(querySequence[readPositionIncludingSoftClipped + si] == 'N'){
 					break;
 				}
 				int baseQuality = queryQuality[readPositionIncludingSoftClipped + si] ;
@@ -1265,7 +1268,8 @@ void CigarParser::process_softclip(string chrName, bam1_t* record, char* querySe
 				Sclip* sclip;
 				if(softClips3End.find(start) == softClips3End.end()){
 					sclip = new Sclip();
-					softClips3End.insert(map<int, Sclip*>::value_type(start, sclip));
+					//softClips3End.insert(map<int, Sclip*>::value_type(start, sclip));
+					softClips3End[start] = sclip;
 				}else{
 					sclip = softClips3End[start];
 				}

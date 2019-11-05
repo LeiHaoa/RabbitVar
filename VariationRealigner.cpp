@@ -16,48 +16,42 @@ using namespace std;
 */
 
 bool COMP2(SortPositionSclip *o1, SortPositionSclip *o2) {
-    if(o2->softClip->varsCount > o1->softClip->varsCount)
-        return 1;
+    if(o1->softClip->varsCount != o2->softClip->varsCount)
+        return o1->softClip->varsCount > o1->softClip->varsCount;
     else 
-        return 0;
+		return o1->position < o2->position;
 }
 
 
 bool COMP3(SortPositionSclip *o1, SortPositionSclip *o2) {
-    if(o2->count > o1->count)
-        return 1;
+    if(o2->count != o1->count)
+        return o1->count > o2->count;
     else
-        return 0;
+        return o1->position < o2->position;
 }
 
 bool COMP_mate(Mate &m1, Mate &m2){
-    if(m2.mateStart_ms > m1.mateStart_ms)
-        return true;
-    else
-        return false;
+    return m1.mateStart_ms < m2.mateStart_ms;
 }
 
 bool CMP_reClu(Cluster *c1, Cluster *c2){
-    if(c2->cnt < c1->cnt)
-        return true;
-    else
-        return false;
+    return c1->cnt < c2->cnt;
 }
 
 bool CMP_tmp(SortPositionDescription *o1, SortPositionDescription *o2){
     int x1 = o1->count;
     int x2 = o2->count;
     if ( x2 != x1)
-        return x2>x1;
+        return x1>x2;
 
     x1 = o1->position;
     x2 = o2->position;
     if ( x1 != x2)
-        return x2>x1;
+        return x1<x2;
 
     string s1 = o1->descriptionstring;
     string s2 = o2->descriptionstring;
-    return s2.compare(s1);
+    return s1.compare(s2)>0;
 }
 VariationRealigner::VariationRealigner(Configuration* conf){
 	this->conf = conf;
@@ -69,6 +63,41 @@ void VariationRealigner::print_result(){
 		" - " << refCoverage.size() <<
 		" - " << positionToDeletionCount.size() <<
 		" - " << positionToInsertionCount.size() << endl;
+
+    //RealignedVariationData *rvdata = new RealignedVariationData(nonInsertionVariants, insertionVariants, softClips3End, softClips5End,
+    //                refCoverage, maxReadLength, duprate, &CURSEG, SOFTP2SV, &scope);
+	//-------------refvoberage-----------------//
+	//for(auto &v: refCoverage ){
+	//	int position = v.first;
+	//	int nn = v.second;
+	//	//for(auto &vm : sclip->seq ){
+	//	printf("%d - %d\n", position, nn);
+	//	//}
+	//		
+	//}
+	//for(auto &v:insertionVariants ){
+	//	int position = v.first;
+	//	VariationMap* var_map = v.second;
+	//	for(auto &vm : var_map -> variation_map){
+	//		printf("%d - %s - %d\n", position, vm.first.c_str(), vm.second->varsCount);
+	//	}
+	//		
+	//}
+	for(auto &v: nonInsertionVariants){
+		int position = v.first;
+		VariationMap* var_map = v.second;
+		for(auto &vm : var_map -> variation_map){
+			printf("%d - %s - %d\n", position, vm.first.c_str(), vm.second->varsCount);
+		}
+			
+	}
+	//printf("---sc3e size: %d---\n",softClips3End.size());
+	//for(auto& v: softClips3End){
+	//	int pos = v.first;
+	//	Sclip* sc = v.second;
+	//	//printf("%d - %s - %d\n", pos, sc->sequence.c_str(), sc->varsCount);
+	//	printf("%d - %d\n", pos, sc->varsCount);
+	//}
 }
 /**
  * Starts the filtering of prepared SV structures, adjusting counts of MNPs and realining of indels and softclips.
@@ -84,15 +113,18 @@ void VariationRealigner::process(Scope<VariationData> &scope) {
     //if (!conf.disableSV) {
     //    filterAllSVStructures();
     //}
+	//print_result();
 
     adjustMNP();
+	//print_result();
 
+	//print_result();
     if (conf->performLocalRealignment) {
 		cout << "--------------realignIndels!!------------" << endl;
         realignIndels();
 		cout << "--------------realignIndels over!!------------" << endl;
 	}
-	print_result();
+	//print_result();
     //RealignedVariationData *rvdata = new RealignedVariationData(nonInsertionVariants, insertionVariants, softClips3End, softClips5End,
     //                refCoverage, maxReadLength, duprate, &CURSEG, SOFTP2SV, &scope);
     //Scope<RealignedVariationData> scopeTo(scope.bam, scope.region, scope.regionRef, scope.maxReadLength,
@@ -271,9 +303,14 @@ Cluster* VariationRealigner::checkCluster(vector<Mate> mates, int rlen) {
  */
 void VariationRealigner::adjustMNP() {
     vector<SortPositionDescription*> tmp = fillAndSortTmp(mnp);
+	cout << "tmp size: " << tmp.size() << endl;
+	for(SortPositionDescription* tpl: tmp){
+		cout << "pos: " << tpl->position << "vn: " << tpl->descriptionstring << "count: " << tpl->count  << endl;
+	}
     for (SortPositionDescription* tpl : tmp) {
         int lastPosition = 0;
         try {
+            //const int position = tpl->position;
             const int position = tpl->position;
             lastPosition = position;
 
@@ -313,6 +350,7 @@ void VariationRealigner::adjustMNP() {
                             //if (conf.y) {
                             //    printf("    AdjMnt Left: %s %s Left: %s Cnt: %s\n", position, vn, left, tref->varsCount);
                             //}
+                            printf("1    AdjMnt Left: %d %s Left: %s Cnt: %d\n", position, vn.c_str(), left.c_str(), tref->varsCount);
                             adjCnt(vref, tref);
                             varsOnPosition.erase(left);
                         }
@@ -330,6 +368,7 @@ void VariationRealigner::adjustMNP() {
                             //if (conf.y) {
                             //    printf("    AdjMnt Right: %s %s Right: %s Cnt: %s\n", position, vn, right, tref->varsCount);
                             //}
+                            printf("2    AdjMnt Right: %d %s Right: %s Cnt: %d\n", position, vn.c_str(), right.c_str(), tref->varsCount);
                             adjCnt(vref, tref);
                             //incCnt(refCoverage, position, tref->varsCount);
                             refCoverage[position] += tref->varsCount;
@@ -341,11 +380,16 @@ void VariationRealigner::adjustMNP() {
 
             if (softClips3End.count(position)) {
                 Sclip *sc3v = softClips3End[position];
+				printf("pos: %d, sequence: %s, seq_size: %d, nt_size: %d, varseCount: %d\n",
+					   position, sc3v->sequence, sc3v->seq.size(), sc3v->nt.size(), sc3v->varsCount);
                 if (!sc3v->used) {
                     const string seq = findconseq(sc3v, 0);
+					printf("consequence: %s\n", seq.c_str());
                     if (vc_substr(seq, 0, mnt.length()) == mnt) {
                         if (seq.length() == mnt.length()
                                 || ismatchref(seq.substr(mnt.length()), reference.referenceSequences, position+mnt.length(), 1)) {
+
+                            printf("3    AdjMnt sc3v: %d %s Cnt: %d\n", position, vn.c_str(), sc3v->varsCount);
                             adjCnt(nonInsertionVariants[position]->variation_map[vn], sc3v);
                             //incCnt(refCoverage, position, sc3v.varsCount);
                             refCoverage[position] += sc3v->varsCount;
@@ -364,7 +408,8 @@ void VariationRealigner::adjustMNP() {
                         if (vc_substr(seq,seq.length()-mnt.length(),mnt.length())==mnt) {
                             if (seq.length() == mnt.length()
                                     || ismatchref(seq.substr(0, seq.length() - mnt.length()), reference.referenceSequences, position - 1, -1)) {
-                                adjCnt(nonInsertionVariants[position]->variation_map[vn], sc5v);
+								printf("4    AdjMnt sc5v: %d %s Cnt: %d\n", position, vn.c_str(), sc5v->varsCount);
+								adjCnt(nonInsertionVariants[position]->variation_map[vn], sc5v);
                                 //incCnt(refCoverage, position, sc5v.varsCount);
                                 refCoverage[position]+=sc5v->varsCount;
                                 sc5v->used = true;
@@ -658,9 +703,9 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
             smatch matcher;
             if (regex_match(vn, matcher, regex(MINUS_NUMBER_AMP_ATGCs_END))) {
                 string tn = matcher[1];
-                Variation *tref;
                 if (nonInsertionVariants[p]->variation_map.count(tn)>0) {
-                    tref = nonInsertionVariants[p]->variation_map[tn];
+//                	cout<<"-------------nonInserVar[p]->vm.count(tn) is "<<nonInsertionVariants[p]->variation_map.count(tn)<<" ------------"<<endl;
+					Variation *tref = nonInsertionVariants[p]->variation_map[tn];
                     if (vref->varsCount < tref->varsCount) {
                         adjCnt(tref, vref);
                         nonInsertionVariants[p]->variation_map.erase(vn);
@@ -842,8 +887,10 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
                             nonInsertionVariants[position]->variation_map.count(string(1,ref[position]) ) ) {
 
                         lref = nonInsertionVariants[position]->variation_map[string(1, ref[position]) ];
-                    }
-                    adjCnt(vref, variation, lref);
+                    	adjCnt(vref, variation, lref);
+                    }else{
+						adjCnt(vref,variation);
+					}
                     nonInsertionVariants[mismatchPosition]->variation_map.erase(mismatchBases);
                     if (nonInsertionVariants[mismatchPosition]->variation_map.empty()) {
                         nonInsertionVariants.erase(mismatchPosition);
@@ -2289,7 +2336,7 @@ int VariationRealigner::findbp(string &sequence,
     for (int n = 0; n < conf->indelsize; n++) {
         int mm = 0;
         int i = 0;
-        set<char> m;
+        unordered_set<char> m;
         for (i = 0; i < sequence.length(); i++) {
             if (startPosition + direction * n + direction * i < 1) {
                 break;
