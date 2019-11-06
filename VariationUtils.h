@@ -364,6 +364,7 @@ inline bool islowcomplexseq(string seq) {
 inline string findconseq(Sclip *softClip, int dir) {
     //if (softClip->sequence != NULL) {
     if (softClip->sequence != "") {
+		//printf("return for sequence != empty: %s\n", softClip->sequence.c_str());
         return softClip->sequence;
     }
 

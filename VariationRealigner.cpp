@@ -305,7 +305,7 @@ void VariationRealigner::adjustMNP() {
     vector<SortPositionDescription*> tmp = fillAndSortTmp(mnp);
 	cout << "tmp size: " << tmp.size() << endl;
 	for(SortPositionDescription* tpl: tmp){
-		cout << "pos: " << tpl->position << "vn: " << tpl->descriptionstring << "count: " << tpl->count  << endl;
+		cout << "pos: " << tpl->position << " vn: " << tpl->descriptionstring << " count: " << tpl->count  << endl;
 	}
     for (SortPositionDescription* tpl : tmp) {
         int lastPosition = 0;
@@ -380,11 +380,25 @@ void VariationRealigner::adjustMNP() {
 
             if (softClips3End.count(position)) {
                 Sclip *sc3v = softClips3End[position];
-				printf("pos: %d, sequence: %s, seq_size: %d, nt_size: %d, varseCount: %d\n",
-					   position, sc3v->sequence, sc3v->seq.size(), sc3v->nt.size(), sc3v->varsCount);
                 if (!sc3v->used) {
                     const string seq = findconseq(sc3v, 0);
-					printf("consequence: %s\n", seq.c_str());
+					//printf("*****************************************\n");
+					//printf("pos: %d, sequence: %s, seq_size: %d, nt_size: %d, varseCount: %d\n",
+					//	   position, sc3v->sequence.c_str(), sc3v->seq.size(), sc3v->nt.size(), sc3v->varsCount);
+					//printf("con sequence: %s\n", seq.c_str());
+					//printf("nt info: \n");
+					//for(auto& nve : sc3v->nt){
+					//	int sc_pos = nve.first;
+					//	unordered_map<char, int> nv = nve.second;
+					//	for(auto& ent : nv){
+					//		printf("%d - %c - %d\n", sc_pos, ent.first, ent.second);
+					//	}
+					//}
+					////printf("sequence != empty: %s\n", softClip->sequence.c_str());
+
+					//printf("*****************************************\n");
+					printf("con sequence: %s\n", seq.c_str());
+
                     if (vc_substr(seq, 0, mnt.length()) == mnt) {
                         if (seq.length() == mnt.length()
                                 || ismatchref(seq.substr(mnt.length()), reference.referenceSequences, position+mnt.length(), 1)) {
@@ -663,7 +677,11 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
                             refCoverage[p] += tv->varsCount;
                         }
                         Variation *lref = sc3pp <= p ? NULL : getVariationMaybe(nonInsertionVariants, p, ref[p]);
-                        adjCnt(vref, tv, lref);
+						if(lref == NULL){
+							adjCnt(vref, tv);
+						}else{
+							adjCnt(vref, tv, lref);
+						}
                         softClips3End[sc3pp]->used = true;
                     }
                 }

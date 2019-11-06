@@ -335,7 +335,7 @@ Variation* getVariationFromSeq(Sclip* softClip,
 	unordered_map<char, Variation*>* seq_map; //= softClip->seq[idx];
 	Variation* variation;
 
-	unordered_map<int ,unordered_map<char, Variation*> >::iterator itr;
+	map<int ,unordered_map<char, Variation*> >::iterator itr;
 	if((itr = softClip->seq.find(idx)) != softClip->seq.end()){
 		seq_map = &((softClip->seq)[idx]);
 	}else{
@@ -384,7 +384,7 @@ Scope<VariationData> CigarParser::process(){
 	double end_time = get_time();
 	printf("totally %d record processed over! and time is %f: \n", count, end_time-start_time);
 	//-----------------------------------------------------//
-	cout << "non/Insertionvariants: " << nonInsertionVariants.size() << " - " << insertionVariants.size() << " - " << refCoverage.size() << " - " <<positionToDeletionCount.size() << " - " << positionToInsertionCount.size()<< endl;
+	//cout << "non/Insertionvariants: " << nonInsertionVariants.size() << " - " << insertionVariants.size() << " - " << refCoverage.size() << " - " <<positionToDeletionCount.size() << " - " << positionToInsertionCount.size()<< endl;
 	//for(auto &v: mnp){
 	//	int position = v.first;
 	//	map<string, int> insert_count = v.second;
@@ -516,14 +516,14 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 	//Ignore reads that are softclipped at both ends and both greater than 10 bp
 	if(bam_cigar_op(cigar[0]) == 4 && bam_cigar_oplen(cigar[0]) >= 10
 	   && bam_cigar_op(cigar[record->core.n_cigar-1]) == 4 && bam_cigar_oplen(cigar[record->core.n_cigar-1]) >= 10){
-		cout << "return for S at both ends" << endl;
+		//cout << "return for S at both ends" << endl;
 		return;
 	}
 	// Only match and insertion counts toward read length
 	// For total length, including soft-clipped bases
 	int read_length_include_matching_and_insertions = getMatchInsertionLength(cigar, record->core.n_cigar);
 	if(conf->minmatch != 0 && read_length_include_matching_and_insertions < conf->minmatch){
-		cout << "return for rlimai < minmatch" << endl;
+		//cout << "return for rlimai < minmatch" << endl;
 		return;
 	}
 	
@@ -534,13 +534,13 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 	}
 	//if supplenmentary alignment is present
 	if (record->core.flag & 2048) {
-		cout << "return for samfilter: true" << endl;
+		//cout << "return for samfilter: true" << endl;
 		return; // Ignore the supplementary for now so that it won't skew the coverage
 	}
 	
 	//skip sites that are not in region of interest in CIGAR mode
 	if(skipSitesOutRegionOfInterest()){
-		cout << "return for skip site out of range!!" << endl;
+		//cout << "return for skip site out of range!!" << endl;
 		return;
 	}
 	
@@ -564,15 +564,11 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 			printf("skip overlapping reads \n");
 			break;
 		}
-		if(debug_flag)
-			cout << "ci: " << ci << "cigar_element_length is: " << cigar_element_length << endl;
 		uint32_t icigar = cigar[ci];
 		//funcinline:getCigarOperator(cigar, ci);
 		int c_operator = bam_cigar_op(icigar);
 		cigar_element_length = bam_cigar_oplen(icigar);
 		if((ci == 0 || ci == record->core.n_cigar - 1) && c_operator == 1){
-			if(debug_flag)
-				cout << "ci: " << ci << "cigar_element_length is: " << cigar_element_length << " and change " << c_operator << "to " << 4 << endl;
 			c_operator = 4;
 		}
 		//printf("cigar: %c - %d\n",bam_cigar_opchr(icigar), cigar_element_length);
@@ -585,8 +581,6 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 			processNotMatched();
 			continue;
 		case 4: //S
-			if(debug_flag)
-				cout << "process softclip" << endl;
 			process_softclip(chrName, record, seq, mapping_quality, ref, query_quality, number_of_mismatches,
 							 direction, position, total_length_including_soft_clipped, ci);
 			continue;
@@ -594,8 +588,6 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 			offset = 0;
 			continue;
 		case 1: //I
-			if(debug_flag)
-				cout << "process insertion" << endl;
 			offset = 0;
 			ci = process_insertion(seq, mapping_quality, ref, query_quality, number_of_mismatches,
 								   direction, position, read_length_include_matching_and_insertions, ci);
@@ -613,8 +605,6 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 		int nmoff = 0;
 		int moffset = 0;
 		//printf("process match: %d-%d\n", readPositionIncludingSoftClipped, c_operator);
-		if(debug_flag)
-			cout << "now process match part" << endl;
 		for(int i = offset; i < cigar_element_length; i++){
 			bool trim = isTrimAtOptTBases(direction, total_length_including_soft_clipped);
 			const char ch1 = seq[readPositionIncludingSoftClipped];

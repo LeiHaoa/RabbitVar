@@ -8,11 +8,11 @@
 
 class Sclip : public Variation{
 public:
-	unordered_map<int, unordered_map<char, int> > nt;
-	unordered_map<int, unordered_map<char, Variation*> > seq;
+	map<int, unordered_map<char, int> > nt;
+	map<int, unordered_map<char, Variation*> > seq;
 
-	string sequence;
-	bool used;
+	string sequence = "";
+	bool used = false;
 
 	int start;
 	int end;
