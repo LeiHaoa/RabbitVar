@@ -397,7 +397,6 @@ void VariationRealigner::adjustMNP() {
 					////printf("sequence != empty: %s\n", softClip->sequence.c_str());
 
 					//printf("*****************************************\n");
-					printf("con sequence: %s\n", seq.c_str());
 
                     if (vc_substr(seq, 0, mnt.length()) == mnt) {
                         if (seq.length() == mnt.length()
@@ -417,9 +416,12 @@ void VariationRealigner::adjustMNP() {
                 Sclip *sc5v = softClips5End[position + mnt.length()];
                 if (!sc5v->used) {
                     string seq = findconseq(sc5v, 0);
+					printf("consequence: %s - mnt: %s\n", seq.c_str(), mnt.c_str());
                     if (!seq.empty() && seq.length() >= mnt.length()) {
+						printf("step1\n");
                         reverse(seq.begin(), seq.end());
                         if (vc_substr(seq,seq.length()-mnt.length(),mnt.length())==mnt) {
+							printf("step2\n");
                             if (seq.length() == mnt.length()
                                     || ismatchref(seq.substr(0, seq.length() - mnt.length()), reference.referenceSequences, position - 1, -1)) {
 								printf("4    AdjMnt sc5v: %d %s Cnt: %d\n", position, vn.c_str(), sc5v->varsCount);
@@ -2656,16 +2658,25 @@ bool VariationRealigner::ismatchref(string sequence,
     //    System.err.println(format("      Matching REF %s %s %s %s", sequence, position, dir, MM));
     //}
 
-    int mm = 0;
+	printf("ismatchref seq: %s\n", sequence.c_str());
+	int mm = 0;
     for (int n = 0; n < sequence.length(); n++) {
         
         if (ref.count(position + dir * n)==0) {
             return false;
         }
-        if (sequence[dir == 1 ? n : dir * n - 1] != ref[position + dir * n]) {
+		//-----这有问题, java里面是自己写的函数,因为这里会出现负数, 这里包子没有处理-----/
+        //if (sequence[dir == 1 ? n : dir * n - 1] != ref[position + dir * n]) {
+        if (charAt(sequence, dir == 1 ? n : dir * n - 1) != ref[position + dir * n]) {
+			printf("%c - %c\n", charAt(sequence, dir == 1 ? n : dir * n - 1), ref[position + dir * n]);
             mm++;
         }
     }
+	if(mm <= MM && mm / (double)sequence.length() < 0.15){
+		printf("true, mm: %d\n", mm);
+	}else{
+		printf("false, mm: %d\n", mm);
+	}
     return mm <= MM && mm / (double)sequence.length() < 0.15;
 }
 
