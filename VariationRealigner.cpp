@@ -116,7 +116,6 @@ void VariationRealigner::process(Scope<VariationData> &scope) {
 	//print_result();
 
     adjustMNP();
-	//print_result();
 
 	//print_result();
     if (conf->performLocalRealignment) {
@@ -124,7 +123,7 @@ void VariationRealigner::process(Scope<VariationData> &scope) {
         realignIndels();
 		cout << "--------------realignIndels over!!------------" << endl;
 	}
-	//print_result();
+	print_result();
     //RealignedVariationData *rvdata = new RealignedVariationData(nonInsertionVariants, insertionVariants, softClips3End, softClips5End,
     //                refCoverage, maxReadLength, duprate, &CURSEG, SOFTP2SV, &scope);
     //Scope<RealignedVariationData> scopeTo(scope.bam, scope.region, scope.regionRef, scope.maxReadLength,
@@ -303,10 +302,6 @@ Cluster* VariationRealigner::checkCluster(vector<Mate> mates, int rlen) {
  */
 void VariationRealigner::adjustMNP() {
     vector<SortPositionDescription*> tmp = fillAndSortTmp(mnp);
-	cout << "tmp size: " << tmp.size() << endl;
-	for(SortPositionDescription* tpl: tmp){
-		cout << "pos: " << tpl->position << " vn: " << tpl->descriptionstring << " count: " << tpl->count  << endl;
-	}
     for (SortPositionDescription* tpl : tmp) {
         int lastPosition = 0;
         try {
@@ -480,6 +475,10 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
     // In perl it doesn't commented, but it doesn't used
     // int longmm = 3; //Longest continued mismatches typical aligned at the end
     vector<SortPositionDescription*> tmp = fillAndSortTmp(positionToDeletionCount);
+	cout << "tmp size: " << tmp.size() << endl;
+	for(SortPositionDescription* tpl: tmp){
+		cout << "pos: " << tpl->position << " vn: " << tpl->descriptionstring << " count: " << tpl->count  << endl;
+	}
     int lastPosition = 0;
     for (SortPositionDescription* tpl : tmp) {
         try {
@@ -503,6 +502,7 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
             if (mtch) {
                 dellen += atoi(sm[1].str().c_str());
             }
+			printf("vn: %s, dellen: %d\n", vn.c_str(), dellen);
             string extrains = "";
             string extra = "";
             string inv5 = "";
@@ -2658,7 +2658,7 @@ bool VariationRealigner::ismatchref(string sequence,
     //    System.err.println(format("      Matching REF %s %s %s %s", sequence, position, dir, MM));
     //}
 
-	printf("ismatchref seq: %s\n", sequence.c_str());
+	//printf("ismatchref seq: %s\n", sequence.c_str());
 	int mm = 0;
     for (int n = 0; n < sequence.length(); n++) {
         
@@ -2668,15 +2668,15 @@ bool VariationRealigner::ismatchref(string sequence,
 		//-----这有问题, java里面是自己写的函数,因为这里会出现负数, 这里包子没有处理-----/
         //if (sequence[dir == 1 ? n : dir * n - 1] != ref[position + dir * n]) {
         if (charAt(sequence, dir == 1 ? n : dir * n - 1) != ref[position + dir * n]) {
-			printf("%c - %c\n", charAt(sequence, dir == 1 ? n : dir * n - 1), ref[position + dir * n]);
+			//printf("%c - %c\n", charAt(sequence, dir == 1 ? n : dir * n - 1), ref[position + dir * n]);
             mm++;
         }
     }
-	if(mm <= MM && mm / (double)sequence.length() < 0.15){
-		printf("true, mm: %d\n", mm);
-	}else{
-		printf("false, mm: %d\n", mm);
-	}
+	//if(mm <= MM && mm / (double)sequence.length() < 0.15){
+	//	printf("true, mm: %d\n", mm);
+	//}else{
+	//	printf("false, mm: %d\n", mm);
+	//}
     return mm <= MM && mm / (double)sequence.length() < 0.15;
 }
 
