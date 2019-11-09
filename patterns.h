@@ -20,9 +20,9 @@
     //ATGC patterns
     #define CARET_ATGNC "\\^([ATGNC]+)"
     #define CARET_ATGC_END  "\\^([ATGC]+)$"
-    #define AMP_ATGC  "&([ATGC]+)"
-    #define BEGIN_PLUS_ATGC "^\\+([ATGC]+)"
-    #define HASH_ATGC "#([ATGC]+)"
+    #define AMP_ATGC  ".*&([ATGC]+).*"
+    #define BEGIN_PLUS_ATGC "^\\+([ATGC]+).*"
+    #define HASH_ATGC "#([ATGC]+).*"
     #define ATGSs_AMP_ATGSs_END "(\\+[ATGC]+)&[ATGC]+$"
     #define MINUS_NUMBER_AMP_ATGCs_END  "(-\\d+)&[ATGC]+$"
     #define MINUS_NUMBER_ATGNC_SV_ATGNC_END "^-\\d+\\^([ATGNC]+)<...\\d+>([ATGNC]+)$"

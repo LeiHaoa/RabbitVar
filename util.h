@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
+#include <regex>
 
 using namespace std;
 
@@ -110,6 +111,9 @@ inline void replaceFirst(string& str, string source, string target){
 	}
 }
 
+inline void replaceFirst_re(string &str, string pat, string target){
+	str = regex_replace(str, regex(pat), target, regex_constants::format_first_only);
+}
 //inline void earse_all(string &str, string& from){
 //	string::size_type pos(0);
 //	int len = from.length();

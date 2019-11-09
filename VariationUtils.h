@@ -273,7 +273,9 @@ inline void adjCnt(Variation *varToAdd, Variation *variant, Variation *reference
     varToAdd->qstd = true;
     varToAdd->addDir(true, variant->getDir(true));
     varToAdd->addDir(false, variant->getDir(false));
-
+	if(referenceVar == NULL){
+		return;
+	}
     referenceVar->varsCount -= variant->varsCount;
     referenceVar->highQualityReadsCount -= variant->highQualityReadsCount;
     referenceVar->lowQualityReadsCount -= variant->lowQualityReadsCount;
@@ -305,7 +307,7 @@ inline void adjCnt(Variation *varToAdd, Variation *variant) {
 
 inline string joinRef(unordered_map<int, char> &baseToPosition, int from,int to){
     string res="";
-    for(int i=from; i<to; i++){
+    for(int i=from; i <= to; i++){
         res+=baseToPosition[i];
     }
     return res;
