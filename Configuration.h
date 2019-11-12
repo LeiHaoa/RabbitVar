@@ -277,7 +277,7 @@ public:
     /**
      * The smaller seed size
      */
-     static int SEED_2;
+     //static int SEED_2;
 
     /**
      * The adaptor size

@@ -305,9 +305,16 @@ inline void adjCnt(Variation *varToAdd, Variation *variant) {
 
 
 
-inline string joinRef(unordered_map<int, char> &baseToPosition, int from,int to){
+inline string joinRef(unordered_map<int, char> &baseToPosition, int from, int to){
     string res="";
     for(int i=from; i <= to; i++){
+        res+=baseToPosition[i];
+    }
+    return res;
+}
+inline string joinRef_double(unordered_map<int, char> &baseToPosition, int from, double to){
+    string res="";
+    for(int i=from; i < to; i++){
         res+=baseToPosition[i];
     }
     return res;
@@ -365,7 +372,17 @@ inline bool islowcomplexseq(string seq) {
  */
 inline string findconseq(Sclip *softClip, int dir) {
     //if (softClip->sequence != NULL) {
-    if (softClip->sequence != "") {
+	//printf("findconseq: %d - %d - %s\n", softClip->nt.size(), dir,  softClip->sequence.c_str());
+	//for(auto& nve : softClip->nt){
+    //    unordered_map<char, int> nv = nve.second;
+	//	for(auto& ent : nv){
+	//		printf("%c", ent.first);
+	//	}
+	//	printf("|");
+	//}
+	//printf("\n");
+	//========================================
+	if (softClip->sequence != "") {
 		//printf("return for sequence != empty: %s\n", softClip->sequence.c_str());
         return softClip->sequence;
     }
@@ -385,18 +402,22 @@ inline string findconseq(Sclip *softClip, int dir) {
             char currentBase = ent.first; //$nt
             int currentCount = ent.second; //$ncnt
             totalCount += currentCount;
-            if (currentCount > maxCount || (softClip->seq.count(positionInSclip) && softClip->seq[positionInSclip].count(currentBase)
+			//printf("current: %c, ==> currentCount: %d, maxCount: %d, currentQuality: %f, maxQuality: %f\n", currentBase, currentCount, maxCount, softClip->seq[positionInSclip][currentBase]->meanQuality, maxQuality);
+			if (currentCount > maxCount || (softClip->seq.count(positionInSclip) && softClip->seq[positionInSclip].count(currentBase)
                     && softClip->seq[positionInSclip][currentBase]->meanQuality > maxQuality)) {
-                maxCount = currentCount;
+				//printf("current changeto: %c, ==> currentCount: %d, maxCount: %d, currentQuality: %f, maxQuality: %f\n", currentBase, currentCount, maxCount, softClip->seq[positionInSclip][currentBase]->meanQuality, maxQuality);
+				maxCount = currentCount;
                 chosenBase = currentBase;
                 maxQuality = softClip->seq[positionInSclip][currentBase]->meanQuality;
             }
         }
         if (positionInSclip == 3 && softClip->nt.size() >= 6 && totalCount/(double)softClip->varsCount < 0.2 && totalCount <= 2) {
+			//printf("break1\n");
             break;
         }
         if ((totalCount - maxCount > 2 || maxCount <= totalCount - maxCount) && maxCount / (double)totalCount < 0.8) {
             if (flag) {
+				//printf("break2\n");
                 break;
             }
             flag = true;
@@ -404,11 +425,13 @@ inline string findconseq(Sclip *softClip, int dir) {
         total += totalCount;
         match += maxCount;
         if (chosenBase != 0) {
+			//printf("%c\n", chosenBase);
             seqq+=chosenBase;
         }
     }
     string SEQ;
     int ntSize = softClip->nt.size();
+	//printf("seq1: %s\n", seqq.c_str());
     if (total != 0
             && match / (double)total > 0.9
             && seqq.length() / 1.5 > ntSize - seqq.length()
@@ -421,14 +444,17 @@ inline string findconseq(Sclip *softClip, int dir) {
     }
 
     //if (!SEQ.empty() && SEQ.length() > Configuration.SEED_2) {
-    if (!SEQ.empty() && SEQ.length() > 17) {
+	//printf("SEQ2: %s\n", SEQ.c_str());
+	if (!SEQ.empty() && SEQ.length() > CONF_SEED_2) {
         bool mm1 = regex_match(SEQ, regex(B_A7));
         bool mm2 = regex_match(SEQ, regex(B_T7));
-        
+		//printf("SEQ3: %s\n", SEQ.c_str());
         if (mm1 || mm2) {
+			//printf("used set to true 1\n");
             softClip->used = true;
         }
         if (islowcomplexseq(SEQ)) {
+			//printf("used set to true 2\n");
             softClip->used = true;
         }
     }
@@ -448,6 +474,9 @@ inline string findconseq(Sclip *softClip, int dir) {
     */
     softClip->sequence = SEQ;
 
+	//if(SEQ == "TACCGATCGGA"){
+	//	printf("i found it!\n");
+	//}
     return SEQ;
 }
 

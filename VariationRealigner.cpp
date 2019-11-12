@@ -83,20 +83,26 @@ void VariationRealigner::print_result(){
 	//	}
 	//		
 	//}
-	for(auto &v: nonInsertionVariants){
-		int position = v.first;
-		VariationMap* var_map = v.second;
-		for(auto &vm : var_map -> variation_map){
-			printf("%d - %s - %d\n", position, vm.first.c_str(), vm.second->varsCount);
-		}
-			
+	//for(auto &v: nonInsertionVariants){
+	//	int position = v.first;
+	//	VariationMap* var_map = v.second;
+	//	for(auto &vm : var_map -> variation_map){
+	//		printf("%d - %s - %d\n", position, vm.first.c_str(), vm.second->varsCount);
+	//	}
+	//		
+	//}
+	printf("---sc3e size: %d---\n",softClips3End.size());
+	for(auto& v: softClips3End){
+		int pos = v.first;
+		Sclip* sc = v.second;
+		//printf("%d - %s - %d\n", pos, sc->sequence.c_str(), sc->varsCount);
+		printf("%d - %d\n", pos, sc->varsCount);
 	}
-	//printf("---sc3e size: %d---\n",softClips3End.size());
-	//for(auto& v: softClips3End){
+	//for(auto& v: positionToInsertionCount){
 	//	int pos = v.first;
-	//	Sclip* sc = v.second;
-	//	//printf("%d - %s - %d\n", pos, sc->sequence.c_str(), sc->varsCount);
-	//	printf("%d - %d\n", pos, sc->varsCount);
+	//	for(auto& vm: v.second){
+	//		printf("%d - %s - %d\n", pos, vm.first.c_str(), vm.second);
+	//	}
 	//}
 }
 /**
@@ -123,7 +129,6 @@ void VariationRealigner::process(Scope<VariationData> &scope) {
         realignIndels();
 		cout << "--------------realignIndels over!!------------" << endl;
 	}
-	print_result();
     //RealignedVariationData *rvdata = new RealignedVariationData(nonInsertionVariants, insertionVariants, softClips3End, softClips5End,
     //                refCoverage, maxReadLength, duprate, &CURSEG, SOFTP2SV, &scope);
     //Scope<RealignedVariationData> scopeTo(scope.bam, scope.region, scope.regionRef, scope.maxReadLength,
@@ -453,8 +458,11 @@ void VariationRealigner::realignIndels()  {
     
 	//if (conf.y) printf("Start Realignlgins30");
 
+	printf("------------------------------start 30--------------------------------------------\n");
     realignlgins30();
-   
+	printf("------------------------------end 30--------------------------------------------\n");
+
+	print_result();
   	//if (conf.y) printf("Start Realignlgins");
     //realignlgins(svStructures.svfdup, svStructures.svrdup);
 }
@@ -467,7 +475,7 @@ void VariationRealigner::realignIndels()  {
 void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map<int, unordered_map<string, int> > positionToDeletionCount) {
     unordered_map<int, char> ref = reference.referenceSequences;
     vector<string> *bams;
-    if (bamsParameter->size()==0) {
+    if (bamsParameter == NULL || bamsParameter->size() == 0) {
         bams = NULL;
     } else {
         bams = bamsParameter;
@@ -475,10 +483,6 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
     // In perl it doesn't commented, but it doesn't used
     // int longmm = 3; //Longest continued mismatches typical aligned at the end
     vector<SortPositionDescription*> tmp = fillAndSortTmp(positionToDeletionCount);
-	cout << "tmp size: " << tmp.size() << endl;
-	for(SortPositionDescription* tpl: tmp){
-		cout << "pos: " << tpl->position << " vn: " << tpl->descriptionstring << " count: " << tpl->count  << endl;
-	}
     int lastPosition = 0;
     for (SortPositionDescription* tpl : tmp) {
         try {
@@ -502,7 +506,6 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
             if (mtch) {
                 dellen += atoi(sm[1].str().c_str());
             }
-			printf("vn: %s, dellen: %d\n", vn.c_str(), dellen);
             string extrains = "";
             string extra = "";
             string inv5 = "";
@@ -706,10 +709,10 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
         }
     }
 
-    for (int i = tmp.size() - 1; i > 0; i--) {
-        try {
-            SortPositionDescription *tpl = tmp[i];
-            int p = tpl->position;
+	for (int i = tmp.size() - 1; i > 0; i--) {
+		try {
+			SortPositionDescription *tpl = tmp[i];
+			int p = tpl->position;
             lastPosition = p;
             string vn = tpl->descriptionstring;
             if (nonInsertionVariants.count(p)==0) {
@@ -746,6 +749,10 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
     string VariationRealigner::realignins(unordered_map<int, unordered_map<string, int> > &positionToInsertionCount) {
         unordered_map<int, char> ref = reference.referenceSequences;
         vector<SortPositionDescription*> tmp = fillAndSortTmp(positionToInsertionCount);
+		cout << "tmp size: " << tmp.size() << endl;
+		for(SortPositionDescription* tpl: tmp){
+			cout << "pos: " << tpl->position << " vn: " << tpl->descriptionstring << " count: " << tpl->count  << endl;
+		}
         string NEWINS = "";
         int lastPosition = 0;
         for (SortPositionDescription* tpl : tmp) {
@@ -797,14 +804,17 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
                     newdel = atoi(mtch[1].str().c_str());
                 }
                 string tn = vn;
-                replaceFirst(tn, "^\\+", "");
+                replaceFirst_re(tn, "^\\+", "");
                 replaceFirst(tn, "&", "");
                 replaceFirst(tn, "#", "");
-                replaceFirst(tn, "\\^\\d+$", "");
-                replaceFirst(tn, "\\^", "");
+                replaceFirst_re(tn, "\\^\\d+$", "");
+                replaceFirst_re(tn, "\\^", "");
 
                 int wustart = position - 150 > 1 ? (position - 150) : 1;
+
                 string wupseq = joinRef(ref, wustart, position) + tn; // 5prime flanking seq
+				//printf("vn: %s, tn: %s, wupseq: %s\n", vn.c_str(), tn.c_str(), wupseq.c_str());
+				//printf("extra: %s, newins: %s, newdel: %d\n", extra.c_str(), newins.c_str(), newdel);
             /*
             5' flanking region is a region of DNA that is adjacent to the 5' end of the gene.
             The 5' flanking region contains the promoter, and may contain enhancers or other protein binding sites.
@@ -858,6 +868,7 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
 
                 vector<Mismatch*> mmm = mm3;
                 mmm.insert(mmm.end(), mm5.begin(), mm5.end());
+				//printf("mm3 size: %d, mm5 size: %d\n", mm3.size(), mm5.size());
                 Variation* vref = getVariation(insertionVariants, position, vn);
                 for (Mismatch* mismatch : mmm) {
                     // $mm mismatch nucleotide
@@ -868,8 +879,10 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
                     int mismatchEnd = mismatch->end;
 
                     if (mismatchBases.length() > 1) {
-                        mismatchBases = mismatchBases[0] + "&" + mismatchBases.substr(1);
+                        //mismatchBases = mismatchBases[0] + "&" + mismatchBases.substr(1);
+                        mismatchBases = string(1,mismatchBases[0]) + "&" + mismatchBases.substr(1);
                     }
+
                     if (!nonInsertionVariants.count(mismatchPosition)) {
                         continue;
                     }
@@ -1023,6 +1036,7 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
             }
         } catch(...){// (Exception exception) {
             //printExceptionAndContinue(exception, "variant", string.valueOf(lastPosition), region);
+				printf("there is an error in realignins!!\n");
         }
     }
 
@@ -1503,31 +1517,37 @@ void VariationRealigner::realignlgins30() {
             if (sc5v->used) {
                 continue;
             }
-
             for (SortPositionSclip* t3 : tmp3) {
                 try {
-                     int p3 = t3->position;
-                    lastPosition = p3;
-                     Sclip *sc3v = t3->softClip;
-                     int cnt3 = t3->count;
-                    if (sc5v->used) {
+					int p3 = t3->position;
+					lastPosition = p3;
+					Sclip *sc3v = t3->softClip;
+					int cnt3 = t3->count;
+					//printf("p5: %d, cnt5: %d, p3: %d, cnt3: %d, lastPosition: %d\n", p5, cnt5, p3, cnt3, lastPosition);
+					if (sc5v->used) {
+						//printf("sc5v used and break this for loop!\n");
                         break;
                     }
                     if (sc3v->used) {
+						//printf("sc3v used and break this for loop!\n");
                         continue;
                     }
                     if (p5 - p3 > maxReadLength * 2.5) {
+						//printf("p5 - p3 and break this for loop!\n");
                         continue;
                     }
                     if (p3 - p5 > maxReadLength - 10) { // if they're too far away, don't even try
+						//printf("p3 - p5 used and break this for loop!\n");
                         continue;
                     }
                      string seq5 = findconseq(sc5v, 5);
                      string seq3 = findconseq(sc3v, 3);
                     //next until at least one of consensus sequences has length > 10
                     if (seq5.length() <= 10 || seq3.length() <= 10) {
+						//printf("seq len and break this for loop!\n");
                         continue;
-                    }
+                    } 
+
                     //if (conf.y) {
                     //    System.err.printf("  Working lgins30: %s %s 3: %s %s 5: %s %s\n",
                     //            p3, p5, seq3, cnt3, new string(seq5).reverse(), cnt5);
@@ -1535,15 +1555,17 @@ void VariationRealigner::realignlgins30() {
                     // Don't even try if there're extreme bias
 
                     if (!(cnt5 / (double) cnt3 >= 0.08 && cnt5 / (double) cnt3 <= 12)) {
+						//printf("cnt5/3 and break this for loop!\n");
                         continue;
                     }
                     Match35* match35 = find35match(seq5, seq3);
-                    int bp5 = match35->matched5end;
-                    int bp3 = match35->matched3End;
+					int bp5 = match35->matched5end;
+					int bp3 = match35->matched3End;
                     //length of match
                     int score = match35->maxMatchedLength;
 
                     if (score == 0) {
+						//printf("score=0 and break this for loop!\n");
                         continue;
                     }
 
@@ -1551,15 +1573,18 @@ void VariationRealigner::realignlgins30() {
                     int smscore = (int) (score / 2);
                     //add matched part of seq3 (left clip)
                     string ins = bp3 + smscore > 1 ? vc_substr(seq3,0, -(bp3 + smscore) + 1) : seq3;
+					printf("ins1: %s\n", ins.c_str());
                     if (bp5 + smscore > 0) { //add not matched part of seq5 (right clip)
                         string tmpstr = seq5.substr(0, bp5 + smscore);
                         reverse(tmpstr.begin(), tmpstr.end());
                         ins += tmpstr;
                     }
+					printf("ins2: %s\n", ins.c_str());
                     if (islowcomplexseq(ins)) {
                         //if (conf.y) {
                         //    System.err.println("  Discard low complexity insertion found " + ins + ".");
                         //}
+						printf("Discard low complexity insertion found: %s\n" ,ins.c_str());
                         continue;
                     }
                     int bi = 0;
@@ -1567,6 +1592,7 @@ void VariationRealigner::realignlgins30() {
                     //if (conf.y) {
                     //   System.err.printf("  Found candidate lgins30: %s %s %s\n", p3, p5, ins);
                     //}
+
                     if (p5 > p3) {
                         if (seq3.length() > ins.length()
                                 && !ismatch(seq3.substr(ins.length()), joinRef(ref, p5, p5 + seq3.length() - ins.length() + 2), 1)) {
@@ -1581,7 +1607,7 @@ void VariationRealigner::realignlgins30() {
                         //}
                         string tmp = joinRef(ref, p3, p5 - 1);
                         if (tmp.length() > ins.length()) { // deletion is longer
-                            ins = (p3 - p5) + "^" + ins;
+                            ins = to_string(p3 - p5) + "^" + ins;
                             bi = p3;
                             vref = getVariation(nonInsertionVariants, p3, ins);
                         } else if (tmp.length() < ins.length()) {
@@ -1603,6 +1629,7 @@ void VariationRealigner::realignlgins30() {
                                 && !ismatch(seq5.substr( ins.length()), joinRef(ref, p3 - (seq5.length() - ins.length()) - 2, p3 - 1), -1)) {
                             continue;
                         }
+
                         string tmp = "";
                         if (ins.length() <= p3 - p5) { // Tandex duplication
                             int rpt = 2;
@@ -1615,11 +1642,17 @@ void VariationRealigner::realignlgins30() {
                             }
                             //TODO: maybe here in Perl we must cast position "to" to int?
                             // -1 because joinRef works to the bound exactly
-                            tmp += joinRef(ref, p5, (p5 + (p3 - p5 + ins.length()) / (double) rpt - ins.length()));
-                            ins = "+" + tmp + "" + ins;
+							printf("ins3: %s\n", ins.c_str());
+                            tmp += joinRef_double(ref, p5, (p5 + (p3 - p5 + ins.length()) / (double) rpt - ins.length()));
+
+							printf("tmp: %s, p5: %d, p3: %d, param3: %f\n", tmp.c_str(), p5, p3, p5 + (p3 - p5 + ins.length()) / (double) rpt - ins.length());
+							ins = "+" + tmp + "" + ins;
+							printf("ins4: %s\n", ins.c_str());
                         } else {
                             // -1 because joinRef works to the bound exactly
+							printf("ins5: %s\n", ins.c_str());
                             tmp += joinRef(ref, p5, p3 - 1);
+							printf("tmp: %s\n", tmp.c_str());
                             if ((ins.length() - tmp.length()) % 2 == 0) {
                                 int tex = (ins.length() - tmp.length()) / 2;
                                 ins = (tmp + vc_substr(ins, 0, tex))==(vc_substr(ins, tex))
@@ -1628,7 +1661,8 @@ void VariationRealigner::realignlgins30() {
                             } else {
                                 ins = "+" + tmp + "" + ins;
                             }
-                        }
+							printf("ins6: %s\n", ins.c_str());
+						}
                         //if (conf.y) {
                         //    System.err.printf("Found lgins30: %s %s %s %s + %s\n", p3, p5, ins.length(), tmp, ins);
                        // }
@@ -1643,6 +1677,7 @@ void VariationRealigner::realignlgins30() {
                     //if (conf.y) {
                     //    System.err.printf(" lgins30 Found: '%s' %s %s %s\n", ins, bi, bp3, bp5);
                     //}
+					printf("lgins30 found: %s\n", ins.c_str());
 
                     if (ins[0] == '+') {
                         Variation *mvref = getVariationMaybe(nonInsertionVariants, bi, ref[bi]);
@@ -2509,6 +2544,7 @@ MismatchResult* VariationRealigner::findMM5(unordered_map<int, char> &ref,
                               int position,
                               string wupseq) {
     string seq = regex_replace(wupseq,regex("#|\\^"), "");
+	//printf("findMM5 input info: %d - %s, after: %s\n", position, wupseq.c_str(), seq.c_str());
     int longmm = 3;
     vector<Mismatch*> mismatches; // $mm mismatches, mismatch positions, 5 or 3 ends
     int n = 0;

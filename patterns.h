@@ -14,11 +14,11 @@
     #define HASH_GROUP_CARET_GROUP "#(.+)\\^(.+)"
 
     //Sclip patterns
-    #define B_A7 "^.AAAAAAA"
-    #define B_T7 "^.TTTTTTT"
+    #define B_A7 "^.AAAAAAA.*"
+    #define B_T7 "^.TTTTTTT.*"
 
     //ATGC patterns
-    #define CARET_ATGNC "\\^([ATGNC]+)"
+    #define CARET_ATGNC "\\^([ATGNC]+).*"
     #define CARET_ATGC_END  "\\^([ATGC]+)$"
     #define AMP_ATGC  ".*&([ATGC]+).*"
     #define BEGIN_PLUS_ATGC "^\\+([ATGC]+).*"
