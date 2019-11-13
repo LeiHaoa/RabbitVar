@@ -91,13 +91,13 @@ void VariationRealigner::print_result(){
 	//	}
 	//		
 	//}
-	printf("---sc3e size: %d---\n",softClips3End.size());
-	for(auto& v: softClips3End){
-		int pos = v.first;
-		Sclip* sc = v.second;
-		//printf("%d - %s - %d\n", pos, sc->sequence.c_str(), sc->varsCount);
-		printf("%d - %d\n", pos, sc->varsCount);
-	}
+	//printf("---sc3e size: %d---\n",softClips3End.size());
+	//for(auto& v: softClips3End){
+	//	int pos = v.first;
+	//	Sclip* sc = v.second;
+	//	//printf("%d - %s - %d\n", pos, sc->sequence.c_str(), sc->varsCount);
+	//	printf("%d - %d\n", pos, sc->varsCount);
+	//}
 	//for(auto& v: positionToInsertionCount){
 	//	int pos = v.first;
 	//	for(auto& vm: v.second){
@@ -111,8 +111,8 @@ void VariationRealigner::print_result(){
  *              and non-insertion variations.
  * @return realigned variations maps
  */
-//Scope<RealignedVariationData> VariationRealigner::process(Scope<VariationData> scope) {
-void VariationRealigner::process(Scope<VariationData> &scope) {
+Scope<RealignedVariationData> VariationRealigner::process(Scope<VariationData> scope) {
+//void VariationRealigner::process(Scope<VariationData> &scope) {
     initFromScope(scope);
     CurrentSegment CURSEG (region.chr, region.start, region.end);
 
@@ -129,11 +129,15 @@ void VariationRealigner::process(Scope<VariationData> &scope) {
         realignIndels();
 		cout << "--------------realignIndels over!!------------" << endl;
 	}
-    //RealignedVariationData *rvdata = new RealignedVariationData(nonInsertionVariants, insertionVariants, softClips3End, softClips5End,
-    //                refCoverage, maxReadLength, duprate, &CURSEG, SOFTP2SV, &scope);
-    //Scope<RealignedVariationData> scopeTo(scope.bam, scope.region, scope.regionRef, scope.maxReadLength,
-	//             scope.splice, rvdata);
-    //return scopeTo;
+	//print_result();
+    RealignedVariationData *rvdata = new RealignedVariationData(nonInsertionVariants, insertionVariants, softClips3End, softClips5End,
+																refCoverage, maxReadLength, duprate, CURSEG, SOFTP2SV, &scope);
+
+	Scope<RealignedVariationData> scopeTo(scope.bam, scope.region, scope.regionRef, scope.maxReadLength,
+										  scope.splice, rvdata);
+
+	return scopeTo;
+
 }
 
 void VariationRealigner::initFromScope(Scope<VariationData> scope) {
@@ -462,7 +466,7 @@ void VariationRealigner::realignIndels()  {
     realignlgins30();
 	printf("------------------------------end 30--------------------------------------------\n");
 
-	print_result();
+	//print_result();
   	//if (conf.y) printf("Start Realignlgins");
     //realignlgins(svStructures.svfdup, svStructures.svrdup);
 }

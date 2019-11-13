@@ -7,7 +7,6 @@
 #include <iostream>
 
 #define CONF_LOWQUAL     10
-#define CONF_LOWQUAL     10
 #define CONF_SEED_1      17
 #define CONF_SEED_2      12
 #define CONF_ADSEED      6
@@ -109,7 +108,7 @@ public:
      * A read pair is considered belonging the amplicon if the edges are less than int bp to the amplicon,
      * and overlap fraction is at least float. Default: 10:0.95
      */
-     string ampliconBasedCalling; //-a
+     string ampliconBasedCalling = ""; //-a
 
      int columnForChromosome = -1; //-c
 
@@ -228,10 +227,10 @@ public:
      */
      double lofreq = 0.05d; // -V
 
-    /**
-     * Any base with quality &lt;=10 will be consider low quality in soft-clipped seq and extension will stop.
-     */
-     static int LOWQUAL;
+    ///**
+    // * Any base with quality &lt;=10 will be consider low quality in soft-clipped seq and extension will stop.
+    // */
+    // static int LOWQUAL;
 
     /**
      * The minimum matches for a read to be considered
@@ -269,20 +268,20 @@ public:
      */
      int threads; //-th
 
-    /**
-     * The larger seed size
-     */
-     static int SEED_1;
+    ///**
+    // * The larger seed size
+    // */
+    // static int SEED_1;
 
     /**
      * The smaller seed size
      */
      //static int SEED_2;
 
-    /**
-     * The adaptor size
-     */
-     static int ADSEED;
+    ///**
+    // * The adaptor size
+    // */
+    // static int ADSEED;
     /**
      *
      * Indicate to turn off chimeric reads filtering.  Chimeric reads are artifacts from library construction,
@@ -303,10 +302,10 @@ public:
      */
      bool deleteDuplicateVariants = false;
 
-    /**
-     * The minimum distance between two SV clusters in term of read length
-     */
-     static double MINSVCDIST;
+    ///**
+    // * The minimum distance between two SV clusters in term of read length
+    // */
+    // static double MINSVCDIST;
     /**
      * Mean Insert size
      */
@@ -323,22 +322,22 @@ public:
      * The minimum structural variant length to be presented using &lt;DEL&gt; &lt;DUP&gt; &lt;INV&gt; &lt;INS&gt;, etc.
      */
      int SVMINLEN = 1000; //-L
-    /**
-     * Max Structure variant size to be called in realignment step
-     */
-     static int SVMAXLEN;
-    /**
-     * the flanking sequence length for SV
-     */
-     static int SVFLANK;
-    /**
-     * The minimum mapping quality when structural variant is only supported by discordant pairs
-     */
-     static int DISCPAIRQUAL;
+    ///**
+    // * Max Structure variant size to be called in realignment step
+    // */
+    // static int SVMAXLEN;
+    ///**
+    // * the flanking sequence length for SV
+    // */
+    // static int SVFLANK;
+    ///**
+    // * The minimum mapping quality when structural variant is only supported by discordant pairs
+    // */
+    // static int DISCPAIRQUAL;
 
-     static int EXTENSION;
+    // static int EXTENSION;
 
-     static string DEFAULT_AMPLICON_PARAMETERS;
+    // static string DEFAULT_AMPLICON_PARAMETERS;
 
     /**
      * Default reference extension $REFEXT
@@ -358,7 +357,7 @@ public:
     /**
      * Maximum of exception to continue work
      */
-     static int MAX_EXCEPTION_COUNT;
+     //static int MAX_EXCEPTION_COUNT;
 
     /**
      * List of adaptor sequences
@@ -373,6 +372,16 @@ public:
      * The genomic position that CRISPR/Cas9 suppose to cut, typically 3bp from the PAM NGG site and within the guide.
      */
      int crisprCuttingSite = 0;
+
+    /**
+     * The variant frequency threshold to determine variant as good in case of monomer MSI
+     */
+    double monomerMsiFrequency = 0.25d;  // -mfreq
+    /**
+     * The variant frequency threshold to determine variant as good in case of non-monomer MSI
+     */
+    double nonMonomerMsiFrequency = 0.1d;  // -nmfreq
+
 
 	 bool isColumnForChromosomeSet() {
 		 return columnForChromosome >= 0;

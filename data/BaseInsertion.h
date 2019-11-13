@@ -1,5 +1,6 @@
 #ifndef _BASEINSERTION_H
 #define  _BASEINSERTION_H
+#include <string>
 /**
  * Contains data about base insertion for realignment process (position of insertion, insertion sequence and position
  * without extra sequence)
@@ -13,13 +14,13 @@ public:
     /**
      * Insertion sequence
      */
-    string insertionSequence; //$ins
+    std::string insertionSequence; //$ins
     /**
      * base position without extra sequence
      */
     int baseInsert2; //$bi2
 
-    BaseInsertion(int baseInsert, string insertionSequence, int baseInsert2) {
+    BaseInsertion(int baseInsert, std::string insertionSequence, int baseInsert2) {
         this->baseInsert = baseInsert;
         this->insertionSequence = insertionSequence;
         this->baseInsert2 = baseInsert2;

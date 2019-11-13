@@ -8,6 +8,7 @@
 #include "Sclip.h"
 #include <stdint.h>
 #include "Configuration.h"
+#include "Vars.h"
 #include <regex>
 #include <map>
 
@@ -480,4 +481,30 @@ inline string findconseq(Sclip *softClip, int dir) {
     return SEQ;
 }
 
+inline int strandBias(int forwardCount, int reverseCount, Configuration* conf){
+    if(forwardCount + reverseCount <= 12){
+        return forwardCount * reverseCount >0 ?2:0;
+    }
+
+    return (forwardCount / (double)(forwardCount + reverseCount) >= conf->bias
+                  && reverseCount / (double)(forwardCount + reverseCount) >= conf->bias
+                  && forwardCount >= conf->minBiasReads
+                  && reverseCount >= conf->minBiasReads) ? 2 : 1;
+
+}
+
+inline Vars* getOrPutVars(unordered_map<int, Vars*> &mapv, int position){
+    //Vars *vars = mapv[position];
+    //mapv[position] = vars;
+    //return vars;
+	Vars *vars;
+	unordered_map<int, Vars*>::iterator itr;
+	if((itr = mapv.find(position)) != mapv.end()){
+		vars = itr->second;
+	}else{
+		vars = new Vars();
+		mapv[position] = vars;
+	}
+	return vars;
+}
 #endif

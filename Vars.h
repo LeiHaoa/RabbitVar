@@ -1,7 +1,9 @@
 #ifndef _VARS_H
 #define _VARS_H
 
-#include<Variation.h>
+#include "Variation.h"
+#include "Variant.h"
+
 #include<unordered_map>
 #include<string.h>
 /**

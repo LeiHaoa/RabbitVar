@@ -2,7 +2,8 @@
 #include "RegionBuilder.h"
 #include "recordPreprocessor.h"
 #include "parseCigar.h"
-#include "./VariationRealigner.h"
+#include "VariationRealigner.h"
+#include "ToVarsBuilder.h"
 
 #include "htslib/hts.h"
 #include "htslib/sam.h"
@@ -304,9 +305,12 @@ int main_single(){
 	CigarParser cp(dscope, preprocessor);
 	Scope<VariationData> svd =  cp.process();
 	cout << "bam: " << svd.bam << endl;
-	cout << "refcov: " << svd.data->refCoverage.size() << endl;
+	//cout << "refcov: " << svd.data->refCoverage.size() << endl;
 	VariationRealigner var_realinger(&conf);
-	var_realinger.process(svd);
+	Scope<RealignedVariationData> rvd = var_realinger.process(svd);
+	ToVarsBuilder vars_builder(&conf);
+	Scope<AlignedVarsData> avd = vars_builder.process(rvd);
+	
 
 	delete preprocessor;
 }

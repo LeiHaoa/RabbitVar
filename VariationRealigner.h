@@ -139,8 +139,8 @@ private:
 public:
 	void print_result(); //only for debug
 	VariationRealigner(Configuration* conf);
-	//Scope<RealignedVariationData> process(Scope<VariationData> scope);
-	void process(Scope<VariationData> &scope);
+	Scope<RealignedVariationData> process(Scope<VariationData> scope);
+	//void process(Scope<VariationData> &scope);
 
 	//bool COMP2(SortPositionSclip &o1, SortPositionSclip &o2);
 	//bool COMP3(SortPositionSclip &o1, SortPositionSclip &o2);

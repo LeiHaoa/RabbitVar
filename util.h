@@ -24,7 +24,7 @@ inline double get_time(){
  * @param idx begin index of substring
  * @return generated substring
  */
-inline string vc_substr(string str, int idx) {
+inline string vc_substr(string &str, int idx) {
     if (idx >= 0) {
         return str.substr(idx);
     } else {
@@ -41,7 +41,7 @@ inline string vc_substr(string str, int idx) {
  * @param len length of substring
  * @return generated substring
  */
-inline string vc_substr(string str, int begin, int len) {
+inline string vc_substr(const string &str, int begin, int len) {
     if (begin < 0) {
         begin = str.length() + begin;
     }
@@ -144,4 +144,9 @@ inline char charAt(string str, int index) {
         }
         return str[index];
 };
+
+inline double roundHalfEven(string bit, double value) {
+        //return Double.parseDouble(new DecimalFormat(pattern).format(value));
+		return value;
+}
 #endif

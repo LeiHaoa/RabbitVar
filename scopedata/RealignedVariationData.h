@@ -26,20 +26,20 @@ class RealignedVariationData {
         unordered_map<int, int> refCoverage;
         int maxReadLength;
         double duprate;
-        CurrentSegment* CURSEG;
+        CurrentSegment CURSEG;
         unordered_map<int, vector<Sclip*> > SOFTP2SV;
         Scope<VariationData> *previousScope;
 
         RealignedVariationData(unordered_map<int, VariationMap* > nonInsertionVariants,
                             unordered_map<int, VariationMap* > insertionVariants,
                             unordered_map<int, Sclip* > softClips3End,
-                            unordered_map<int, Sclip* > softClips5End,
-                            unordered_map<int, int> refCoverage,
-                            int maxReadLength,
-                            double duprate,
-                            CurrentSegment *CURSEG,
-                            unordered_map<int, vector<Sclip*> > SOFTP2SV,
-                            Scope<VariationData> *preScope ) 
+							   unordered_map<int, Sclip* > softClips5End,
+							   unordered_map<int, int> refCoverage,
+							   int maxReadLength,
+							   double duprate,
+							   CurrentSegment CURSEG,
+							   unordered_map<int, vector<Sclip*> > SOFTP2SV,
+							   Scope<VariationData> *preScope ) 
     {
         this->softClips3End = softClips3End;
         this->softClips5End = softClips5End;
@@ -50,17 +50,17 @@ class RealignedVariationData {
         this->duprate = duprate;
         this->CURSEG = CURSEG;
         this->SOFTP2SV = SOFTP2SV;
-        //this->previousScope= preScope;
-        this->previousScope->region = preScope->region;
-        this->previousScope->data = preScope->data;
-        this->previousScope->regionRef = preScope->regionRef;
-        //thispreviousScope.->referenceResource = scope.referenceResource;
-        this->previousScope->maxReadLength = preScope->maxReadLength;
-        this->previousScope->bam = preScope->bam;
-        this->previousScope->splice = preScope->splice;
-        
-        //this->svStructures = scope.data.svStructures;
-        //this->variantPrinter = scope.out;
+        this->previousScope= preScope;
+        //this->previousScope->region = preScope->region;
+        //this->previousScope->data = preScope->data;
+        //this->previousScope->regionRef = preScope->regionRef;
+        ////thispreviousScope.->referenceResource = scope.referenceResource;
+        //this->previousScope->maxReadLength = preScope->maxReadLength;
+        //this->previousScope->bam = preScope->bam;
+        //this->previousScope->splice = preScope->splice;
+        //
+        ////this->svStructures = scope.data.svStructures;
+        ////this->variantPrinter = scope.out;
     }
 };
 

@@ -14,6 +14,11 @@ using namespace std;
     	int start;
     	int end;
 
+		CurrentSegment(){
+			chr = "";
+			start = 0;
+			end = 0;
+		}
     	CurrentSegment(string chr, int start, int end) {
         	this->chr = chr;
         	this->start = start;
