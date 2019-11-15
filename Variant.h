@@ -166,7 +166,8 @@ class Variant {
 
         if (refallele.length() == 1 && varallele.length() == 1) {
             return "SNV";
-        } else if (regex_match(varallele, sm, regex(ANY_SV))) {
+			//} else if (regex_match(varallele, sm, regex(ANY_SV))) {
+        } else if (regex_match(varallele, sm, regex("<(...)>"))) {
             return sm[1];
         } else if (refallele.length() == 0 || varallele.length() == 0) { //issue #19
             return "Complex";

@@ -447,8 +447,8 @@ inline string findconseq(Sclip *softClip, int dir) {
     //if (!SEQ.empty() && SEQ.length() > Configuration.SEED_2) {
 	//printf("SEQ2: %s\n", SEQ.c_str());
 	if (!SEQ.empty() && SEQ.length() > CONF_SEED_2) {
-        bool mm1 = regex_match(SEQ, regex(B_A7));
-        bool mm2 = regex_match(SEQ, regex(B_T7));
+        bool mm1 = regex_match(SEQ, regex("^.AAAAAAA"));
+        bool mm2 = regex_match(SEQ, regex("^.TTTTTTT"));
 		//printf("SEQ3: %s\n", SEQ.c_str());
         if (mm1 || mm2) {
 			//printf("used set to true 1\n");

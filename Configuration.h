@@ -4,6 +4,7 @@
 //#include "RegionBuilder.h"
 #include <vector>
 #include "util.h"
+#include "./patterns.h"
 #include <iostream>
 
 #define CONF_LOWQUAL     10
@@ -408,6 +409,7 @@ public:
 	 //PrinterType printerTypeOut;
 	 unordered_map<string, int> adaptorForward;
 	 unordered_map<string, int> adaptorReverse;
+	 Patterns* patterns;
 
 };
 

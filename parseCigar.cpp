@@ -471,8 +471,8 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 		num_of_mismatches_form_tag = bam_aux2i(aux_temp);
 		total_number_of_mismatches = num_of_mismatches_form_tag - insertion_deletion_length;
 		if(total_number_of_mismatches > conf->mismatch) {
-			printf("---return for totalmismatch > config : NM_tag:%d idl: %d tnom: %d\n", num_of_mismatches_form_tag, insertion_deletion_length, total_number_of_mismatches);
-			print_cigar_string(cigar, record->core.n_cigar, 0);
+			//printf("---return for totalmismatch > config : NM_tag:%d idl: %d tnom: %d\n", num_of_mismatches_form_tag, insertion_deletion_length, total_number_of_mismatches);
+			//print_cigar_string(cigar, record->core.n_cigar, 0);
 			return;
 		}
 	}else{
@@ -561,7 +561,7 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 	//processCigar:
 	for(int ci=0; ci < record->core.n_cigar;++ci){
 		if(skipOverlappingReads(record, position, direction, mateAlignmentStart)){
-			printf("skip overlapping reads \n");
+			//printf("skip overlapping reads \n");
 			break;
 		}
 		uint32_t icigar = cigar[ci];
@@ -864,7 +864,7 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
             // Skip read if it is overlap
             if (skipOverlappingReads(record, position, direction, mateAlignmentStart)) {
                 //break processCigar;
-				printf("skip ! for overlaping read\n");
+				//printf("skip ! for overlaping read\n");
 				//return;
             }
 		}
@@ -880,9 +880,6 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 		//cout << "after: including: " << readPositionIncludingSoftClipped << endl;
 		//cout << "after: excluding: " << readPositionExcludingSoftClipped << endl;
 
-	}
-	if(get_cigar_string(cigar, record->core.n_cigar) == "89M2I9M"){
-		printf("----------------found it!!!!!!!!!!!!!!!!!!-------------------\n");
 	}
 
 }
@@ -1055,7 +1052,7 @@ bool CigarParser::isNextAfterNumMatched( int ci, int number) {
 
 
 inline bool isReadChimericWithSA(bam1_t* record, int positon, char* saTagString,
-						  bool dir, bool is5Side, char* refName){
+								 bool dir, bool is5Side, char* refName, Configuration* conf){
 	char delim[] = ",";
 	char* ptr = strtok(saTagString, delim);
 	char* saChromosome = strtok(NULL, delim);
@@ -1066,9 +1063,9 @@ inline bool isReadChimericWithSA(bam1_t* record, int positon, char* saTagString,
 
 	bool mm;
 	if(is5Side){
-		mm = regex_match(saCigar, regex(SA_CIGAR_D_S_5clip));
+		mm = regex_match(saCigar, conf->patterns->SA_CIGAR_D_S_5clip);
 	}else{
-		mm = regex_match(saCigar, regex(SA_CIGAR_D_S_3clip));
+		mm = regex_match(saCigar, conf->patterns->SA_CIGAR_D_S_3clip);
 	}
 	return (((dir && saDirectionString) || (!dir && !saDirectionString))
 			&& strcmp(saChromosome, refName)
@@ -1089,7 +1086,7 @@ void CigarParser::process_softclip(string chrName, bam1_t* record, char* querySe
 			char* saTagString = bam_aux2Z(bam_aux_get(record, "SA"));
 
 			if (cigar_element_length >= 20 && saTagString != NULL) {
-				if (isReadChimericWithSA(record, position, saTagString, direction, true, getRefName(record))) {
+				if (isReadChimericWithSA(record, position, saTagString, direction, true, getRefName(record), conf)) {
 					readPositionIncludingSoftClipped += cigar_element_length;
 					offset = 0;
 					// Had to reset the start due to softclipping adjustment
@@ -1389,7 +1386,7 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
 	if(start - 1 >= region.start && start - 1 <= region.end
 	   && desc_string_of_insertion_segment.find("N") == string::npos){
 		int insertion_pointion = start - 1;
-		if(regex_match(desc_string_of_insertion_segment, regex(BEGIN_ATGC_END))){
+		if(regex_match(desc_string_of_insertion_segment, conf->patterns->BEGIN_ATGC_END)){
 			BaseInsertion *tpl = adjInsPos(start - 1, desc_string_of_insertion_segment, ref);
 			insertion_pointion = tpl->baseInsert;
 			desc_string_of_insertion_segment = tpl->insertionSequence;

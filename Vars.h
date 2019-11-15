@@ -14,7 +14,7 @@ class Vars {
      * Reference variant
      */
     public:
-		Variant* referenceVariant;
+		Variant* referenceVariant = NULL;
 
     /**
      * List of all variants except reference variant

@@ -9,14 +9,13 @@
 #include "htslib/sam.h"
 #include <fstream>
 #include <iostream>
-
-#include <regex>
+#include "./patterns.h"
 
 using namespace std;
 
 #define SAMPLE_PATTERN "([^\\/\\._]+).sorted[^\\/]*.bam"
 #define SAMPLE_PATTERN2 "([^\\/]+)[_\\.][^\\/]*bam"
-#define INTEGER_ONLY "^\\d+$"
+//#define INTEGER_ONLY "^\\d+$"
 /**
  * Initialize resources and starts the needed VarDict mode (amplicon/simple/somatic/splicing).
  * @param config starting configuration
@@ -143,7 +142,7 @@ std::tuple<string, bool, vector<string> > VarDictLauncher::readBedFile(Configura
 				//Matcher column6Matcher = INTEGER_ONLY.matcher(columnValues[6]);
 				//Matcher column7Matcher = INTEGER_ONLY.matcher(columnValues[7]);
 				
-				if (regex_match(columnValues[6], regex(INTEGER_ONLY)) && regex_match(columnValues[7], regex(INTEGER_ONLY))) {
+				if (regex_match(columnValues[6], conf.patterns->INTEGER_ONLY) && regex_match(columnValues[7], conf.patterns->INTEGER_ONLY)) {
 					try {
 						int startRegion_a1 = std::stoi(columnValues[1]);
 						int endRegion_a2 = std::stoi(columnValues[2]);
@@ -275,6 +274,7 @@ void init_conf(Configuration& conf){
 	conf.delimiter = "\t";
 	conf.bedRowFormat = BedRowFormat(0,1,2,3,1,2);
 	conf.chimeric = false;
+	conf.patterns = new Patterns();
 	cout << "after assign info: " << conf.bedRowFormat.chrColumn << "-" << conf.bedRowFormat.startColumn << "-" << conf.bedRowFormat.endColumn << endl;
 }
 //int main(){
@@ -301,16 +301,26 @@ int main_single(){
 		cout << "i have not write the bed file version!!" << endl;
 		exit(0);
 	}
+	double start1 = get_time();
 	RecordPreprocessor *preprocessor = new RecordPreprocessor(region, &conf);
 	CigarParser cp(dscope, preprocessor);
 	Scope<VariationData> svd =  cp.process();
+	double end1 = get_time();
 	cout << "bam: " << svd.bam << endl;
 	//cout << "refcov: " << svd.data->refCoverage.size() << endl;
+	double start2 = get_time();
 	VariationRealigner var_realinger(&conf);
 	Scope<RealignedVariationData> rvd = var_realinger.process(svd);
+	double end2 = get_time();
+	double start3 = get_time();
 	ToVarsBuilder vars_builder(&conf);
 	Scope<AlignedVarsData> avd = vars_builder.process(rvd);
+	double end3 = get_time();
 	
+	cout << "parseCigar Time: " << end1 - start1
+		 << " var realignger Time: " << end2 - start2
+		 << " to varBuilder Time: " << end3 - start3
+		 << endl;
 
 	delete preprocessor;
 }

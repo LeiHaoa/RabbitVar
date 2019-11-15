@@ -104,13 +104,15 @@ Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &sco
     int lastPosition = 0;
     //Loop over positions
     for (auto& entH : nonInsertionVariants) {
-		// try {
+		//printf("%d\n", entH.first);
+		 try {
             int position = entH.first;
             lastPosition = position;
             VariationMap* varsAtCurPosition = entH.second;
             
             // skip position if there are no variants on position (both insertion and non-insertion)
             if (varsAtCurPosition->variation_map.empty() && !insertionVariants.count(position)) {
+				printf("tovar: continue for 1\n");
                 continue;
             }
 
@@ -128,12 +130,14 @@ Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &sco
             //}
 
             if (isTheSameVariationOnRef(position, varsAtCurPosition->variation_map)) {
+				//printf("tovar: continue for 2\n");
                 continue;
             }
 
             if (!refCoverage.count(position) || refCoverage[position] == 0) { // ignore when there's no coverage
                 //System.err.printf("Error tcov: %s %d %d %d %s\n",
                 //        region.chr, position, region.start, region.end, varsAtCurPosition.sv.type);
+				printf("tovar: continue for 3\n");
                 continue;
             }
 
@@ -154,7 +158,8 @@ Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &sco
             vector<string> keys;
             unordered_set<string> kvs;
             for(auto& key_v : varsAtCurPosition->variation_map){
-                if(kvs.count(key_v.first)==0)keys.push_back(key_v.first);
+                //if(kvs.count(key_v.first)==0)keys.push_back(key_v.first);
+				keys.push_back(key_v.first);
             }
             sort(keys.begin(),keys.end(),CMP_KEY);
 
@@ -182,11 +187,11 @@ Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &sco
             Vars* variationsAtPos = getOrPutVars(alignedVariants, position);
 
             collectReferenceVariants(position, totalPosCoverage, variationsAtPos, debugLines);
-			//} //catch(...){// (Exception exception) {
-            //printExceptionAndContinue(exception, "position", string.valueOf(lastPosition), region);
-			//printf("in ToVarsBuilder, error!!\n");
-		// }
-    }
+		 } catch(...){// (Exception exception) {
+			 //printExceptionAndContinue(exception, "position", string.valueOf(lastPosition), region);
+			 printf("in ToVarsBuilder, error!!\n");
+		 }
+	}
 
     //if (config.y) {
     //    System.err.println("TIME: Finish preparing vars:" + LocalDateTime.now());
@@ -211,7 +216,8 @@ bool ToVarsBuilder::isTheSameVariationOnRef(int position, unordered_map<string, 
     if (insertionVariants.count(position)) {
         vk.insert("I");
     }
-    if (vk.size() == 1 && ref.count(position) && vk.count(to_string(ref[position]))) {
+    //if (vk.size() == 1 && ref.count(position) && vk.count(to_string(ref[position]))) {
+    if (vk.size() == 1 && ref.count(position) && vk.count(string(1, ref[position]))) {
         // ignore if only reference were seen and no pileup to avoid computation
         if (!conf->doPileup && !conf->bam.hasBam2() && conf->ampliconBasedCalling == "") {
             return true;
@@ -310,7 +316,8 @@ double ToVarsBuilder::collectVarsAtPosition(unordered_map<int, Vars*> &alignedVa
     double maxfreq = 0;
     for (Variant* tvar : var) {
         //If variant description string is 1-char base and it matches reference base at this position
-        if (ref.count(position) && tvar->descriptionString == to_string(ref[position])) {
+        //if (ref.count(position) && tvar->descriptionString == to_string(ref[position])) {
+        if (ref.count(position) && tvar->descriptionString == string(1, ref[position])) {
             //this is a reference variant
             getOrPutVars(alignedVariants, position)->referenceVariant = tvar;
         } else {
@@ -569,6 +576,52 @@ int ToVarsBuilder::calcHicov(unordered_map<string, Variation*> *insertionVariati
  * @param left left 50 bases in reference sequence
  * @return MSI
  */
+//MSI* ToVarsBuilder::findMSI(const string& tseq1, const string& tseq2, const string& left) {
+//    //Number of nucleotides in microsattelite
+//    int nmsi = 1;
+//    //Number of bases to be shifted to 3 prime
+//    int shift3 = 0;
+//    string maxmsi = "";
+//    double msicnt = 0;
+//    while (nmsi <= tseq1.length() && nmsi <= 6) {
+//        //Microsattelite nucleotide sequence; trim nucleotide(s) from the end
+//        string msint = vc_substr(tseq1, -nmsi, nmsi);
+//        smatch sm;
+//        //Pattern pattern = Pattern.compile("((" + msint + ")+)$");
+//        //Matcher mtch = pattern.matcher(tseq1);
+//        string msimatch = "";
+//        //string pattmp = "((" + msint + ")+)$" ;
+//        string pattmp = ".*((" + msint + ")+)$" ; //------------------need tobe verifying-----------//
+//		//printf("pat: %s\n", pattmp.c_str());
+//        if (regex_match(tseq1, sm, regex(pattmp))) {
+//            msimatch = sm[1];
+//        }
+//        if (!left.empty()) {
+//            //mtch = pattern.matcher(left + tseq1);
+//            string mubiao = left+tseq1;
+//            if (regex_match(mubiao, sm, regex(pattmp) ) ) {
+//                msimatch = sm[1];
+//            }
+//        }
+//        double curmsi = msimatch.length() / (double)nmsi;
+//        //mtch = Pattern.compile("^((" + msint + ")+)").matcher(tseq2);
+//        if (regex_match(tseq2, sm, regex("^((" + msint + ")+)"))) {
+//            curmsi += sm[1].str().length() / (double)nmsi;
+//        }
+//        if (curmsi > msicnt) {
+//            maxmsi = msint;
+//            msicnt = curmsi;
+//        }
+//        nmsi++;
+//    }
+//
+//    string tseq = tseq1 + tseq2;
+//    while (shift3 < tseq2.length() && tseq[shift3] == tseq2[shift3]) {
+//        shift3++;
+//    }
+//    return new MSI(msicnt, shift3, maxmsi);
+//}
+
 MSI* ToVarsBuilder::findMSI(const string& tseq1, const string& tseq2, const string& left) {
     //Number of nucleotides in microsattelite
     int nmsi = 1;
@@ -583,8 +636,8 @@ MSI* ToVarsBuilder::findMSI(const string& tseq1, const string& tseq2, const stri
         //Pattern pattern = Pattern.compile("((" + msint + ")+)$");
         //Matcher mtch = pattern.matcher(tseq1);
         string msimatch = "";
-        //string pattmp = "((" + msint + ")+)$" ;
         string pattmp = ".*((" + msint + ")+)$" ; //------------------need tobe verifying-----------//
+		//printf("pat: %s\n", pattmp.c_str());
         if (regex_match(tseq1, sm, regex(pattmp))) {
             msimatch = sm[1];
         }
@@ -613,7 +666,6 @@ MSI* ToVarsBuilder::findMSI(const string& tseq1, const string& tseq2, const stri
     }
     return new MSI(msicnt, shift3, maxmsi);
 }
-
 /**
  * Fill the information about reference, genotype, refallele and varallele to the variant.
  * @param position position to get data from reference
@@ -643,7 +695,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
         smatch sm;
         
         //Matcher mm = DUP_NUM.matcher(genotype1);
-        if (regex_match(genotype1, sm, regex(DUP_NUM))) {
+        if (regex_match(genotype1, sm, conf->patterns->DUP_NUM)) {
             genotype1 = "+" + to_string(CONF_SVFLANK + atoi(sm[1].str().c_str()));
         }
         else {
@@ -655,18 +707,20 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
 
     if (totalPosCoverage > refCoverage[position] && nonInsertionVariants.count(position + 1)
             && ref.count(position + 1)
-            && nonInsertionVariants[position + 1]->variation_map.count(to_string(ref[position + 1]))) {
-        Variation* tpref = getVariationMaybe(nonInsertionVariants, position + 1, ref[position + 1]);
+		    && nonInsertionVariants[position + 1]->variation_map.count(string(1, ref[position + 1]))) {
+		Variation* tpref = getVariationMaybe(nonInsertionVariants, position + 1, ref[position + 1]);
         referenceForwardCoverage = tpref->varsCountOnForward;
         referenceReverseCoverage = tpref->varsCountOnReverse;
     }
+	//printf("%d-0 %s, %d, %d\n", position, genotype1.c_str(), referenceForwardCoverage, referenceReverseCoverage);
 
     // only reference reads are observed.
     if (variationsAtPos->variants.size() > 0) { //Condition: non-reference variants are found
         //Loop over non-reference variants
         for (Variant *vref : variationsAtPos->variants) {
             //vref - variant reference
-            string genotype1current = genotype1;
+			//printf("%d-1 %s,%s\n", position, vref->descriptionString.c_str(), genotype1.c_str());
+            //string genotype1current = genotype1;
             genotype2 = vref->descriptionString;
             if (starts_with(genotype2, "+")) {
                 genotype2 = "+" + to_string(genotype2.length() - 1);
@@ -677,7 +731,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
             int deletionLength = 0; //$dellen
             //Matcher matcher = BEGIN_MINUS_NUMBER.matcher(descriptionString);
             smatch sm;
-            if (regex_match(descriptionString, sm, regex(BEGIN_MINUS_NUMBER))) {
+            if (regex_match(descriptionString, sm, conf->patterns->BEGIN_MINUS_NUMBER)) {
                 deletionLength = atoi(sm[1].str().c_str());
             }
             //effective position (??): p + dellen - 1 for deletion, p otherwise
@@ -714,7 +768,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                     endPosition += shift3;
                 }
                 //reference allele is 1 base
-                refallele = ref.count(position) ? to_string(ref[position]) : "";
+                refallele = ref.count(position) ? string(1, ref[position]) : "";
                 //variant allele is reference base concatenated with insertion
                 varallele = refallele + descriptionString.substr(1);
                 if (varallele.length() > conf->SVMINLEN) {
@@ -723,7 +777,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                 }
                 
                 //Matcher mm = DUP_NUM.matcher(varallele);
-                if (regex_match(varallele, sm, regex(DUP_NUM))) {
+                if (regex_match(varallele, sm, conf->patterns->DUP_NUM)) {
                     int dupCount = atoi(sm[1].str().c_str());
                     endPosition = startPosition + (2 * CONF_SVFLANK + dupCount) - 1;
                     genotype2 = "+" + to_string(2 * CONF_SVFLANK + dupCount);
@@ -732,8 +786,8 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
             } else if (starts_with(descriptionString, "-")) { //deletion variant
                 //Matcher matcherINV = INV_NUM.matcher(descriptionString);
                 //Matcher matcherStartMinusNum = BEGIN_MINUS_NUMBER_CARET.matcher(descriptionString);
-                bool matcherINV = regex_match(descriptionString, regex(INV_NUM));
-                bool matcherStartMinusNum = regex_match(descriptionString, regex(BEGIN_MINUS_NUMBER_CARET));
+                bool matcherINV = regex_match(descriptionString, conf->patterns->INV_NUM);
+                bool matcherStartMinusNum = regex_match(descriptionString, conf->patterns->BEGIN_MINUS_NUMBER_CARET);
                 if (deletionLength < conf->SVMINLEN) {
                     //variant allele is in the record
                     //remove '-' and number from beginning of variant string
@@ -763,15 +817,15 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                     }
                     //variant allele is 1 base from reference string preceding p
                     if (varallele!="<DEL>") {
-                        varallele = ref.count(position - 1) ? to_string(ref[position - 1]) : "";
+                        varallele = ref.count(position - 1) ? string(1, ref[position - 1]) : "";
                     }
                     //prepend same base to reference allele
-                    refallele = ref.count(position - 1) ? to_string(ref[position - 1]) : "";
+                    refallele = ref.count(position - 1) ? string(1, ref[position - 1]) : "";
                     startPosition--;
                 }
                 //Matcher mm = SOME_SV_NUMBERS.matcher(descriptionString);
-                if (regex_match(descriptionString,regex(SOME_SV_NUMBERS))) {
-                    refallele = ref.count(position) ? to_string(ref[position]) : "";
+                if (regex_match(descriptionString,conf->patterns->SOME_SV_NUMBERS)) {
+                    refallele = ref.count(position) ? string(1, ref[position]) : "";
                 }
                 else if (deletionLength < conf->SVMINLEN) {
                     //append dellen bases from reference string to reference allele
@@ -790,14 +844,14 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                 shift3 = msiData->shift3;
                 msint = msiData->msint;
                 //reference allele is 1 base from reference sequence
-                refallele = ref.count(position) ? to_string(ref[position]) : "";
+                refallele = ref.count(position) ? string(1, ref[position]) : "";
                 //variant allele is same as description string
                 varallele = descriptionString;
             }
 
             //Matcher mtch = AMP_ATGC.matcher(descriptionString);
 
-            if (regex_match(descriptionString, sm, regex(AMP_ATGC))) { //If variant is followed by matched sequence
+            if (regex_match(descriptionString, sm, conf->patterns->AMP_ATGC)) { //If variant is followed by matched sequence
                 //following matching sequence
                 string extra = sm[1];
                 //remove '&' symbol from variant allele
@@ -805,18 +859,18 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                 //append length(extra) bases from reference sequence to reference allele and genotype1
                 string tch = joinRef(ref, endPosition + 1, endPosition + extra.length());
                 refallele += tch;
-                genotype1current += tch;
+                genotype1 += tch;
 
                 //Adjust position
                 endPosition += extra.length();
 
                 //mtch = AMP_ATGC.matcher(varallele);
-                if (regex_match(varallele, sm, regex(AMP_ATGC))) {
+                if (regex_match(varallele, sm, conf->patterns->AMP_ATGC)) {
                     string vextra = sm[1];
                     replaceFirst(varallele, "&", "");
                     tch = joinRef(ref, endPosition + 1, endPosition + vextra.length());
                     refallele += tch;
-                    genotype1current += tch;
+                    genotype1 += tch;
                     endPosition += vextra.length();
                 }
 
@@ -828,7 +882,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                 }
 
                 if (varallele=="<DEL>" && refallele.length() >= 1) {
-                    refallele = ref.count(startPosition) ? to_string(ref[startPosition]) : "";
+                    refallele = ref.count(startPosition) ? string(1, ref[startPosition]) : "";
                     if (refCoverage.count(startPosition - 1)) {
                         totalPosCoverage = refCoverage[startPosition - 1];
                     }
@@ -839,9 +893,10 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                 }
             }
 
-            //If variant is followed by short matched sequence and insertion/deletion
+			//printf("%d-2 %s,%s\n", position, genotype1.c_str(), genotype2.c_str());
+			//If variant is followed by short matched sequence and insertion/deletion
             //mtch = HASH_GROUP_CARET_GROUP.matcher(descriptionString);
-            if (regex_match(descriptionString, sm, regex(HASH_GROUP_CARET_GROUP))) {
+            if (regex_match(descriptionString, sm, conf->patterns->HASH_GROUP_CARET_GROUP)) {
                 string matchedSequence = sm[1]; //$mseq
                 //insertion/deletion tail
                 string tail = sm[2];
@@ -855,7 +910,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                 //If tail is a deletion
                 //mtch = BEGIN_DIGITS.matcher(tail);
                 smatch smq;
-                if (regex_match(tail, smq, regex(BEGIN_DIGITS))) {
+                if (regex_match(tail, smq, conf->patterns->BEGIN_DIGITS)) {
                     //append (deletion length) bases from reference sequence to reference allele
                     int deletion = atoi(smq.str().c_str()); //$d
                     refallele += joinRef(ref, endPosition + 1, endPosition + deletion);
@@ -868,18 +923,18 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                 replaceFirst_re(varallele, "\\^(\\d+)?", "");
 
                 //replace '#' with 'm' and '^' with 'i' in genotypes
-                replaceFirst(genotype1current,"#", "m");
-                replaceFirst(genotype1current,"^", "i");
+                replaceFirst(genotype1,"#", "m");
+                replaceFirst(genotype1,"^", "i");
                 replaceFirst(genotype2, "#", "m");
                 replaceFirst(genotype2, "^", "i");
             }
             //mtch = CARET_ATGNC.matcher(descriptionString); // for deletion followed directly by insertion in novolign
-            if (regex_match(descriptionString, regex(CARET_ATGNC))) {
+            if (regex_match(descriptionString, conf->patterns->CARET_ATGNC)) {
                 //remove '^' sign from varallele
                 replaceFirst(varallele, "^", "");
 
                 //replace '^' sign with 'i' in genotypes
-                replaceFirst(genotype1current, "^", "i");
+                replaceFirst(genotype1, "^", "i");
                 replaceFirst(genotype2, "^", "i");
             }
 
@@ -907,6 +962,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                         while(startPosition + n < cutSite && n < shift3 && endPosition + n != cutSite) {
                             n++;
                         }
+						//n = min(cutSite - startPosition, shift3);
                         if (abs(startPosition + n - cutSite) > dis && abs(endPosition + n - cutSite) > dis ) {
                             n = 0;
                             // Don't move if it makes it worse
@@ -917,6 +973,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                             while(endPosition + n < cutSite && n < shift3) {
                                 n++;
                             }
+							//n = min(cutSite - endPosition, shift3);
                         }
                     }
                     if (n > 0) {
@@ -951,7 +1008,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
             //following reference sequence
             vref->rightseq = joinRef(ref, endPosition + 1, endPosition + 20 > chr0 ? chr0 : endPosition + 20); // right 20 nt
             //genotype description string
-            string genotype = genotype1current + "/" + genotype2;
+            string genotype = genotype1 + "/" + genotype2;
             //remove '&' and '#' symbols from genotype string
             //replace '^' symbol with 'i' in genotype string
             genotype = regex_replace(genotype, regex("&"), "");
@@ -1018,7 +1075,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
         vref->startPosition = position;
         vref->endPosition = position;
         vref->highQualityReadsFrequency = roundHalfEven("0.0000", vref->highQualityReadsFrequency);
-        string referenceBase = ref.count(position) ? to_string(ref[position]) : ""; // $r
+        string referenceBase = ref.count(position) ? string(1, ref[position]) : ""; // $r
         //both refallele and varallele are 1 base from reference string
         vref->refallele = validateRefallele(referenceBase);
         vref->varallele = validateRefallele(referenceBase);

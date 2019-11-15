@@ -11,8 +11,8 @@ FLAGS= -std=c++11 -lhts -O3 -g
 
 #$(CC) parseCigar.o $(FLAGS) -I$(INCLUDE) -L$(LIBS)   -o parseCigar 
 
-launcher:Launcher.o RegionBuilder.o parseCigar.o recordPreprocessor.o VariationRealigner.o
-	$(CC) -o launcher Launcher.o RegionBuilder.o parseCigar.o recordPreprocessor.o VariationRealigner.o $(FLAGS) -I$(INCLUDE) -L$(LIBS) 
+launcher:Launcher.o RegionBuilder.o parseCigar.o recordPreprocessor.o VariationRealigner.o ToVarsBuilder.o
+	$(CC) -o launcher Launcher.o RegionBuilder.o parseCigar.o recordPreprocessor.o VariationRealigner.o ToVarsBuilder.o $(FLAGS) -I$(INCLUDE) -L$(LIBS) 
 
 recordPreprocessor.o:recordPreprocessor.cpp
 	$(CC) -c recordPreprocessor.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
@@ -29,8 +29,12 @@ RegionBuilder.o: RegionBuilder.cpp
 VariationRealigner.o: VariationRealigner.cpp
 	$(CC) -c VariationRealigner.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
 
+ToVarsBuilder.o: ToVarsBuilder.cpp
+	$(CC) -c ToVarsBuilder.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
+
 Launcher.o: Launcher.cpp
 	$(CC) -c Launcher.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
+
 
 
 .PHONY:clean

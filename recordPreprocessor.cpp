@@ -105,7 +105,7 @@ int RecordPreprocessor::next_record(bam1_t *record){
 		//---haoz: filter the record by samfilter
 		//printf("samfilter: %s, samfilter_int: %d, flag: %d, result: %d\n",conf->samfilter.c_str(), std::stoi(conf->samfilter), record->core.flag, record->core.flag & std::stoi(conf->samfilter));
 		if((record->core.flag & std::stoi(conf->samfilter)) != 0){
-			printf("return for samfilter!!\n");
+			//printf("return for samfilter!!\n");
 			continue;
 		}
 		/*

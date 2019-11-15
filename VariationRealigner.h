@@ -12,7 +12,7 @@
 #include <vector>
 #include <iostream>
 
-#include "patterns.h"
+//#include "patterns.h"
 #include "Variation.h"
 #include "VariationUtils.h"
 #include "Configuration.h"
