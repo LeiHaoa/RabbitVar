@@ -25,7 +25,6 @@ bool CMP_VARI(Variant *o1, Variant *o2){
             return o1->descriptionString.compare(o2->descriptionString)<0;
         else
             return res>0;
-        
 }
 
 void ToVarsBuilder::print_result(){
@@ -44,11 +43,12 @@ void ToVarsBuilder::print_result(){
 	//	//}
 	//		
 	//}
+	//for(auto &v:nonInsertionVariants ){
 	for(auto &v:insertionVariants ){
 		int position = v.first;
 		VariationMap* var_map = v.second;
 		for(auto &vm : var_map -> variation_map){
-			printf("%d - %s - %d\n", position, vm.first.c_str(), vm.second->varsCount);
+			printf("%d - %s - %d - %d\n", position, vm.first.c_str(), vm.second->varsCount, vm.second->highQualityReadsCount);
 		}
 			
 	}
@@ -94,6 +94,7 @@ void ToVarsBuilder::initFromScope(Scope<RealignedVariationData> &scope) {
 Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &scope) {
     initFromScope(scope);
     //Configuration config = instance().conf;
+	//print_result();
 
     //if (config.y) {
     //    System.err.printf("Current segment: %s:%d-%d \n", region.chr, region.start, region.end);
@@ -153,6 +154,8 @@ Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &sco
 				hicov = calcHicov(NULL, varsAtCurPosition->variation_map);
 			}
 
+			printf("%d hicov: %d\n", position, hicov);
+
 			//array of all variants for the position
             vector<Variant*> var;
             vector<string> keys;
@@ -197,6 +200,16 @@ Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &sco
     //    System.err.println("TIME: Finish preparing vars:" + LocalDateTime.now());
     //}
     AlignedVarsData *avdata= new AlignedVarsData(scope.maxReadLength, alignedVariants);
+	//print_result();
+	//-----------print alignedVariants--------------//
+	//for(auto& var : alignedVariants){
+	//	int pos = var.first;
+	//	for(auto &v : var.second->varDescriptionStringToVariants){
+	//		string desc = v.first;
+	//		//printf("%d - %s - %s\n", pos, desc.c_str(), v.second->tostring().c_str());
+	//		printf("%d - %s\n", pos, desc.c_str());
+	//	}
+	//}
 
     return Scope<AlignedVarsData>(scope.bam, scope.region, scope.regionRef, scope.maxReadLength,
              scope.splice, avdata);
@@ -455,6 +468,7 @@ void ToVarsBuilder::createVariant(double duprate, unordered_map<int, Vars* > &al
         //    getorputvars(alignedvars, position).sv = sv.splits + "-" + sv.pairs + "-" + sv.clusters;
         //    continue;
         //}
+		//printf("%d key: %s\n", position, descriptionString.c_str());
         if(nonInsertionVariations->variation_map.count(descriptionString)==0)continue;
         Variation* cnt = nonInsertionVariations->variation_map[descriptionString];
         if (cnt->varsCount == 0) { //skip variant if it does not have count
@@ -552,10 +566,10 @@ int ToVarsBuilder::calcHicov(unordered_map<string, Variation*> *insertionVariati
                       unordered_map<string, Variation*> &nonInsertionVariations) {
     int hicov = 0;
     for (auto& descVariantEntry : nonInsertionVariations) {
-        string keystr = descVariantEntry.first;
-        if (starts_with(keystr, "+")) {
-            continue;
-        }
+        //string keystr = descVariantEntry.first;
+        //if (starts_with(keystr, "+")) {
+        //    continue;
+        //}
         hicov += descVariantEntry.second->highQualityReadsCount;
     }
     if (insertionVariations != NULL) {
@@ -638,9 +652,10 @@ MSI* ToVarsBuilder::findMSI(const string& tseq1, const string& tseq2, const stri
         string msimatch = "";
         string pattmp = ".*((" + msint + ")+)$" ; //------------------need tobe verifying-----------//
 		//printf("pat: %s\n", pattmp.c_str());
-        if (regex_match(tseq1, sm, regex(pattmp))) {
-            msimatch = sm[1];
-        }
+        //if (regex_match(tseq1, sm, regex(pattmp))) {
+        //    msimatch = sm[1];
+        //}
+		msimatch = msint;
         if (!left.empty()) {
             //mtch = pattern.matcher(left + tseq1);
             string mubiao = left+tseq1;
@@ -650,9 +665,12 @@ MSI* ToVarsBuilder::findMSI(const string& tseq1, const string& tseq2, const stri
         }
         double curmsi = msimatch.length() / (double)nmsi;
         //mtch = Pattern.compile("^((" + msint + ")+)").matcher(tseq2);
-        if (regex_match(tseq2, sm, regex("^((" + msint + ")+)"))) {
-            curmsi += sm[1].str().length() / (double)nmsi;
-        }
+        //if (regex_match(tseq2, sm, regex("^((" + msint + ")+)"))) {
+        //    curmsi += sm[1].str().length() / (double)nmsi;
+        //}
+		if(tseq2.substr(0, nmsi) == msint){
+            curmsi += nmsi / (double)nmsi;
+		}
         if (curmsi > msicnt) {
             maxmsi = msint;
             msicnt = curmsi;

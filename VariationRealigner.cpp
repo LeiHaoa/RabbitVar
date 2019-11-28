@@ -83,14 +83,14 @@ void VariationRealigner::print_result(){
 	//	}
 	//		
 	//}
-	//for(auto &v: nonInsertionVariants){
-	//	int position = v.first;
-	//	VariationMap* var_map = v.second;
-	//	for(auto &vm : var_map -> variation_map){
-	//		printf("%d - %s - %d\n", position, vm.first.c_str(), vm.second->varsCount);
-	//	}
-	//		
-	//}
+	for(auto &v:nonInsertionVariants ){
+		int position = v.first;
+		VariationMap* var_map = v.second;
+		for(auto &vm : var_map -> variation_map){
+			printf("%d - %s - %d - %d\n", position, vm.first.c_str(), vm.second->varsCount, vm.second->highQualityReadsCount);
+		}
+			
+	}
 	//printf("---sc3e size: %d---\n",softClips3End.size());
 	//for(auto& v: softClips3End){
 	//	int pos = v.first;
@@ -119,7 +119,6 @@ Scope<RealignedVariationData> VariationRealigner::process(Scope<VariationData> s
     //if (!conf.disableSV) {
     //    filterAllSVStructures();
     //}
-	//print_result();
 
     adjustMNP();
 
@@ -129,7 +128,7 @@ Scope<RealignedVariationData> VariationRealigner::process(Scope<VariationData> s
         realignIndels();
 		cout << "--------------realignIndels over!!------------" << endl;
 	}
-	print_result();
+	//print_result();
     RealignedVariationData *rvdata = new RealignedVariationData(nonInsertionVariants, insertionVariants, softClips3End, softClips5End,
 																refCoverage, maxReadLength, duprate, CURSEG, SOFTP2SV, &scope);
 
@@ -137,7 +136,6 @@ Scope<RealignedVariationData> VariationRealigner::process(Scope<VariationData> s
 										  scope.splice, rvdata);
 
 	return scopeTo;
-
 }
 
 void VariationRealigner::initFromScope(Scope<VariationData> scope) {

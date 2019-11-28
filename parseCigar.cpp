@@ -367,6 +367,52 @@ Variation* getVariationFromSeq(Sclip* softClip,
     //}
     return variation;
 }
+void CigarParser::print_result(){
+	cout << "result infom: " << nonInsertionVariants.size() <<
+		" - " << insertionVariants.size() <<
+		" - " << refCoverage.size() << endl;
+
+    //RealignedVariationData *rvdata = new RealignedVariationData(nonInsertionVariants, insertionVariants, softClips3End, softClips5End,
+    //                refCoverage, maxReadLength, duprate, &CURSEG, SOFTP2SV, &scope);
+	//-------------refvoberage-----------------//
+	//for(auto &v: refCoverage ){
+	//	int position = v.first;
+	//	int nn = v.second;
+	//	//for(auto &vm : sclip->seq ){
+	//	printf("%d - %d\n", position, nn);
+	//	//}
+	//		
+	//}
+	for(auto &v:nonInsertionVariants ){
+		int position = v.first;
+		VariationMap* var_map = v.second;
+		for(auto &vm : var_map -> variation_map){
+			printf("%d - %s - %d - %d\n", position, vm.first.c_str(), vm.second->varsCount, vm.second->highQualityReadsCount);
+		}
+			
+	}
+	//for(auto &v: nonInsertionVariants){
+	//	int position = v.first;
+	//	VariationMap* var_map = v.second;
+	//	for(auto &vm : var_map -> variation_map){
+	//		printf("%d - %s - %d\n", position, vm.first.c_str(), vm.second->varsCount);
+	//	}
+	//		
+	//}
+	//printf("---sc3e size: %d---\n",softClips3End.size());
+	//for(auto& v: softClips3End){
+	//	int pos = v.first;
+	//	Sclip* sc = v.second;
+	//	//printf("%d - %s - %d\n", pos, sc->sequence.c_str(), sc->varsCount);
+	//	printf("%d - %d\n", pos, sc->varsCount);
+	//}
+	//for(auto& v: positionToInsertionCount){
+	//	int pos = v.first;
+	//	for(auto& vm: v.second){
+	//		printf("%d - %s - %d\n", pos, vm.first.c_str(), vm.second);
+	//	}
+	//}
+}
 
 Scope<VariationData> CigarParser::process(){
 //void CigarParser::process(){
@@ -382,6 +428,7 @@ Scope<VariationData> CigarParser::process(){
 		count++;
 	}
 	double end_time = get_time();
+	//print_result();
 	printf("totally %d record processed over! and time is %f: \n", count, end_time-start_time);
 	//-----------------------------------------------------//
 	//cout << "non/Insertionvariants: " << nonInsertionVariants.size() << " - " << insertionVariants.size() << " - " << refCoverage.size() << " - " <<positionToDeletionCount.size() << " - " << positionToInsertionCount.size()<< endl;
@@ -1043,6 +1090,7 @@ void CigarParser::addVariationForDeletion(uint8_t mappingQuality, int nm, bool d
         //incCnt(refCoverage, start + i, 1);
 		refCoverage[start+i]++;
     }
+	//printf("Add VariationForDeletion!: %d - %s - %d - %d - %f\n", start, descStringOfDeletedElement.c_str(), hv->highQualityReadsCount, hv->lowQualityReadsCount, tmpq);
 }
 
 bool CigarParser::isNextAfterNumMatched( int ci, int number) {
@@ -1416,6 +1464,7 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
 		for(int i = 0; i < quality_string.length(); i++){
 			tmpq += quality_string[i] ;
 		}
+		tmpq = tmpq / quality_string.length();
 		//pstd is a flag that is 1 if the variant is covered by at least 2 read segments with different positions
 		if (!hv->pstd && hv->pp != 0 && tp != hv->pp) {
 			hv->pstd = true;
@@ -1666,9 +1715,12 @@ int CigarParser::process_deletion(char* querySequence, uint8_t mappingQuality, u
 		quality_of_segment.append((char*)&quality_of_last_segment_before_del); //quality_of_last_segment_before_del is char, convert to char*(string) and appended to quality_of_segment
 	}else{
 		uint8_t quality_of_segment_with_offset = queryQuality[readPositionIncludingSoftClipped + offset];
-		quality_of_segment.append(quality_of_last_segment_before_del > quality_of_segment_with_offset
-								  ? (char*)&quality_of_last_segment_before_del
-								  : (char*)&quality_of_segment_with_offset);
+		//quality_of_segment.append(quality_of_last_segment_before_del > quality_of_segment_with_offset
+		//						  ? (char*)&quality_of_last_segment_before_del
+		//						  : (char*)&quality_of_segment_with_offset);
+		quality_of_segment.append(1, quality_of_last_segment_before_del > quality_of_segment_with_offset
+								  ? (char)quality_of_last_segment_before_del
+								  : (char)quality_of_segment_with_offset);
 	}
 
 	//if reference position is inside region of interest
@@ -1728,7 +1780,7 @@ void CigarParser::appendSegments(char* querySequence, uint8_t* queryQuality, int
     //if an insertion is two segments ahead, append '^' + part of sequence corresponding
     // to next-next segment otherwise (deletion) append '^' + length of a next-next segment
     //descStringOfElement.append('^').append(bam_cigar_op(cigar[ci+2]) == 1
-    //        ? string(querySequence, begin + mLen, indelLen)
+	//        ? string(querySequence, begin + mLen, indelLen)
     //        : indelLen);
 	if(bam_cigar_op(cigar[ci+2]) == 1 ){
 		descstream << "^" << string(querySequence, begin + mLen, indelLen);

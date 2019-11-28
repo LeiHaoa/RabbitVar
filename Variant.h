@@ -244,40 +244,41 @@ class Variant {
     
     string tostring() {
         string str =  "Variant{" ;
-                str = str + "descriptionString=" + "'" + descriptionString + "\'" +
-                ", positionCoverage=" + to_string(positionCoverage) +
-                ", varsCountOnForward=" + to_string(varsCountOnForward) +
-                ", varsCountOnReverse=" + to_string(varsCountOnReverse) +
-                ", strandBiasFlag='" + strandBiasFlag + "\'" +
-                ", frequency=" + to_string(frequency) +
-                ", meanPosition=" + to_string(meanPosition) +
-                ", isAtLeastAt2Positions=" + to_string(isAtLeastAt2Positions) +
-                ", meanQuality=" + to_string(meanQuality) +
-                ", hasAtLeast2DiffQualities=" + to_string(hasAtLeast2DiffQualities) +
-                ", meanMappingQuality=" + to_string(meanMappingQuality) +
-                ", highQualityToLowQualityRatio=" + to_string(highQualityToLowQualityRatio) +
-                ", highQualityReadsFrequency=" + to_string(highQualityReadsFrequency) +
-                ", extraFrequency=" + to_string(extraFrequency) +
-                ", shift3=" + to_string(shift3) +
-                ", msi=" + to_string(msi) +
+                str = str +
+					//"descriptionString=" + "'" + descriptionString + "\'" +
+					//", positionCoverage=" + to_string(positionCoverage) +
+					//", varsCountOnForward=" + to_string(varsCountOnForward) +
+					//", varsCountOnReverse=" + to_string(varsCountOnReverse) +
+					//", strandBiasFlag='" + strandBiasFlag + "\'" +
+					//", frequency=" + to_string(frequency) +
+					//", meanPosition=" + to_string(meanPosition) +
+					//", isAtLeastAt2Positions=" + to_string(isAtLeastAt2Positions) +
+					//", meanQuality=" + to_string(meanQuality) +
+					//", hasAtLeast2DiffQualities=" + to_string(hasAtLeast2DiffQualities) +
+					//", meanMappingQuality=" + to_string(meanMappingQuality) +
+					//", highQualityToLowQualityRatio=" + to_string(highQualityToLowQualityRatio) +
+					//", highQualityReadsFrequency=" + to_string(highQualityReadsFrequency) +
+					//", extraFrequency=" + to_string(extraFrequency) +
+					//", shift3=" + to_string(shift3) +
+					//", msi=" + to_string(msi) +
                 ", msint=" + to_string(msint) +
-                ", numberOfMismatches=" + to_string(numberOfMismatches) +
-                ", hicnt=" + to_string(hicnt) +
-                ", hicov=" + to_string(hicov) +
-                ", leftseq= '" + leftseq + "\'" +
-                ", rightseq= '" + rightseq + "\'" +
-                ", startPosition=" + to_string(startPosition) +
-                ", endPosition=" + to_string(endPosition) +
+					//", numberOfMismatches=" + to_string(numberOfMismatches) +
+					//", hicnt=" + to_string(hicnt) +
+					//", hicov=" + to_string(hicov) +
+					//", leftseq='" + leftseq + "\'" +
+					//", rightseq='" + rightseq + "\'" +
+					//", startPosition=" + to_string(startPosition) +
+					//", endPosition=" + to_string(endPosition) +
                 ", refReverseCoverage=" + to_string(refReverseCoverage) +
                 ", refForwardCoverage=" + to_string(refForwardCoverage) +
                 ", totalPosCoverage=" + to_string(totalPosCoverage) +
-                ", duprate=" + to_string(duprate) +
-                ", genotype= '" + genotype + "\'" +
-                ", varallele= '" + varallele + "\'" +
-                ", refallele= '" + refallele + "\'" +
-                ", vartype= '" + vartype + "\'" +
-                ", crispr= '" + to_string(crispr) + "\'" +
-                ", DEBUG= '" + DEBUG + "\'" +
+					//", duprate=" + to_string(duprate) +
+					//", genotype= '" + genotype + "\'" +
+                ", varallele='" + varallele + "\'" +
+                ", refallele='" + refallele + "\'" +
+                ", vartype='" + vartype + "\'" +
+					//", crispr= '" + to_string(crispr) + "\'" +
+					//", DEBUG= '" + DEBUG + "\'" +
                 '}';
                 return str;
     }

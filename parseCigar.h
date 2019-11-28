@@ -90,6 +90,8 @@ public:
 	bool skipSitesOutRegionOfInterest();
     void makeReference(string fa_file_path, bam_hdr_t* header);
 	char* getRefName(bam1_t* record);
+
+	void print_result();
 private:
 	unordered_map<int, int> refCoverage;
 	Configuration *conf;
