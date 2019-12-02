@@ -245,8 +245,8 @@ class Variant {
     string tostring() {
         string str =  "Variant{" ;
                 str = str +
-					//"descriptionString=" + "'" + descriptionString + "\'" +
-					//", positionCoverage=" + to_string(positionCoverage) +
+					"descriptionString=" + "'" + descriptionString + "\'" +
+					", positionCoverage=" + to_string(positionCoverage) +
 					//", varsCountOnForward=" + to_string(varsCountOnForward) +
 					//", varsCountOnReverse=" + to_string(varsCountOnReverse) +
 					//", strandBiasFlag='" + strandBiasFlag + "\'" +

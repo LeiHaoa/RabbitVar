@@ -1,4 +1,3 @@
-
 #include <unordered_set>
 #include <cmath>
 #include <regex>
@@ -154,8 +153,7 @@ Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &sco
 				hicov = calcHicov(NULL, varsAtCurPosition->variation_map);
 			}
 
-			printf("%d hicov: %d\n", position, hicov);
-
+			//printf("%d hicov: %d, totalPoscoverage: %d\n", position, hicov, totalPosCoverage);
 			//array of all variants for the position
             vector<Variant*> var;
             vector<string> keys;
@@ -164,18 +162,21 @@ Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &sco
                 //if(kvs.count(key_v.first)==0)keys.push_back(key_v.first);
 				keys.push_back(key_v.first);
             }
-            sort(keys.begin(),keys.end(),CMP_KEY);
+			sort(keys.begin(),keys.end(),CMP_KEY);
 
-            //temporary array used for debugging
+            //temporary array used for debuggig
             vector<string> debugLines;
 
             createVariant(duprate, alignedVariants, position, varsAtCurPosition, totalPosCoverage, var, debugLines, keys, hicov);
             totalPosCoverage = createInsertion(duprate, position, totalPosCoverage, var, debugLines, hicov);
+			//printf("%d hicov: %d, totalPoscoverage: %d\n", position, hicov, totalPosCoverage);
             sort(var.begin(), var.end() , CMP_VARI);
             //sortVariants(var);
+			//for(Variant* v: var){
+			//	printf("%d var info: %s\n", position, v->tostring().c_str());
+			//}
 
             double maxfreq = collectVarsAtPosition(alignedVariants, position, var);
-
 
             if (!conf->doPileup && maxfreq <= conf->freq && conf->ampliconBasedCalling == "") {
                 if (!conf->bam.hasBam2()) {
@@ -190,6 +191,11 @@ Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &sco
             Vars* variationsAtPos = getOrPutVars(alignedVariants, position);
 
             collectReferenceVariants(position, totalPosCoverage, variationsAtPos, debugLines);
+			//------------print vars--------------//
+			//for(Variant* vp : variationsAtPos->variants){
+			//	printf("%d varsatpos info: %s\n", position, vp->tostring().c_str());
+			//}
+			//---------pirnt vars over------------//
 		 } catch(...){// (Exception exception) {
 			 //printExceptionAndContinue(exception, "position", string.valueOf(lastPosition), region);
 			 printf("in ToVarsBuilder, error!!\n");
@@ -202,14 +208,14 @@ Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &sco
     AlignedVarsData *avdata= new AlignedVarsData(scope.maxReadLength, alignedVariants);
 	//print_result();
 	//-----------print alignedVariants--------------//
-	//for(auto& var : alignedVariants){
-	//	int pos = var.first;
-	//	for(auto &v : var.second->varDescriptionStringToVariants){
-	//		string desc = v.first;
-	//		//printf("%d - %s - %s\n", pos, desc.c_str(), v.second->tostring().c_str());
-	//		printf("%d - %s\n", pos, desc.c_str());
-	//	}
-	//}
+	for(auto& var : alignedVariants){
+		int pos = var.first;
+		for(auto &v : var.second->varDescriptionStringToVariants){
+			string desc = v.first;
+			printf("%d - %s - %s\n", pos, desc.c_str(), v.second->tostring().c_str());
+			//printf("%d - %s\n", pos, desc.c_str());
+		}
+	}
 
     return Scope<AlignedVarsData>(scope.bam, scope.region, scope.regionRef, scope.maxReadLength,
              scope.splice, avdata);
@@ -362,15 +368,16 @@ int ToVarsBuilder::createInsertion(double duprate, int position, int totalPosCov
 		
 		unordered_map<string, Variation*> insertionVariations = insertionVariants[position]->variation_map;      
         vector<string> insertionDescriptionStrings;
-        for(auto& key_v:insertionVariations)
+        for(auto& key_v:insertionVariations){
             insertionDescriptionStrings.push_back(key_v.first);
+		}
         sort(insertionDescriptionStrings.begin(), insertionDescriptionStrings.end(), CMP_KEY);
         //Collections.sort(insertionDescriptionStrings);
         //Loop over insertion variants
         for (string descriptionString : insertionDescriptionStrings) {
-            if (descriptionString.find("&") != descriptionString.npos && refCoverage.count(position + 1)) {
-                totalPosCoverage = refCoverage[position + 1];
-            }
+            //if (descriptionString.find("&") != descriptionString.npos && refCoverage.count(position + 1)) {
+            //    totalPosCoverage = refCoverage[position + 1];
+            //}
             // String n = entV.getKey();
             Variation* cnt = insertionVariations[descriptionString];
             //count of variants in forward strand
@@ -441,6 +448,7 @@ int ToVarsBuilder::createInsertion(double duprate, int position, int totalPosCov
             //if (instance().conf.debug) {
             //    tvref->debugVariantsContentInsertion(debugLines, descriptionString);
             //}
+
         }
     }
     return totalPosCoverage;
@@ -526,7 +534,8 @@ void ToVarsBuilder::createVariant(double duprate, unordered_map<int, Vars* > &al
        // if (instance().conf.debug) {
        //     tvref->debugvariantscontentsimple(debuglines, descriptionstring);
        // }
-    }
+		//	printf("%d push var: %s\n", position, tvref->tostring().c_str());
+	}
 }
 
 /**
@@ -590,9 +599,11 @@ int ToVarsBuilder::calcHicov(unordered_map<string, Variation*> *insertionVariati
  * @param left left 50 bases in reference sequence
  * @return MSI
  */
+
 //MSI* ToVarsBuilder::findMSI(const string& tseq1, const string& tseq2, const string& left) {
 //    //Number of nucleotides in microsattelite
-//    int nmsi = 1;
+//	//printf("start info: %s, %s, %s\n", tseq1.c_str(), tseq2.c_str(), left.c_str());
+//	int nmsi = 1;
 //    //Number of bases to be shifted to 3 prime
 //    int shift3 = 0;
 //    string maxmsi = "";
@@ -604,27 +615,37 @@ int ToVarsBuilder::calcHicov(unordered_map<string, Variation*> *insertionVariati
 //        //Pattern pattern = Pattern.compile("((" + msint + ")+)$");
 //        //Matcher mtch = pattern.matcher(tseq1);
 //        string msimatch = "";
-//        //string pattmp = "((" + msint + ")+)$" ;
-//        string pattmp = ".*((" + msint + ")+)$" ; //------------------need tobe verifying-----------//
+//        string pattmp = "((" + msint + ")+)$" ; //------------------need tobe verifying-----------//
 //		//printf("pat: %s\n", pattmp.c_str());
-//        if (regex_match(tseq1, sm, regex(pattmp))) {
+//        if (regex_search(tseq1, sm, regex(pattmp))) {
 //            msimatch = sm[1];
-//        }
+//			//printf("msimatch1: %s\n", msimatch.c_str());
+//		}
+//		//msimatch = msint;
 //        if (!left.empty()) {
 //            //mtch = pattern.matcher(left + tseq1);
 //            string mubiao = left+tseq1;
-//            if (regex_match(mubiao, sm, regex(pattmp) ) ) {
+//            if (regex_search(mubiao, sm, regex(pattmp) ) ) {
 //                msimatch = sm[1];
+//				//printf("msimatch2: %s\n", msimatch.c_str());
 //            }
 //        }
 //        double curmsi = msimatch.length() / (double)nmsi;
+//		//printf("1 msint: %s, curmsi: %f\n", msint.c_str(), curmsi);
 //        //mtch = Pattern.compile("^((" + msint + ")+)").matcher(tseq2);
-//        if (regex_match(tseq2, sm, regex("^((" + msint + ")+)"))) {
+//        if (regex_search(tseq2, sm, regex( "^((" + msint + ")+)" ))) {
 //            curmsi += sm[1].str().length() / (double)nmsi;
-//        }
-//        if (curmsi > msicnt) {
+//			//printf("curmsi: %f\n", curmsi);
+//		}
+//		//if(tseq2.substr(0, nmsi) == msint){
+//        //    curmsi += nmsi / (double)nmsi;
+//		//	//printf("curmsi: %f\n", curmsi);
+//		//}
+//		//printf("2 msint: %s, curmsi: %f\n", msint.c_str(), curmsi);
+//		if (curmsi > msicnt) {
 //            maxmsi = msint;
 //            msicnt = curmsi;
+//			//printf("maxmsi: %s, msicnt: %f\n", maxmsi.c_str(), msicnt);
 //        }
 //        nmsi++;
 //    }
@@ -633,12 +654,35 @@ int ToVarsBuilder::calcHicov(unordered_map<string, Variation*> *insertionVariati
 //    while (shift3 < tseq2.length() && tseq[shift3] == tseq2[shift3]) {
 //        shift3++;
 //    }
+//	//printf("end info: %f, %d, %s\n", msicnt, shift3, maxmsi.c_str());
 //    return new MSI(msicnt, shift3, maxmsi);
 //}
-
+inline double curmsi_from_end(string& seq, string& msint, int nmsi){
+	double curmsi = 1.0;
+	for(int i = seq.length() - nmsi; i > 0; i-=nmsi){
+		if(i > nmsi && seq.substr(i-nmsi, nmsi) == msint){
+			curmsi += 1;
+		}else{
+			break;
+		}
+	}
+	return curmsi;
+}
+inline double curmsi_from_start(string& seq, string& msint, int nmsi){
+	double curmsi = 1.0;
+	for(int i = 0; i < seq.length(); i+=nmsi){
+		if(i + nmsi < seq.length() && seq.substr(i, nmsi) == msint){
+			curmsi += 1;
+		}else{
+			break;
+		}
+	}
+	return curmsi;
+}
 MSI* ToVarsBuilder::findMSI(const string& tseq1, const string& tseq2, const string& left) {
     //Number of nucleotides in microsattelite
-    int nmsi = 1;
+	//printf("start info: %s, %s, %s\n", tseq1.c_str(), tseq2.c_str(), left.c_str());
+	int nmsi = 1;
     //Number of bases to be shifted to 3 prime
     int shift3 = 0;
     string maxmsi = "";
@@ -649,31 +693,49 @@ MSI* ToVarsBuilder::findMSI(const string& tseq1, const string& tseq2, const stri
         smatch sm;
         //Pattern pattern = Pattern.compile("((" + msint + ")+)$");
         //Matcher mtch = pattern.matcher(tseq1);
-        string msimatch = "";
-        string pattmp = ".*((" + msint + ")+)$" ; //------------------need tobe verifying-----------//
+        //string msimatch = "";
+        //string pattmp = "((" + msint + ")+)$" ; //------------------need tobe verifying-----------//
 		//printf("pat: %s\n", pattmp.c_str());
-        //if (regex_match(tseq1, sm, regex(pattmp))) {
+        //if (regex_search(tseq1, sm, regex(pattmp))) {
         //    msimatch = sm[1];
+		//	//printf("msimatch1: %s\n", msimatch.c_str());
+		//}
+        //if (!left.empty()) {
+        //    //mtch = pattern.matcher(left + tseq1);
+        //    string mubiao = left+tseq1;
+        //    if (regex_search(mubiao, sm, regex(pattmp) ) ) {
+        //        msimatch = sm[1];
+		//		//printf("msimatch2: %s\n", msimatch.c_str());
+        //    }
         //}
-		msimatch = msint;
-        if (!left.empty()) {
-            //mtch = pattern.matcher(left + tseq1);
-            string mubiao = left+tseq1;
-            if (regex_match(mubiao, sm, regex(pattmp) ) ) {
-                msimatch = sm[1];
-            }
-        }
-        double curmsi = msimatch.length() / (double)nmsi;
+		string mubiao = left+tseq1;
+		double curmsi = curmsi_from_end(mubiao, msint, nmsi);
+        //double curmsi = msimatch.length() / (double)nmsi;
+		//printf("1 msint: %s, curmsi: %f\n", msint.c_str(), curmsi);
         //mtch = Pattern.compile("^((" + msint + ")+)").matcher(tseq2);
-        //if (regex_match(tseq2, sm, regex("^((" + msint + ")+)"))) {
+        //if (regex_search(tseq2, sm, regex( "^((" + msint + ")+)" ))) {
         //    curmsi += sm[1].str().length() / (double)nmsi;
-        //}
-		if(tseq2.substr(0, nmsi) == msint){
-            curmsi += nmsi / (double)nmsi;
+		//	//printf("curmsi: %f\n", curmsi);
+		//}
+		//--------------------------------------
+		//	curmsi += curmsi_from_start(tseq2, msint, nmsi);
+		for(int i = 0; i < tseq2.length(); i+=nmsi){
+			if(i + nmsi < tseq2.length() && tseq2.substr(i, nmsi) == msint){
+				curmsi += 1.0;
+			}else{
+				break;
+			}
 		}
-        if (curmsi > msicnt) {
+		//--------------------------------------
+		//if(tseq2.substr(0, nmsi) == msint){
+        //    curmsi += nmsi / (double)nmsi;
+		//	//printf("curmsi: %f\n", curmsi);
+		//}
+		//printf("2 msint: %s, curmsi: %f\n", msint.c_str(), curmsi);
+		if (curmsi > msicnt) {
             maxmsi = msint;
             msicnt = curmsi;
+			//printf("maxmsi: %s, msicnt: %f\n", maxmsi.c_str(), msicnt);
         }
         nmsi++;
     }
@@ -682,6 +744,7 @@ MSI* ToVarsBuilder::findMSI(const string& tseq1, const string& tseq2, const stri
     while (shift3 < tseq2.length() && tseq[shift3] == tseq2[shift3]) {
         shift3++;
     }
+	//printf("end info: %f, %d, %s\n", msicnt, shift3, maxmsi.c_str());
     return new MSI(msicnt, shift3, maxmsi);
 }
 /**
@@ -801,6 +864,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                     genotype2 = "+" + to_string(2 * CONF_SVFLANK + dupCount);
                     varallele = "<DUP>";
                 }
+				//printf("%d-1 %s\n", position, msint.c_str());
             } else if (starts_with(descriptionString, "-")) { //deletion variant
                 //Matcher matcherINV = INV_NUM.matcher(descriptionString);
                 //Matcher matcherStartMinusNum = BEGIN_MINUS_NUMBER_CARET.matcher(descriptionString);
@@ -849,6 +913,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                     //append dellen bases from reference string to reference allele
                     refallele += joinRef(ref, position, position + deletionLength - 1);
                 }
+				//printf("%d-2 %s\n", position, msint.c_str());
             } else { //Not insertion/deletion variant. SNP or MNP
                 //Find MSI adjustment
                 string tseq1 = joinRef(ref, position - 30 > 1 ? position - 30 : 1, position + 1);
@@ -865,6 +930,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                 refallele = ref.count(position) ? string(1, ref[position]) : "";
                 //variant allele is same as description string
                 varallele = descriptionString;
+				//printf("%d-3 tseq1: %s, tseq2: %s, msint: %s\n", position, tseq1.c_str(), tseq2.c_str(), msint.c_str());
             }
 
             //Matcher mtch = AMP_ATGC.matcher(descriptionString);
@@ -918,6 +984,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                 string matchedSequence = sm[1]; //$mseq
                 //insertion/deletion tail
                 string tail = sm[2];
+				printf("%d HASH_GROUP find!%s,%s\n", position, matchedSequence.c_str(), tail.c_str());
 
                 //adjust position by length of matched sequence
                 endPosition += matchedSequence.length();
@@ -1048,6 +1115,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
             vref->refForwardCoverage = referenceForwardCoverage;
             vref->refReverseCoverage = referenceReverseCoverage;
 
+			//printf("%d vref info: msint: %s, refForwardcoverage: %d, refReversecoverage: %d\n", position, msint.c_str(), referenceForwardCoverage, referenceReverseCoverage);
             //bias is [0-2];[0-2] where first flag is for reference, second for variant
             //if reference variant is not found, first flag is 0
             if (variationsAtPos->referenceVariant != NULL) {
@@ -1078,6 +1146,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
         //    variationsAtPos->variants.end = remove_if(variationsAtPos->variants.begin(),variationsAtPos->variants.end(),regex_match(vref->varallele, regex(ANY_SV)));
         //}
     } else if (variationsAtPos->referenceVariant != NULL) {
+		printf("%d in else if case!\n", position);
         Variant* vref = variationsAtPos->referenceVariant; //no variant reads are detected.
         vref->totalPosCoverage = totalPosCoverage;
         vref->positionCoverage = 0;
