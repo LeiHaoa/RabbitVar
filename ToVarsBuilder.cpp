@@ -868,13 +868,14 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
             } else if (starts_with(descriptionString, "-")) { //deletion variant
                 //Matcher matcherINV = INV_NUM.matcher(descriptionString);
                 //Matcher matcherStartMinusNum = BEGIN_MINUS_NUMBER_CARET.matcher(descriptionString);
-                bool matcherINV = regex_match(descriptionString, conf->patterns->INV_NUM);
-                bool matcherStartMinusNum = regex_match(descriptionString, conf->patterns->BEGIN_MINUS_NUMBER_CARET);
+                bool matcherINV = regex_search(descriptionString, conf->patterns->INV_NUM);
+                bool matcherStartMinusNum = regex_search(descriptionString, conf->patterns->BEGIN_MINUS_NUMBER_CARET);
                 if (deletionLength < conf->SVMINLEN) {
                     //variant allele is in the record
                     //remove '-' and number from beginning of variant string
                     varallele = descriptionString;
                     replaceFirst_re(varallele, "^-\\d+", "");
+					printf("varallel: %s => %s\n", descriptionString.c_str(), varallele.c_str());
 
                     refVariantMsi = proceedVrefIsDeletion(position, deletionLength);
                     msi = refVariantMsi->msi;
@@ -1014,9 +1015,11 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                 replaceFirst(genotype2, "^", "i");
             }
             //mtch = CARET_ATGNC.matcher(descriptionString); // for deletion followed directly by insertion in novolign
-            if (regex_match(descriptionString, conf->patterns->CARET_ATGNC)) {
+            if (regex_search(descriptionString, conf->patterns->CARET_ATGNC)) {
                 //remove '^' sign from varallele
+				printf("varallel before: %s\n", varallele.c_str());
                 replaceFirst(varallele, "^", "");
+				printf("varallel after: %s\n", varallele.c_str());
 
                 //replace '^' sign with 'i' in genotypes
                 replaceFirst(genotype1, "^", "i");

@@ -32,7 +32,6 @@ RecordPreprocessor::RecordPreprocessor(Region& region, Configuration *conf){
 RecordPreprocessor::~RecordPreprocessor(){
 	bam_hdr_destroy(header);
 	if(in) sam_close(in);
-
 	//free(reference.referenceSequences);
 }
 
@@ -40,7 +39,9 @@ void RecordPreprocessor::makeReference(string fa_file_path){
 	int extension = conf->referenceExtension;
 	int sequenceStart = region.start - conf->numberNucleotideToExtend - extension < 1 ?
 					 1: region.start - conf->numberNucleotideToExtend - extension;
-	int len = 248956422;
+	//int len = 248956422;
+	int len = conf->chrLengths[region.chr];
+	cout << "chr: " << region.chr << " length is: " << len << endl;
 	int sequenceEnd = region.end + conf->numberNucleotideToExtend + extension > len ?
 				len : region.end + conf->numberNucleotideToExtend + extension;
 
@@ -63,11 +64,12 @@ void RecordPreprocessor::makeReference(string fa_file_path){
 	//**********char* seq = faidx_fetch_seq(fasta_reference, "chr1", 3828491, 3919709, &ref_len);
 	printf("reference length is: %d\n", ref_len);
 	//for(int i = 0; i < reference.ref_end - reference.ref_start; ++i){//java里面是到了55271531，截断了一块先不管,先造出数据来
-	for(int i = reference.ref_start; i < reference.ref_end - CONF_SEED_1; ++i){
+	for(int i = reference.ref_start; i <= reference.ref_end; ++i){
 		reference.referenceSequences[i] = toupper(seq[i - reference.ref_start]);
-		//printf("%c", i, seq[i]);
+		//printf("%d - %c\n", i, reference.referenceSequences[i]);
 		//printf("%d-%c\n",i + reference.ref_start, seq[i]);
 	}
+	//exit(0);
 	//printf("\n");
 	//reference.referenceSequences = seq;
 }	
@@ -83,12 +85,12 @@ string getMateReferenceName(bam_hdr_t* header, bam1_t* record) {
 	return string(header->target_name[record->core.mtid]);
 }
 
-inline int getMateAlignmentStart(bam1_t* record){
-	return record->core.mpos + 1;
-}
-inline int getAlignmentStart(bam1_t* record){
-	return record->core.pos+1;
-}
+//inline int getMateAlignmentStart(bam1_t* record){
+//	return record->core.mpos + 1;
+//}
+//inline int getAlignmentStart(bam1_t* record){
+//	return record->core.pos+1;
+//}
 
 inline string get_cigar_string(uint32_t* cigar, int n_cigar){
 	string ss;

@@ -59,6 +59,9 @@ inline string vc_substr(const string &str, int begin, int len) {
 inline bool starts_with(string& s, string t){
 	return s.find(t) == 0;
 }
+inline bool ends_with(string& s, string t){
+	return s.rfind(t) == s.length()-t.length();
+}
 
 inline vector<string> ssplit(const string& str, const string& delim) {
 	vector<string> res;
@@ -149,4 +152,30 @@ inline double roundHalfEven(string bit, double value) {
         //return Double.parseDouble(new DecimalFormat(pattern).format(value));
 		return value;
 }
+//-----------------about htslib operation----------------------
+//TODO: to be verifying
+inline int getAlignmentStart(bam1_t* record){
+	return record->core.pos+1;
+}
+
+//TODO: to be verifying
+inline int getMateAlignmentStart(bam1_t* record){
+	return record->core.mpos + 1;
+}
+
+inline int getAlignmentEnd(bam1_t* record){
+	return bam_endpos(record);
+}
+
+inline int getAlignedLength(uint32_t* cigar, int n_cigar){
+	int length = 0;
+	for(int c_i = 0; c_i < n_cigar; c_i++){
+		if(bam_cigar_op(cigar[c_i]) == 0 || bam_cigar_op(cigar[c_i]) == 2){
+			length += bam_cigar_oplen(cigar[c_i]);	
+		}
+	}
+	return length;
+}
+//-----------------about htslib operation----------------------
+
 #endif

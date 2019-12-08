@@ -12,11 +12,11 @@ public:
     //VarDictLauncher(ReferenceResource referenceResource) {
     //    this.referenceResource = referenceResource;
     //}
-	void start(Configuration &config);
-    void initResources(Configuration &conf);
-    std::tuple<string, bool, vector<string> > readBedFile(Configuration &conf);
+	void start(Configuration *config);
+    void initResources(Configuration *conf);
+    std::tuple<string, bool, vector<string> > readBedFile(Configuration *conf);
     void readChr(string bam, unordered_map<string, int> &chrs);
-    std::tuple<string, string> getSampleNames(Configuration &conf);
-    std::tuple<string, string> getSampleNamesSomatic(Configuration &conf);
+    std::tuple<string, string> getSampleNames(Configuration *conf);
+    std::tuple<string, string> getSampleNamesSomatic(Configuration *conf);
 };
 #endif

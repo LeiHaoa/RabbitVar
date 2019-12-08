@@ -2,7 +2,6 @@
 #include "RegionBuilder.h"
 #include <iostream>
 
-BedRowFormat DEFAULT_BED_ROW_FORMAT(2, 6, 7, 9, 10, 12);
 BedRowFormat CUSTOM_BED_ROW_FORMAT(0, 1, 2, 3, 1, 2);
 BedRowFormat AMP_BED_ROW_FORMAT(0, 1, 2, 6, 7, 3);
 
@@ -24,6 +23,8 @@ vector<vector<Region> > RegionBuilder::buildRegions(vector<string>& segRaws, boo
 	bool isZeroBased = config.zeroBased;
 	vector<vector<Region> > segs;
 	BedRowFormat format = config.bedRowFormat;
+	//cout << "format info: "  << format.chrColumn << " - " << format.startColumn << " - " << format.endColumn << " - " << format.geneColumn
+	//	 << " thickStartColumn: " << format.thickStartColumn << " thickendcolumn: " << format.thickEndColumn << endl;
 	//BedRowFormat format = (0, 1, 2, 3, 1, 2);
 	for (string seg : segRaws) {
 		vector<string> columnValues = ssplit(seg, config.delimiter);
@@ -45,6 +46,8 @@ vector<vector<Region> > RegionBuilder::buildRegions(vector<string>& segRaws, boo
 				//throw e;
 			}
 		}
+		//cout << "format info: "  << format.chrColumn << " - " << format.startColumn << " - " << format.endColumn << " - " << format.geneColumn
+		//	 << " thickStartColumn: " << format.thickStartColumn << " thickendcolumn: " << format.thickEndColumn << endl;
 		string chr = columnValues[format.chrColumn];
 		chr = correctChromosome(chromosomesLengths, chr);
 		int cdsStart = std::stoi(columnValues[format.startColumn]);
@@ -92,6 +95,9 @@ vector<vector<Region> > RegionBuilder::buildAmpRegions(vector<string>& segRaws, 
 	unordered_map<string, vector<Region> > tsegs; //= new HashMap<>();
 	for (string str : segRaws) {
 		vector<string> split = ssplit(str, config.delimiter);
+		for(string spi: split){
+			cout << "spi: " << spi << endl;
+		}
 		string chr = split[AMP_BED_ROW_FORMAT.chrColumn];
 		chr = correctChromosome(chromosomesLengths, chr);
 		int start = std::stoi(split[AMP_BED_ROW_FORMAT.startColumn]);

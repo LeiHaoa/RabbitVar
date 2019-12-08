@@ -18,6 +18,9 @@
 #define CONF_EXTENSION  5000
 #define CONF_DEFAULT_AMPLICON_PARAMETERS  "10:0.95"
 #define CONF_MAX_EXCEPTION_COUNT  10
+#define CONF_HG19 ""
+#define CONF_HG38 ""
+#define CONF_MM10 ""
 
 //using namespace std;
 class BedRowFormat {

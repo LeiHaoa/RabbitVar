@@ -1,8 +1,12 @@
 #include "Cluster.h"
 #include <sys/time.h>
 #include "VariationRealigner.h"
+#include "htslib/hts.h"
+#include "htslib/sam.h"
+#include "htslib/faidx.h"
 #include <unordered_set>
 #include <cmath>
+#include <assert.h>
 using namespace std;
 
 //double get_time(){
@@ -84,10 +88,11 @@ void VariationRealigner::print_result(){
 	//		
 	//}
 	for(auto &v:nonInsertionVariants ){
+	//for(auto &v:insertionVariants ){
 		int position = v.first;
 		VariationMap* var_map = v.second;
 		for(auto &vm : var_map -> variation_map){
-			printf("%d - %s - %d - %d\n", position, vm.first.c_str(), vm.second->varsCount, vm.second->highQualityReadsCount);
+			printf("%d - %s - %d - %d - %.1f\n", position, vm.first.c_str(), vm.second->varsCount, vm.second->highQualityReadsCount, vm.second->meanPosition);
 		}
 			
 	}
@@ -96,7 +101,7 @@ void VariationRealigner::print_result(){
 	//	int pos = v.first;
 	//	Sclip* sc = v.second;
 	//	//printf("%d - %s - %d\n", pos, sc->sequence.c_str(), sc->varsCount);
-	//	printf("%d - %d\n", pos, sc->varsCount);
+	//	printf("%d - %d - %s\n", pos, sc->varsCount, sc->used? "true": "false");
 	//}
 	//for(auto& v: positionToInsertionCount){
 	//	int pos = v.first;
@@ -120,9 +125,10 @@ Scope<RealignedVariationData> VariationRealigner::process(Scope<VariationData> s
     //    filterAllSVStructures();
     //}
 
-    adjustMNP();
-
 	//print_result();
+    adjustMNP();
+	//print_result();
+
     if (conf->performLocalRealignment) {
 		cout << "--------------realignIndels!!------------" << endl;
         realignIndels();
@@ -416,7 +422,7 @@ void VariationRealigner::adjustMNP() {
                 Sclip *sc5v = softClips5End[position + mnt.length()];
                 if (!sc5v->used) {
                     string seq = findconseq(sc5v, 0);
-					printf("consequence: %s - mnt: %s\n", seq.c_str(), mnt.c_str());
+					printf("consequence: %s - mnt: %s - pos: %d\n", seq.c_str(), mnt.c_str(), position+mnt.length());
                     if (!seq.empty() && seq.length() >= mnt.length()) {
 						printf("step1\n");
                         reverse(seq.begin(), seq.end());
@@ -446,11 +452,14 @@ void VariationRealigner::realignIndels()  {
     //if (conf.y) printf("Start Realigndel");
     
     realigndel(&bams, positionToDeletionCount);
+	//print_result();
+	//exit(0);
 
 	//if (conf.y) printf("Start Realignins");
 
     realignins(positionToInsertionCount);
     
+	//print_result();
 	//if (conf.y) printf("Start Realignlgdel");
 
     //TODO SV相关没写完
@@ -461,7 +470,6 @@ void VariationRealigner::realignIndels()  {
 	printf("------------------------------start 30--------------------------------------------\n");
     realignlgins30();
 	printf("------------------------------end 30--------------------------------------------\n");
-
 	//print_result();
   	//if (conf.y) printf("Start Realignlgins");
     //realignlgins(svStructures.svfdup, svStructures.svrdup);
@@ -473,6 +481,13 @@ void VariationRealigner::realignIndels()  {
  * @param bamsParameter BAM file list (can be NULL in few cases of running realigndel)
 */
 void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map<int, unordered_map<string, int> > positionToDeletionCount) {
+	//if(positionToDeletionCount.size() == 1){
+	//	for(auto& vm: positionToDeletionCount){
+	//		for(auto v: vm.second){
+	//			printf("deletion before process: %s, count: %d\n", v.first.c_str(), v.second);
+	//		}
+	//	}
+	//}
     unordered_map<int, char> ref = reference.referenceSequences;
     vector<string> *bams;
     if (bamsParameter == NULL || bamsParameter->size() == 0) {
@@ -491,8 +506,8 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
             string vn = tpl->descriptionstring;
             int dcnt = tpl->count;
             //if (conf.y) {
-            //    printf("  Realigndel for: %s %s %s cov: %s\n", p, vn, dcnt, refCoverage[p]);
-            //}
+			printf("  Realigndel for: %d %s %d cov: %d\n", p, vn.c_str(), dcnt, refCoverage[p]);
+			//}
             Variation* vref = getVariation(nonInsertionVariants, p, vn);
             int dellen = 0;
             //----regex------regex_match(desc_string_of_insertion_segment, regex(BEGIN_ATGC_END)
@@ -502,7 +517,7 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
             if (mtch) {
                 dellen = atoi(sm[1].str().c_str());
             }
-            mtch = regex_match(vn, sm, conf->patterns->UP_NUMBER_END);
+            mtch = regex_search(vn, sm, conf->patterns->UP_NUMBER_END);
             if (mtch) {
                 dellen += atoi(sm[1].str().c_str());
             }
@@ -516,7 +531,7 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
                 inv3 = sm[2];
             } else if (regex_match(vn, sm, conf->patterns->BEGIN_MINUS_NUMBER_ANY)) {
                 extra = regex_replace(sm[1].str(), regex("\\^|&|#"), "");
-                if (regex_match(vn, sm, conf->patterns->CARET_ATGNC)) {
+                if (regex_search(vn, sm, conf->patterns->CARET_ATGNC)) {
                     extrains = sm[1];
                 }
             }
@@ -602,20 +617,16 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
                     adjRefCnt(tv, getVariationMaybe(nonInsertionVariants, p, ref[p]), dellen);
                 }
 
-                int q=1;
-                if(mp > p && me == 3){
-                    if (nonInsertionVariants.count(p) ){
-                        if(nonInsertionVariants[p]->variation_map.count(string(1,ref[p]))){
+                if(mp > p && me == 3 && nonInsertionVariants.count(p) &&
+				   nonInsertionVariants[p]->variation_map.count(string(1, ref[p]))){
                             Variation *lref = nonInsertionVariants[p]->variation_map[string(1,ref[p])];
                             adjCnt(vref, tv, lref);
-                            q=0;
-                        }
-                    }
-                }
-                if(q) adjCnt(vref, tv);       
+				}else{
+					adjCnt(vref, tv);
+				}
+				//if(q) adjCnt(vref, tv);       
                 /////////---??????------------------------------------------------------------------banlaz--------------
 
-                
                 nonInsertionVariants[mp]->variation_map.erase(mm);
                 if (nonInsertionVariants[mp]->variation_map.empty()) {
                     nonInsertionVariants.erase(mp);
@@ -682,11 +693,12 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
                             refCoverage[p] += tv->varsCount;
                         }
                         Variation *lref = sc3pp <= p ? NULL : getVariationMaybe(nonInsertionVariants, p, ref[p]);
-						if(lref == NULL){
-							adjCnt(vref, tv);
-						}else{
-							adjCnt(vref, tv, lref);
-						}
+						//if(lref == NULL){
+						//	adjCnt(vref, tv);
+						//}else{
+						//	adjCnt(vref, tv, lref);
+						//}
+						adjCnt(vref, tv, lref);
                         softClips3End[sc3pp]->used = true;
                     }
                 }
@@ -700,7 +712,7 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
                     && pe - p >= 5
                     && pe - p < maxReadLength - 10
                     && h != NULL && h->varsCount != 0
-                    //&& noPassingReads(chr, p, pe, bams)TODO
+                    && noPassingReads(chr, p, pe, *bams)
                     && vref->varsCount > 2 * h->varsCount * (1 - (pe - p) / (double) maxReadLength)) {
                 adjCnt(vref, h, h);
             }
@@ -724,10 +736,10 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
             }
             Variation *vref = nonInsertionVariants[p]->variation_map[vn];
             smatch matcher;
-            if (regex_match(vn, matcher, conf->patterns->MINUS_NUMBER_AMP_ATGCs_END)) {
+            if (regex_search(vn, matcher, conf->patterns->MINUS_NUMBER_AMP_ATGCs_END)) {
                 string tn = matcher[1];
                 if (nonInsertionVariants[p]->variation_map.count(tn)>0) {
-//                	cout<<"-------------nonInserVar[p]->vm.count(tn) is "<<nonInsertionVariants[p]->variation_map.count(tn)<<" ------------"<<endl;
+                	cout<<"-------------nonInserVar[p]->vm.count(tn)" << " ------------"<<endl;
 					Variation *tref = nonInsertionVariants[p]->variation_map[tn];
                     if (vref->varsCount < tref->varsCount) {
                         adjCnt(tref, vref);
@@ -739,6 +751,14 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
             //printExceptionAndContinue(exception, "variant", string.valueOf(lastPosition), region);
         }
     }
+
+	//if(positionToDeletionCount.size() == 1){
+	//	for(auto& vm: positionToDeletionCount){
+	//		for(auto v: vm.second){
+	//			printf("deletion after process: %s, count: %d\n", v.first.c_str(), v.second);
+	//		}
+	//	}
+	//}
 }
 
     /**
@@ -762,7 +782,6 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
                 string vn = tpl->descriptionstring;
                 int insertionCount = tpl->count;
                 //if (conf.y) {
-                //    printf(format("  Realign Ins: %s %s %s", position, vn, insertionCount));
                 //}
                 string insert1;
                 //Matcher mtch = BEGIN_PLUS_ATGC.matcher(vn);
@@ -868,7 +887,7 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
 
                 vector<Mismatch*> mmm = mm3;
                 mmm.insert(mmm.end(), mm5.begin(), mm5.end());
-				//printf("mm3 size: %d, mm5 size: %d\n", mm3.size(), mm5.size());
+				printf("mm3 size: %d, mm5 size: %d\n", mm3.size(), mm5.size());
                 Variation* vref = getVariation(insertionVariants, position, vn);
                 for (Mismatch* mismatch : mmm) {
                     // $mm mismatch nucleotide
@@ -884,24 +903,30 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
                     }
 
                     if (!nonInsertionVariants.count(mismatchPosition)) {
+						//printf("continue 1\n");
                         continue;
                     }
 
                     
                     if (!nonInsertionVariants[mismatchPosition]->variation_map.count(mismatchBases)) {
+						//printf("continue 2\n");
                         continue;
                     }
                     Variation* variation = nonInsertionVariants[mismatchPosition]->variation_map[mismatchBases];
                     if (variation->varsCount == 0) {
+						//printf("continue 3\n");
                         continue;
                     }
                     if (variation->meanQuality / variation->varsCount < conf->goodq) {
+						//printf("continue 4\n");
                         continue;
                     }
                     if (variation->meanPosition / variation->varsCount > (mismatchEnd == 3 ? nm3 + 4 : nm5 + 4)) { // opt_k;
+						//printf("continue 5: meap: %f, varc: %d, msimatchedEnd: %d, nm3: %d, nm5: %d\n", variation->meanPosition, variation->varsCount, mismatchEnd, nm3, nm5);
                         continue;
                     }
                     if (variation->varsCount >= insertionCount + insert1.length() || variation->varsCount / insertionCount >= 8) {
+						//printf("continue 6\n");
                         continue;
                     }
                     //if (conf.y) {
@@ -924,19 +949,23 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
                     }else{
 						adjCnt(vref,variation);
 					}
+					//printf("erase1: mismatchPositon: %d, mismatchBases: %s\n", mismatchPosition, mismatchBases.c_str());
                     nonInsertionVariants[mismatchPosition]->variation_map.erase(mismatchBases);
                     if (nonInsertionVariants[mismatchPosition]->variation_map.empty()) {
+						//printf("erase2: mismatchPositon: %d\n", mismatchPosition);
                         nonInsertionVariants.erase(mismatchPosition);
                     }
                 }
                 if (misp3 != 0 && mm3.size() == 1 && nonInsertionVariants.count(misp3)
                         && nonInsertionVariants[misp3]->variation_map.count(misnt3)
                         && nonInsertionVariants[misp3]->variation_map[misnt3]->varsCount < insertionCount) {
+					//printf("erase3: mismatchPositon: %d, mismatchBases: %s\n", misp3, misnt3.c_str());
                     nonInsertionVariants[misp3]->variation_map.erase(misnt3);
                 }
                 if (misp5 != 0 && mm5.size() == 1 && nonInsertionVariants.count(misp5)
                         && nonInsertionVariants[misp5]->variation_map.count(misnt5)
                         && nonInsertionVariants[misp5]->variation_map[misnt5]->varsCount < insertionCount) {
+					//printf("erase4: mismatchPositon: %d, mismatchBases: %s\n", misp5, misnt5.c_str());
                     nonInsertionVariants[misp5]->variation_map.erase(misnt5);
                 }
                 for (int sc5pp : sc5p) {
@@ -1508,36 +1537,39 @@ void VariationRealigner::realignlgins30() {
     }
     sort(tmp3.begin(), tmp3.end(), COMP3);
     int lastPosition = 0;
-    for (SortPositionSclip *t5 : tmp5) {
-        try {
-             int p5 = t5->position;
-            lastPosition = p5;
-             Sclip *sc5v = t5->softClip;
-             int cnt5 = t5->count;
-            if (sc5v->used) {
-                continue;
-            }
-            for (SortPositionSclip* t3 : tmp3) {
-                try {
+	//printf("haoz--------------m5 size: %d, m3 size: %d------------\n", tmp5.size(), tmp3.size());
+	for (SortPositionSclip *t5 : tmp5) {
+		//printf("-----------------split line start----------------\n");
+		try {
+			int p5 = t5->position;
+			lastPosition = p5;
+			Sclip *sc5v = t5->softClip;
+			int cnt5 = t5->count;
+			if (sc5v->used) {
+				printf("sc5v used!\n");
+				continue;
+			}
+			for (SortPositionSclip* t3 : tmp3) {
+				try {
 					int p3 = t3->position;
 					lastPosition = p3;
 					Sclip *sc3v = t3->softClip;
 					int cnt3 = t3->count;
 					//printf("p5: %d, cnt5: %d, p3: %d, cnt3: %d, lastPosition: %d\n", p5, cnt5, p3, cnt3, lastPosition);
 					if (sc5v->used) {
-						//printf("sc5v used and break this for loop!\n");
-                        break;
-                    }
-                    if (sc3v->used) {
-						//printf("sc3v used and break this for loop!\n");
-                        continue;
-                    }
-                    if (p5 - p3 > maxReadLength * 2.5) {
-						//printf("p5 - p3 and break this for loop!\n");
-                        continue;
-                    }
-                    if (p3 - p5 > maxReadLength - 10) { // if they're too far away, don't even try
-						//printf("p3 - p5 used and break this for loop!\n");
+						//printf("sc5v used and break this for loop! : %d\n", p5);
+						break;
+					}
+					if (sc3v->used) {
+						//printf("sc3v used and break this for loop! : %d\n", p3);
+						continue;
+					}
+					if (p5 - p3 > maxReadLength * 2.5) {
+						//printf("p5 - p3 and break this for loop! : p5: %d, p3: %d, mrl: %d\n", p5, p3, maxReadLength);
+						continue;
+					}
+					if (p3 - p5 > maxReadLength - 10) { // if they're too far away, don't even try
+						//printf("p3 - p5 and break this for loop! : p3: %d, p5: %d, mrl: %d\n", p3, p5, maxReadLength);
                         continue;
                     }
                      string seq5 = findconseq(sc5v, 5);
@@ -1596,10 +1628,12 @@ void VariationRealigner::realignlgins30() {
                     if (p5 > p3) {
                         if (seq3.length() > ins.length()
                                 && !ismatch(seq3.substr(ins.length()), joinRef(ref, p5, p5 + seq3.length() - ins.length() + 2), 1)) {
+							printf("p5>p3 continue 1\n");
                             continue;
                         }
                         if (seq5.length() > ins.length()
                                 && !ismatch(seq5.substr( ins.length()), joinRef(ref, p3 - (seq5.length() - ins.length()) - 2, p3 - 1), -1)) {
+							printf("p5>p3 continue 2\n");
                             continue;
                         }
                         //if (conf.y) {
@@ -1610,6 +1644,7 @@ void VariationRealigner::realignlgins30() {
                             ins = to_string(p3 - p5) + "^" + ins;
                             bi = p3;
                             vref = getVariation(nonInsertionVariants, p3, ins);
+							printf("find deletion1587: %s : varsCount: %d\n", ins.c_str(), vref->varsCount);
                         } else if (tmp.length() < ins.length()) {
                             ins = vc_substr(ins, 0, ins.length() - tmp.length()) + "&" + vc_substr(ins, p3 - p5);
                             ins = "+" + ins;
@@ -1619,14 +1654,17 @@ void VariationRealigner::realignlgins30() {
                             ins = "-" + to_string(ins.length()) + "^" + ins;
                             bi = p3;
                             vref = getVariation(nonInsertionVariants, p3, ins);
+							printf("find deletion1599: %s : varsCount: %d\n", ins.c_str(), vref->varsCount);
                         }
                     } else {
                         if (seq3.length() > ins.length()
                                 && !ismatch(seq3.substr( ins.length()), joinRef(ref, p5, p5 + seq3.length() - ins.length() + 2), 1)) {
+							printf("p3>p5 continue 1\n");
                             continue;
                         }
                         if (seq5.length() > ins.length()
                                 && !ismatch(seq5.substr( ins.length()), joinRef(ref, p3 - (seq5.length() - ins.length()) - 2, p3 - 1), -1)) {
+							printf("p3>p5 continue 2\n");
                             continue;
                         }
 
@@ -1650,9 +1688,9 @@ void VariationRealigner::realignlgins30() {
 							printf("ins4: %s\n", ins.c_str());
                         } else {
                             // -1 because joinRef works to the bound exactly
-							printf("ins5: %s\n", ins.c_str());
+							printf("ins5: %s, tmp: %s\n", ins.c_str(), tmp.c_str());
                             tmp += joinRef(ref, p5, p3 - 1);
-							printf("tmp: %s\n", tmp.c_str());
+							printf("p5: %d, p3: %d, tmp: %s\n", p5, p3, tmp.c_str());
                             if ((ins.length() - tmp.length()) % 2 == 0) {
                                 int tex = (ins.length() - tmp.length()) / 2;
                                 ins = (tmp + vc_substr(ins, 0, tex))==(vc_substr(ins, tex))
@@ -1686,7 +1724,7 @@ void VariationRealigner::realignlgins30() {
                         if (bams.size() > 0 
                                 && p3 - p5 >= 5 && p3 - p5 < maxReadLength - 10
                                 && mvref != NULL && mvref->varsCount != 0
-                                //&& noPassingReads(chr, p5, p3, bams)
+                                && noPassingReads(chr, p5, p3, bams)
                                 && vref->varsCount > 2 * mvref->varsCount) {
                             adjCnt(vref, mvref, mvref);
                         }
@@ -1696,13 +1734,16 @@ void VariationRealigner::realignlgins30() {
                         tins[bi] = mapp;
                         realignins(tins);
                     } else if (ins[0]=='-') {
+						printf("find deletion1: %s : varsCount: %d\n", ins.c_str(), vref->varsCount);
                         adjCnt(vref, sc3v, getVariationMaybe(nonInsertionVariants, bi, ref[bi]));
                         adjCnt(vref, sc5v);
+						printf("find deletion2: %s : varsCount: %d\n", ins.c_str(), vref->varsCount);
                         unordered_map<int, unordered_map<string, int> > tdel;
                         unordered_map<string, int> mapp ;
                         mapp[ins]= vref->varsCount;
                         tdel[bi]= mapp;
                         realigndel(NULL, tdel);
+						printf("find deletion3: %s : varsCount: %d\n", ins.c_str(), vref->varsCount);
                     } else {
                         adjCnt(vref, sc3v);
                         adjCnt(vref, sc5v);
@@ -1714,7 +1755,10 @@ void VariationRealigner::realignlgins30() {
             }
         } catch(...){// (Exception exception) {
             //printExceptionAndContinue(exception, "variant", string.valueOf(lastPosition), region);
+			printf("there an expect in realignlgins30\n");
+			exit(0);
         }
+		//printf("-----------------split line end----------------\n");
     }
     //if (conf.y) {
     //    System.err.println("Done: lgins30\n");
@@ -2141,6 +2185,14 @@ Match35* VariationRealigner::find35match(string &seq5, string &seq3) {
     return new Match35(b5, b3, maxMatchedLength);
 }
 
+inline bool cigar_has_element(uint32_t* cigar, int n_cigar, uint32_t dlenqr){
+	for(int i = 0; i < n_cigar; i++){
+		if(cigar[i] == dlenqr){
+			return true;
+		} 
+	}
+	return false;
+}
 /**
  * Check whether there're reads supporting wild type in deletions
  * Only for indels that have micro-homology
@@ -2150,38 +2202,61 @@ Match35* VariationRealigner::find35match(string &seq5, string &seq3) {
  * @param bams BAM file list
  * @return true if any read was found in chr:s-e
  */
-//bool VariationRealigner::noPassingReads(string& chr, int start, int end, vector<string> bams) {
-//    int cnt = 0;
-//    int midcnt = 0; // Reads end in the middle
-//    int dlen = end - start;
-//    string dlenqr = dlen + "D";
-//    Region* region = new Region(chr, start, end, "");
-//    for (string bam : bams) {
-//        try (SamView *reader = new SamView(bam, "0", region, conf.validationstringency)) {
-//            SAMRecord record;
-//            while ((record = reader.read()) != NULL) {
-//                if (record.getCigarstring().count(dlenqr)) {
-//                    continue;
-//                }
-//                int readStart = record.getAlignmentStart();
-//                // The total aligned length, excluding soft-clipped bases and insertions
-//                int readLengthIncludeMatchedAndDeleted = getAlignedLength(record.getCigar());
-//                int readEnd = readStart + readLengthIncludeMatchedAndDeleted;
-//                if (readEnd > end + 2 && readStart < start - 2) {
-//                    cnt++;
-//                }
-//                if (readStart < start - 2 && readEnd > start && readEnd < end) {
-//                    midcnt++;
-//                }
-//            }
-//
-//        }
-//    }
-//    //if (conf.y) {
-//    //    System.err.printf("    Passing Read CNT: %s %s %s %s %s\n", cnt, chr, start, end, midcnt);
-//    //}
-//    return cnt <= 0 && midcnt + 1 > 0;
-//}
+bool VariationRealigner::noPassingReads(string& chr, int start, int end, vector<string> bams) {
+    int cnt = 0;
+    int midcnt = 0; // Reads end in the middle
+    int dlen = end - start;
+    //string dlenqr = dlen + "D";
+	uint32_t dlenqr = (dlen << 4) | BAM_CDEL;
+    //Region* region = new Region(chr, start, end, "");
+	string region_string = chr + ":" + to_string(start) + "-" + to_string(end);
+	bam_hdr_t* header;
+	hts_idx_t* idx;
+	hts_itr_t* iter;
+	bam1_t* record = bam_init1();
+	
+    for (string bam : bams) {
+        //try (SamView *reader = new SamView(bam, "0", region, conf.validationstringency)) {
+		try{
+			samFile* in = sam_open(bam.c_str(), "r");
+			if(in){
+				header = sam_hdr_read(in);
+				idx = sam_index_load(in, bam.c_str());
+				assert(idx != NULL);
+				iter = sam_itr_querys(idx, header, region_string.c_str());
+				int ret = 0;
+				uint32_t* cigar;
+				//printf("bam: %s, region: %s\n", bam.c_str(), region_string.c_str());
+				while( (ret = sam_itr_next(in, iter, record)) >= 0){
+					//if (record.getCigarstring().count(dlenqr))
+					cigar = bam_get_cigar(record);
+					if(cigar_has_element(cigar, record->core.n_cigar, dlenqr)){
+						continue;
+					}
+					int readStart = getAlignmentStart(record);
+					int readLengthIncludeMatchedAndDeleted = getAlignedLength(cigar, record->core.n_cigar);
+					int readEnd = readStart + readLengthIncludeMatchedAndDeleted;
+					if (readEnd > end + 2 && readStart < start - 2) {
+						cnt++;
+					}
+					if (readStart < start - 2 && readEnd > start && readEnd < end) {
+						midcnt++;
+					}
+				}
+			}
+		}catch(...){
+			printf("there is an error in realigner reader!!");
+		}
+	}
+	//bam_hdr_destroy(header);
+	//if(in) sam_close(in);
+	bam_destroy1(record);
+    //if (conf.y) {
+    //    System.err.printf("    Passing Read CNT: %s %s %s %s %s\n", cnt, chr, start, end, midcnt);
+    //}
+	printf("    Passing Read CNT: %d %s %d %d %d\n", cnt, chr.c_str(), start, end, midcnt);
+	return cnt <= 0 && midcnt + 1 > 0;
+}
 
 /**
  * Find if sequences match with no more than default number of mismatches (3).

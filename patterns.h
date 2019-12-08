@@ -23,7 +23,7 @@ public:
     regex B_T7{"^.TTTTTTT.*"};
 
     //ATGC patterns
-    regex CARET_ATGNC{"\\^([ATGNC]+).*"};
+    regex CARET_ATGNC{"\\^([ATGNC]+)"};
     regex CARET_ATGC_END {"\\^([ATGC]+)$"};
     regex AMP_ATGC {".*&([ATGC]+).*"};
     regex BEGIN_PLUS_ATGC{"^\\+([ATGC]+).*"};

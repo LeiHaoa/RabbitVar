@@ -81,15 +81,6 @@ int getSoftClippedLength(uint32_t* cigar, int n_cigar){
 	}
 	return length;
 }
-int getAlignedLength(uint32_t* cigar, int n_cigar){
-	int length = 0;
-	for(int c_i = 0; c_i < n_cigar; c_i++){
-		if(bam_cigar_op(cigar[c_i]) == 0 || bam_cigar_op(cigar[c_i]) == 2){
-			length += bam_cigar_oplen(cigar[c_i]);	
-		}
-	}
-	return length;
-}
 
 char* CigarParser::getRefName(bam1_t* record){
 	return preprocessor->header->target_name[record->core.tid];
@@ -186,19 +177,6 @@ bool CigarParser::skipOverlappingReads(bam1_t *record, int position, bool dir, i
     }
     return false;
 }
-//TODO: to be verifying
-inline int getAlignmentStart(bam1_t* record){
-	return record->core.pos+1;
-}
-
-//TODO: to be verifying
-inline int getMateAlignmentStart(bam1_t* record){
-	return record->core.mpos + 1;
-}
-
-inline int getAlignmentEnd(bam1_t* record){
-	return bam_endpos(record);
-}
 bool CigarParser::isReadsOverlap(bam1_t *record, int position, int mateAlignmentStart){
     if (position >= mateAlignmentStart) {
         return start >= mateAlignmentStart
@@ -275,6 +253,7 @@ inline void subCnt(Variation *variation,
 				   int numberOfMismatches,
 				   float goodq) {
     // rp = read position, q = quality
+	//printf("subCnt: readPosition: %d\n", readPosition);
     variation->varsCount--;
     variation->decDir(direction);
     variation->meanPosition -= readPosition;
@@ -304,6 +283,7 @@ inline void addCnt(Variation *variation,
 				   int mappingBaseQuality,
 				   int numberOfMismatches,
 				   float goodq) {
+	//printf("addCnt: readPosition: %d\n", readPosition);
 	variation->varsCount++;
 	//variation.indir(direction);
 	if(direction){
@@ -387,7 +367,7 @@ void CigarParser::print_result(){
 		int position = v.first;
 		VariationMap* var_map = v.second;
 		for(auto &vm : var_map -> variation_map){
-			printf("%d - %s - %d - %d\n", position, vm.first.c_str(), vm.second->varsCount, vm.second->highQualityReadsCount);
+			printf("%d - %s - %d - %d - %.1f\n", position, vm.first.c_str(), vm.second->varsCount, vm.second->highQualityReadsCount, vm.second->meanPosition);
 		}
 			
 	}
@@ -528,6 +508,7 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 		//	System.err.println("No NM tag for mismatches. " + record.getSAMString());
 		//}
 		if(record->core.flag & BAM_FUNMAP ){//record.getCigarString().equals(SAMRecord.NO_ALIGNMENT_CIGAR)) // TODO
+			printf("return or NO_ALIGNMENT_CIGAR\n");
 			return;
 		}
 	}
@@ -979,7 +960,7 @@ void CigarParser::addVariationForMatchingPart(uint8_t mappingQuality, int nm, bo
 	hv->varsCount++;
 
 	//minimum of position from start of read and end of read
-	int tp = readPositionIncludingSoftClipped < rlen1 - readPositionExcludingSoftClipped
+	int tp = readPositionExcludingSoftClipped < rlen1 - readPositionExcludingSoftClipped
 			? readPositionExcludingSoftClipped + 1
 			: rlen1 - readPositionExcludingSoftClipped;
 	//average quality of bases in the variation
@@ -992,6 +973,7 @@ void CigarParser::addVariationForMatchingPart(uint8_t mappingQuality, int nm, bo
 	if(!hv->qstd && hv->pq != 0 && q != hv->pq){
 		hv->qstd = true;
 	}
+	//printf("matching part: %d\n", tp);
 	hv->meanPosition += tp;
 	hv->meanQuality += q;
 	hv->meanMappingQuality += mappingQuality;
@@ -1268,7 +1250,7 @@ void CigarParser::process_softclip(string chrName, bam1_t* record, char* querySe
 			//printf("add variation nonInsert : %d-%c\n", readPositionIncludingSoftClipped, ref.at(start));
 			Variation* variation = getVariation(nonInsertionVariants, start, string(1, ref.at(start)));
 			//add count
-			addCnt(variation, direction, totalLengthIncludingSoftClipped - readPositionIncludingSoftClipped,
+			addCnt(variation, direction, totalLengthIncludingSoftClipped - readPositionExcludingSoftClipped,
 				   queryQuality[readPositionIncludingSoftClipped], mappingQuality, numberOfMismatches, conf->goodq);
 			//increase -> incCnt(refCoverage, start, 1);
 			refCoverage[start]++;
@@ -1499,6 +1481,7 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
 				//if(1){
                 //subCnt(tv, direction, tp, queryQuality.charAt(index) - 33,
                 //        mappingQuality, numberOfMismatches - nmoff);
+				//printf("subCnt: readPosition: %d\n", tp);
 				tv->varsCount--;
 				tv->decDir(direction);
 				tv->meanPosition -= tp;
@@ -1525,7 +1508,7 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
             ttref->varsCount++;
             ttref->pstd = hv->pstd;
             ttref->qstd = hv->qstd;
-            ttref->meanPosition += tp;
+			ttref->meanPosition += tp;
             ttref->meanQuality += tmpq;
             ttref->meanMappingQuality += mappingQuality;
             ttref->pp = tp;

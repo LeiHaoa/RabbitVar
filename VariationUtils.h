@@ -320,22 +320,23 @@ inline string joinRef_double(unordered_map<int, char> &baseToPosition, int from,
     }
     return res;
 }
-    /**
-     * Counts the total count of base presence in the string
-     * @param str string to count characters
-     * @param chr character to seek in the string
-     * @return number of characters in the string
-     */
-    inline int count(string str, char chr) {
-        int cnt = 0;
-        for (int i = 0; i < str.length(); i++) {
-            if (str[i] == chr) {
-                cnt++;
-            }
+/**
+ * Counts the total count of base presence in the string
+ * @param str string to count characters
+ * @param chr character to seek in the string
+ * @return number of characters in the string
+ */
+inline int count(string &str, char chr) {
+    int cnt = 0;
+    for (int i = 0; i < str.length(); i++) {
+        if (str[i] == chr) {
+            cnt++;
         }
-        return cnt;
     }
-inline bool islowcomplexseq(string seq) {
+    return cnt;
+}
+//------this code can be optimized--------//
+inline bool islowcomplexseq(string &seq) {
         int len = seq.length();
         if (len == 0)
             return true;
@@ -362,7 +363,7 @@ inline bool islowcomplexseq(string seq) {
             return true;
 
         return ntcnt < 3;
-    }
+}
 
 /**
  * Find the consensus sequence in soft-clipped reads. Consensus is called if
@@ -447,15 +448,15 @@ inline string findconseq(Sclip *softClip, int dir) {
     //if (!SEQ.empty() && SEQ.length() > Configuration.SEED_2) {
 	//printf("SEQ2: %s\n", SEQ.c_str());
 	if (!SEQ.empty() && SEQ.length() > CONF_SEED_2) {
-        bool mm1 = regex_match(SEQ, regex("^.AAAAAAA"));
-        bool mm2 = regex_match(SEQ, regex("^.TTTTTTT"));
+        bool mm1 = regex_search(SEQ, regex("^.AAAAAAA"));
+        bool mm2 = regex_search(SEQ, regex("^.TTTTTTT"));
 		//printf("SEQ3: %s\n", SEQ.c_str());
         if (mm1 || mm2) {
-			//printf("used set to true 1\n");
+			printf("used set to true 1\n");
             softClip->used = true;
         }
         if (islowcomplexseq(SEQ)) {
-			//printf("used set to true 2\n");
+			printf("used set to true 2: %s\n", SEQ.c_str());
             softClip->used = true;
         }
     }
@@ -478,6 +479,7 @@ inline string findconseq(Sclip *softClip, int dir) {
 	//if(SEQ == "TACCGATCGGA"){
 	//	printf("i found it!\n");
 	//}
+	//printf("consequence: %s\n", SEQ.c_str());
     return SEQ;
 }
 
