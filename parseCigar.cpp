@@ -469,6 +469,12 @@ void inline get_record_form_samtool_resulet(uint8_t* seq_sam, int len, char* seq
 		seq[i] = seq_nt16_str[bam_seqi(seq_sam, i)];
 	}
 }
+inline void print_quality_33(uint8_t* query_quality, int length){
+	for(int i = 0; i < length; i++){
+		printf("%c", query_quality[i]+33);
+	}
+	printf("\n");
+}
 void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 	uint8_t *seq_sam = bam_get_seq(record);
 	int32_t lseq = record->core.l_qseq;
@@ -604,23 +610,25 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 		//cout << "excluding: " << readPositionExcludingSoftClipped << endl;
 		//-------step1.3 process NSHID------------//
 		switch (c_operator){
-		case 3: //N
+		case BAM_CREF_SKIP: //N
 			//cout << "process not macthed" << endl;
 			processNotMatched();
 			continue;
-		case 4: //S
+		case BAM_CSOFT_CLIP: //S
 			process_softclip(chrName, record, seq, mapping_quality, ref, query_quality, number_of_mismatches,
 							 direction, position, total_length_including_soft_clipped, ci);
 			continue;
-		case 5: //H
+		case BAM_CHARD_CLIP: //H
 			offset = 0;
 			continue;
-		case 1: //I
+		case BAM_CINS: //I
 			offset = 0;
+			printf("processing insertion: position: %d\n", position);
+			print_quality_33(query_quality, lseq);
 			ci = process_insertion(seq, mapping_quality, ref, query_quality, number_of_mismatches,
 								   direction, position, read_length_include_matching_and_insertions, ci);
 			continue;
-		case 2: //D
+		case BAM_CDEL: //D
 			//cout << "process deletion" << endl;
 			offset = 0;
 			ci = process_deletion(seq, mapping_quality, ref, query_quality, number_of_mismatches,
@@ -1318,15 +1326,19 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
 					 uint8_t* queryQuality, int numberOfMismatches, bool direction, int position,
 					 int readLengthIncludeMatchingAndInsertions, int ci){
 	
-    if((record->core.n_cigar > ci && bam_cigar_op(cigar[ci+1]) == 3)
-	   || (ci > 1 && bam_cigar_op(cigar[ci-1]) == 3)){ //skipIndelNextoIntron function
+    if((record->core.n_cigar > ci && bam_cigar_op(cigar[ci+1]) == BAM_CREF_SKIP)
+	   || (ci > 1 && bam_cigar_op(cigar[ci-1]) == BAM_CREF_SKIP)){ //skipIndelNextoIntron function
         readPositionIncludingSoftClipped += cigar_element_length;
         return ci;
     }
 	//inserted segment of read sequence
 	string desc_string_of_insertion_segment(querySequence, readPositionIncludingSoftClipped, cigar_element_length);
 	//quality of segment
+	//printf("in process insertion position: %d, rps: %d, cel: %d\n",position, readPositionIncludingSoftClipped, cigar_element_length);
+	//print_quality_33(queryQuality, record->core.l_qseq);
+	//cout << string((char*)queryQuality) << endl;
 	string quality_string((char*)queryQuality, readPositionIncludingSoftClipped, cigar_element_length);
+	//printf("quality_string: %s\n", quality_string.c_str());
 	//sequence to be appended if next segment is matched
 	string ss("");
 
@@ -1839,11 +1851,11 @@ void CigarParser::cleanupCigar(uint32_t* cigar, int n_cigar){
 		//first leading elements
 		bool noMatchesYet = true;
 		for(int c_i = 0; c_i < n_cigar && noMatchesYet; c_i++){
-			if(bam_cigar_op(cigar[c_i]) == 1){
+			if(bam_cigar_op(cigar[c_i]) == BAM_CINS){
 				//(length,insertion)->(length,soft_clip)
 				cigar[c_i] = (cigar[c_i] | 0x00000004) & 0xfffffff4;
 			}
-			else if(bam_cigar_op(cigar[c_i]) == 5){
+			else if(bam_cigar_op(cigar[c_i]) == BAM_CHARD_CLIP){
 				//hard clip how to dealing with??
 			}
 			else if(bam_cigar_type(bam_cigar_op(cigar[c_i])) == 3){ //both bit1=1 and bit2=1
@@ -1854,11 +1866,11 @@ void CigarParser::cleanupCigar(uint32_t* cigar, int n_cigar){
 		//then trailing elements
 		noMatchesYet = true;
 		for(int c_i = n_cigar-1; c_i >= 0 && noMatchesYet; c_i--){
-			if(bam_cigar_op(cigar[c_i]) == 1){
+			if(bam_cigar_op(cigar[c_i]) == BAM_CINS){
 				//(length,insertion)->(length,soft_clip)
 				cigar[c_i] = (cigar[c_i] | 0x00000004) & 0xfffffff4;
 			}
-			else if(bam_cigar_op(cigar[c_i]) == 5){
+			else if(bam_cigar_op(cigar[c_i]) == BAM_CHARD_CLIP){
 				
 			}
 			else if(bam_cigar_type(bam_cigar_op(cigar[c_i])) == 3){ //both bit1=1 and bit2=1

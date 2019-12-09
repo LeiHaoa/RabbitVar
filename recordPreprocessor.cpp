@@ -1,5 +1,6 @@
 #include "recordPreprocessor.h"
 #include "Configuration.h"
+#include "./VariationUtils.h"
 #include <string>
 #include <assert.h>
 

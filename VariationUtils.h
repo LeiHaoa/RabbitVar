@@ -509,4 +509,29 @@ inline Vars* getOrPutVars(unordered_map<int, Vars*> &mapv, int position){
 	}
 	return vars;
 }
+
+//-----------------about htslib operation----------------------
+//TODO: to be verifying
+inline int getAlignmentStart(bam1_t* record){
+	return record->core.pos+1;
+}
+
+//TODO: to be verifying
+inline int getMateAlignmentStart(bam1_t* record){
+	return record->core.mpos + 1;
+}
+
+inline int getAlignmentEnd(bam1_t* record){
+	return bam_endpos(record);
+}
+inline int getAlignedLength(uint32_t* cigar, int n_cigar){
+	int length = 0;
+	for(int c_i = 0; c_i < n_cigar; c_i++){
+		if(bam_cigar_op(cigar[c_i]) == 0 || bam_cigar_op(cigar[c_i]) == 2){
+			length += bam_cigar_oplen(cigar[c_i]);	
+		}
+	}
+	return length;
+}
+//-----------------about htslib operation----------------------
 #endif

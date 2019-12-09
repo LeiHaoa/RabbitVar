@@ -11,6 +11,7 @@
 #include <iostream>
 #include "./patterns.h"
 #include "./cmdline.h"
+#include <omp.h>
 
 using namespace std;
 
@@ -544,24 +545,9 @@ Configuration* cmdParse(int argc, char* argv[]){
 
     //-----------------------------------end----------------------
 }
-
-int main_single(int argc, char* argv[]){
-	Configuration* conf = cmdParse(argc, argv);
-	//init_conf(conf);
-	//Configuration* conf = new Configuration();
-	//init_conf(conf);
-	VarDictLauncher launcher;
-	launcher.start(conf); //launcher 里面有segments变量存的是region信息
+inline void one_region_run(Region region, Configuration* conf){
 	DataScope dscope;
-	Region region;
-	if(conf->regionOfInterest != ""){
-		region = launcher.segments[0][0];
-		dscope.region = region;
-		cout << "interest region info: " << region.start << "-" << region.end << endl;
-	}else{
-		cout << "i have not write the bed file version!!" << endl;
-		exit(0);
-	}
+	dscope.region = region;
 	double start1 = get_time();
 	RecordPreprocessor *preprocessor = new RecordPreprocessor(region, conf);
 	CigarParser cp(dscope, preprocessor);
@@ -584,6 +570,36 @@ int main_single(int argc, char* argv[]){
 		 << endl;
 
 	delete preprocessor;
+
+}
+
+int main_single(int argc, char* argv[]){
+	Configuration* conf = cmdParse(argc, argv);
+	//init_conf(conf);
+	//Configuration* conf = new Configuration();
+	//init_conf(conf);
+	VarDictLauncher launcher;
+	launcher.start(conf); //launcher 里面有segments变量存的是region信息
+	if(conf->regionOfInterest != ""){
+		//DataScope dscope;
+		Region region;
+		region = launcher.segments[0][0];
+		//dscope.region = region;
+		cout << "interest region info: " << region.start << "-" << region.end << endl;
+		one_region_run(region, conf);
+	}else{
+		cout << "bed file name: " << conf->bed << " and regions is: " << endl;
+		for(vector<Region> reg_vec: launcher.segments){
+//#pragma omp parallel for num_threads(20)
+			//for(Region reg: reg_vec){
+			for(int i = 0; i < reg_vec.size(); i++){
+				Region reg = reg_vec[i];
+				//cout << reg.chr << " - " << reg.start << " - " << reg.end  << endl;
+				one_region_run(reg, conf);
+			}
+		}
+	}
+
 }
 
 int main(int argc, char* argv[]){
