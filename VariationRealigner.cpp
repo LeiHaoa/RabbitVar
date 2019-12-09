@@ -135,6 +135,7 @@ Scope<RealignedVariationData> VariationRealigner::process(Scope<VariationData> s
 		cout << "--------------realignIndels over!!------------" << endl;
 	}
 	//print_result();
+	//exit(0);
     RealignedVariationData *rvdata = new RealignedVariationData(nonInsertionVariants, insertionVariants, softClips3End, softClips5End,
 																refCoverage, maxReadLength, duprate, CURSEG, SOFTP2SV, &scope);
 
@@ -451,9 +452,8 @@ void VariationRealigner::adjustMNP() {
 void VariationRealigner::realignIndels()  {
     //if (conf.y) printf("Start Realigndel");
     
-    realigndel(&bams, positionToDeletionCount);
 	//print_result();
-	//exit(0);
+    realigndel(&bams, positionToDeletionCount);
 
 	//if (conf.y) printf("Start Realignins");
 
@@ -512,7 +512,7 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
             int dellen = 0;
             //----regex------regex_match(desc_string_of_insertion_segment, regex(BEGIN_ATGC_END)
             smatch sm;
-            bool mtch = regex_match(vn, sm, conf->patterns->BEGIN_MINUS_NUMBER);
+            bool mtch = regex_search(vn, sm, conf->patterns->BEGIN_MINUS_NUMBER);
             
             if (mtch) {
                 dellen = atoi(sm[1].str().c_str());
@@ -526,10 +526,10 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
             string inv5 = "";
             string inv3 = "";
 
-            if (regex_match(vn, sm, conf->patterns->MINUS_NUMBER_ATGNC_SV_ATGNC_END)) {
+            if (regex_search(vn, sm, conf->patterns->MINUS_NUMBER_ATGNC_SV_ATGNC_END)) {
                 inv5 = sm[1];
                 inv3 = sm[2];
-            } else if (regex_match(vn, sm, conf->patterns->BEGIN_MINUS_NUMBER_ANY)) {
+            } else if (regex_search(vn, sm, conf->patterns->BEGIN_MINUS_NUMBER_ANY)) {
                 extra = regex_replace(sm[1].str(), regex("\\^|&|#"), "");
                 if (regex_search(vn, sm, conf->patterns->CARET_ATGNC)) {
                     extrains = sm[1];
@@ -578,7 +578,8 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
                 int mp = mismatch->mismatchPosition;
                 int me = mismatch->end;
                 if (mm.length() > 1) {
-                    mm = mm[0] + "&" + mm.substr(1);
+                    //mm = mm[0] + "&" + mm.substr(1);
+					mm.insert(1, 1, '&');
                 }
                 //---------------------------------
                 if (!nonInsertionVariants.count(mp)) {
@@ -586,7 +587,7 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
                 }
                 Variation* tv;
                 if ( !nonInsertionVariants[mp]->variation_map.count(mm)) {
-                    continue;
+					continue;
                 }
                 tv = nonInsertionVariants[mp]->variation_map[mm];
                 //----------------------------------
@@ -786,7 +787,7 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
                 string insert1;
                 //Matcher mtch = BEGIN_PLUS_ATGC.matcher(vn);
                 smatch mtch;
-                if (regex_match(vn,mtch,conf->patterns->BEGIN_PLUS_ATGC)) {
+                if (regex_search(vn,mtch,conf->patterns->BEGIN_PLUS_ATGC)) {
                     insert1 = mtch[1];
                 } else {
                     continue;
@@ -795,31 +796,31 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
                 int inslen = insert1.length();
 
                 
-                if (regex_match(vn,mtch,conf->patterns->DUP_NUM_ATGC)) {
+                if (regex_search(vn,mtch,conf->patterns->DUP_NUM_ATGC)) {
                     ins3 = mtch[2];
                     inslen += atoi(mtch[1].str().c_str()) + ins3.length();
                 }
                 string extra = "";
                 //mtch = AMP_ATGC.matcher(vn);
-                if (regex_match(vn,mtch,conf->patterns->AMP_ATGC)) {
+                if (regex_search(vn,mtch,conf->patterns->AMP_ATGC)) {
                     extra = mtch[1];
                 }
                 string compm = ""; // the match part for a complex variant
                 //mtch = HASH_ATGC.matcher(vn);
-                if (regex_match(vn,mtch,conf->patterns->HASH_ATGC)) {
+                if (regex_search(vn,mtch,conf->patterns->HASH_ATGC)) {
                     compm = mtch[1];
                 }
 
                 // In perl it doesn't commented, but not used
                 string newins = ""; // the adjacent insertion
                // mtch = CARET_ATGC_END.matcher(vn);
-                if (regex_match(vn,mtch,conf->patterns->CARET_ATGC_END)) {
+                if (regex_search(vn,mtch,conf->patterns->CARET_ATGC_END)) {
                     newins = mtch[1];
                 }
 
                 int newdel = 0; // the adjacent deletion
                 //mtch = UP_NUMBER_END.matcher(vn);
-                if (regex_match(vn,mtch,conf->patterns->UP_NUMBER_END)) {
+                if (regex_search(vn,mtch,conf->patterns->UP_NUMBER_END)) {
                     newdel = atoi(mtch[1].str().c_str());
                 }
                 string tn = vn;
@@ -1086,7 +1087,7 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
             Variation* vref = insertionVariants[p]->variation_map[vn];
             //Matcher mtch = ATGSs_AMP_ATGSs_END.matcher(vn);
             smatch mtch;
-            if(regex_match(vn, mtch, conf->patterns->ATGSs_AMP_ATGSs_END)) {
+            if(regex_search(vn, mtch, conf->patterns->ATGSs_AMP_ATGSs_END)) {
                 string tn = mtch[1];
                 
                 if(insertionVariants[p]->variation_map.count(tn)) {

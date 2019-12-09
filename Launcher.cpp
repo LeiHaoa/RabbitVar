@@ -590,7 +590,7 @@ int main_single(int argc, char* argv[]){
 	}else{
 		cout << "bed file name: " << conf->bed << " and regions is: " << endl;
 		for(vector<Region> reg_vec: launcher.segments){
-//#pragma omp parallel for num_threads(20)
+//#pragma omp parallel for num_threads(2)
 			//for(Region reg: reg_vec){
 			for(int i = 0; i < reg_vec.size(); i++){
 				Region reg = reg_vec[i];

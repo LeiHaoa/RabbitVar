@@ -81,6 +81,12 @@ int getSoftClippedLength(uint32_t* cigar, int n_cigar){
 	}
 	return length;
 }
+inline void append_quality(uint8_t* queryQuality, int from, int offset, long& qss, int& qsc){
+	for(int i = from; i < from+offset; i++){
+		qss += queryQuality[i];
+	}
+	qsc += offset;
+}
 
 char* CigarParser::getRefName(bam1_t* record){
 	return preprocessor->header->target_name[record->core.tid];
@@ -199,7 +205,8 @@ Offset CigarParser::findOffset(int referencePosition,
 
 	int offset = 0;
 	string ss = "";
-	string q = "";
+	//string q = "";
+	long q_sum = 0;
 	int tnm = 0;
 	int vsn = 0;
 	for(int vi = 0; vsn <= conf->vext && vi < cigarLength; vi++){
@@ -219,7 +226,10 @@ Offset CigarParser::findOffset(int referencePosition,
 	}
 	if(offset > 0){
 		ss = string(querySequence, readPosition, offset);
-		q = string((char*)queryQuality, readPosition, offset);
+		//q = string((char*)queryQuality, readPosition, offset);
+		for(int i = readPosition; i < readPosition + offset; i++){
+			q_sum += queryQuality[i];
+		}
 		for(int osi = 0; osi < offset; osi++){
 			//incCnt(refCoverage, referencePosition+osi, 1)
 			refCoverage[referencePosition+osi]++;
@@ -229,7 +239,8 @@ Offset CigarParser::findOffset(int referencePosition,
 	Offset ofs;
 	ofs.offset = offset;
 	ofs.sequence = ss;
-	ofs.qualitySequence = q;
+	//ofs.qualitySequence = q;
+	ofs.q_sum = q_sum;
 	ofs.offsetNumberOfMismatches = tnm;
 	return ofs;//
 }
@@ -623,8 +634,8 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 			continue;
 		case BAM_CINS: //I
 			offset = 0;
-			printf("processing insertion: position: %d\n", position);
-			print_quality_33(query_quality, lseq);
+			//printf("processing insertion: position: %d\n", position);
+			//print_quality_33(query_quality, lseq);
 			ci = process_insertion(seq, mapping_quality, ref, query_quality, number_of_mismatches,
 								   direction, position, read_length_include_matching_and_insertions, ci);
 			continue;
@@ -1030,7 +1041,7 @@ void CigarParser::addVariationForMatchingPart(uint8_t mappingQuality, int nm, bo
  * Creates variation for deletion in Cigar (D). If variation already exists, increment it's counters
  */
 void CigarParser::addVariationForDeletion(uint8_t mappingQuality, int nm, bool dir, int rlen1,
-                                     string descStringOfDeletedElement, string qualityOfSegment, int nmoff) {
+										  string descStringOfDeletedElement, long quality_segment_sum, int quality_segment_count, int nmoff) {
     //add variant structure for deletion at this position
 	Variation* hv = getVariation(nonInsertionVariants, start, descStringOfDeletedElement); //variation structure [v]
     //add record for deletion in deletions map
@@ -1047,12 +1058,14 @@ void CigarParser::addVariationForDeletion(uint8_t mappingQuality, int nm, bool d
             : rlen1 - readPositionExcludingSoftClipped;
 
     //average quality of bases
-    double tmpq = 0;
+    //double tmpq = 0;
 
-    for (int i = 0; i < qualityOfSegment.length(); i++) {
-		tmpq += qualityOfSegment[i] ;
-    }
-    tmpq = tmpq / qualityOfSegment.length();
+    //for (int i = 0; i < qualityOfSegment.length(); i++) {
+	//	tmpq += qualityOfSegment[i] ;
+    //}
+    //tmpq = tmpq / qualityOfSegment.length();
+	double tmpq = ((double)quality_segment_sum) / quality_segment_count;
+	printf("tmp in process deletion: %f\n", tmpq);
 
     //pstd is a flag that is 1 if the variant is covered by at least 2 read segments with different positions
     if (!hv->pstd && hv->pp != 0 && tp != hv->pp) {
@@ -1101,9 +1114,9 @@ inline bool isReadChimericWithSA(bam1_t* record, int positon, char* saTagString,
 
 	bool mm;
 	if(is5Side){
-		mm = regex_match(saCigar, conf->patterns->SA_CIGAR_D_S_5clip);
+		mm = regex_search(saCigar, conf->patterns->SA_CIGAR_D_S_5clip);
 	}else{
-		mm = regex_match(saCigar, conf->patterns->SA_CIGAR_D_S_3clip);
+		mm = regex_search(saCigar, conf->patterns->SA_CIGAR_D_S_3clip);
 	}
 	return (((dir && saDirectionString) || (!dir && !saDirectionString))
 			&& strcmp(saChromosome, refName)
@@ -1337,9 +1350,15 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
 	//printf("in process insertion position: %d, rps: %d, cel: %d\n",position, readPositionIncludingSoftClipped, cigar_element_length);
 	//print_quality_33(queryQuality, record->core.l_qseq);
 	//cout << string((char*)queryQuality) << endl;
-	string quality_string((char*)queryQuality, readPositionIncludingSoftClipped, cigar_element_length);
+	//string quality_string((char*)queryQuality, readPositionIncludingSoftClipped, cigar_element_length);
 	//printf("quality_string: %s\n", quality_string.c_str());
 	//sequence to be appended if next segment is matched
+	long quality_segment_sum = 0;
+	int quality_segment_count = 0;
+	for(int i = readPositionIncludingSoftClipped; i < readPositionIncludingSoftClipped + cigar_element_length; i++){
+		quality_segment_sum += queryQuality[i];
+	}
+	quality_segment_count += cigar_element_length;
 	string ss("");
 
 	int multoffs = 0;
@@ -1358,8 +1377,8 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
 		int mLen = bam_cigar_oplen(cigar[ci+1]);
 		int indelLen = bam_cigar_oplen(cigar[ci+2]);
 		int begin = readPositionIncludingSoftClipped + cigar_element_length;
-		appendSegments(querySequence, queryQuality, ci, desc_string_of_insertion_segment, quality_string,
-					   mLen, indelLen, begin, true);
+		appendSegments(querySequence, queryQuality, ci, desc_string_of_insertion_segment, quality_segment_sum,
+					   quality_segment_count, mLen, indelLen, begin, true);
 		//add length of next segment to both multoffs and multoffp
 		//add length of next-next segment to multoffp (for insertion) or to multoffs (for deletion)
 		multoffs += mLen + (bam_cigar_op(cigar[ci+2]) == 2 ? indelLen : 0);
@@ -1372,7 +1391,9 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
 									ci6, querySequence, queryQuality, ref, refCoverage);
 			offset = tpl.offset;
 			ss = tpl.sequence;
-			quality_string.append(tpl.qualitySequence);
+			quality_segment_sum += tpl.q_sum;
+			quality_segment_count += offset;
+			//quality_string.append(tpl.qualitySequence);
 			
 		}
 		//skip 2 cigar segment
@@ -1409,7 +1430,12 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
 			}
 			if(offset != 0){
 				ss += string(querySequence, readPositionIncludingSoftClipped + cigar_element_length, offset);
-				quality_string.append(string((char*)queryQuality, readPositionIncludingSoftClipped + cigar_element_length, offset));
+				//quality_string.append(string((char*)queryQuality, readPositionIncludingSoftClipped + cigar_element_length, offset));
+				int tmp_start = readPositionIncludingSoftClipped + cigar_element_length;
+				for(int i = tmp_start; i < tmp_start + offset; i++){
+					quality_segment_sum += queryQuality[i];
+				}
+				quality_segment_count += offset;
 				//incurease coverge for position corresponding to first offset base of next segment;
 				for(int osi = 0; osi < offset; osi++){
 					//incCnt(refCoverage, start + osi, 1);
@@ -1455,10 +1481,12 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
 													: readLengthIncludeMatchingAndInsertions - readPositionExcludingSoftClipped;
 		//mean read quality of the segment
 		double tmpq = 0;
-		for(int i = 0; i < quality_string.length(); i++){
-			tmpq += quality_string[i] ;
-		}
-		tmpq = tmpq / quality_string.length();
+		//for(int i = 0; i < quality_string.length(); i++){
+		//	tmpq += quality_string[i] ;
+		//}
+		//tmpq = tmpq / quality_string.length();
+		tmpq = ((double)quality_segment_sum) / quality_segment_count;
+		printf("tmpq in process insertion: %f\n", tmpq);
 		//pstd is a flag that is 1 if the variant is covered by at least 2 read segments with different positions
 		if (!hv->pstd && hv->pp != 0 && tp != hv->pp) {
 			hv->pstd = true;
@@ -1559,7 +1587,9 @@ int CigarParser::process_deletion(char* querySequence, uint8_t mappingQuality, u
 	string sequence_to_append_if_next_segment_matched("");
 	uint8_t quality_of_last_segment_before_del = queryQuality[readPositionIncludingSoftClipped - 1];
 	//quality of this segment
-	string quality_of_segment("");
+	//string quality_of_segment("");
+	long quality_segment_sum = 0;
+	int quality_segment_count = 0;
 
 	//For nultiple indels within vext bp
 	//offset for read postiton if next segment is matched
@@ -1581,8 +1611,8 @@ int CigarParser::process_deletion(char* querySequence, uint8_t mappingQuality, u
 		int indelLen = bam_cigar_oplen(cigar[ci+2]);
 
 		int begin = readPositionIncludingSoftClipped + cigar_element_length;
-		appendSegments(querySequence, queryQuality, ci, desc_string_of_deletion_element, quality_of_segment,
-					   mLen, indelLen, begin, false);
+		appendSegments(querySequence, queryQuality, ci, desc_string_of_deletion_element, quality_segment_sum,
+					   quality_segment_count, mLen, indelLen, begin, false);
 		//add length of next segment to both multoffs and multoffp
 		//add length of next-next segment to multoffp (for insertion) or to multoffs (for deletion)
 		multoffs += mLen + (bam_cigar_op(cigar[ci+2]) == 2 ? indelLen : 0);
@@ -1610,7 +1640,8 @@ int CigarParser::process_deletion(char* querySequence, uint8_t mappingQuality, u
 			}
 			if(offset != 0){
 				sequence_to_append_if_next_segment_matched.append(string(querySequence, tn, offset));
-				quality_of_segment.append(string((char*)queryQuality, tn, offset));
+				//quality_of_segment.append(string((char*)queryQuality, tn, offset));
+				append_quality(queryQuality, tn, offset, quality_segment_sum, quality_segment_count);
 			}
 		}
 		//skip next 2 CIGAR segments
@@ -1625,7 +1656,8 @@ int CigarParser::process_deletion(char* querySequence, uint8_t mappingQuality, u
 		//appedn '^' + next segment (inserted)
 		desc_string_of_deletion_element.append("^").append(string(querySequence, readPositionIncludingSoftClipped, insLen));
 		//Append next segment to quality string
-		quality_of_segment.append(string((char*)queryQuality, readPositionIncludingSoftClipped, insLen));
+		//quality_of_segment.append(string((char*)queryQuality, readPositionIncludingSoftClipped, insLen));
+		append_quality(queryQuality, readPositionIncludingSoftClipped, insLen, quality_segment_sum, quality_segment_count);
 
 		//Shift reference position by length of next segment
 		//skip next CIGAR segment
@@ -1657,7 +1689,8 @@ int CigarParser::process_deletion(char* querySequence, uint8_t mappingQuality, u
 			}
 			if(offset != 0){
 				sequence_to_append_if_next_segment_matched.append(string(querySequence, tn, offset));
-				quality_of_segment.append(string((char*)queryQuality, tn, offset));
+				//quality_of_segment.append(string((char*)queryQuality, tn, offset));
+				append_quality(queryQuality, tn, offset, quality_segment_sum, quality_segment_count);
 			}
 		}
 		ci += 1;
@@ -1693,7 +1726,8 @@ int CigarParser::process_deletion(char* querySequence, uint8_t mappingQuality, u
 			//if next cigar segment has good matching base
 			if(offset != 0){
 				sequence_to_append_if_next_segment_matched.append(string(querySequence, readPositionIncludingSoftClipped, offset));
-				quality_of_segment.append(string((char*)queryQuality, readPositionIncludingSoftClipped, offset));
+				//quality_of_segment.append(string((char*)queryQuality, readPositionIncludingSoftClipped, offset));
+				append_quality(queryQuality, readPositionIncludingSoftClipped, offset, quality_segment_sum, quality_segment_count);
 			}
 		}
 	}
@@ -1707,21 +1741,27 @@ int CigarParser::process_deletion(char* querySequence, uint8_t mappingQuality, u
 	//append best of q1 and q2
 	//if(readPositionIncludingSoftClipped + offset >= queryQuality.length()){
 	if(readPositionIncludingSoftClipped + offset >= record->core.l_qseq){
-		quality_of_segment.append((char*)&quality_of_last_segment_before_del); //quality_of_last_segment_before_del is char, convert to char*(string) and appended to quality_of_segment
+		//quality_of_segment.append((char*)&quality_of_last_segment_before_del); //quality_of_last_segment_before_del is char, convert to char*(string) and appended to quality_of_segment
+		quality_segment_sum += quality_of_last_segment_before_del;
+		quality_segment_count += 1;
 	}else{
 		uint8_t quality_of_segment_with_offset = queryQuality[readPositionIncludingSoftClipped + offset];
 		//quality_of_segment.append(quality_of_last_segment_before_del > quality_of_segment_with_offset
 		//						  ? (char*)&quality_of_last_segment_before_del
 		//						  : (char*)&quality_of_segment_with_offset);
-		quality_of_segment.append(1, quality_of_last_segment_before_del > quality_of_segment_with_offset
-								  ? (char)quality_of_last_segment_before_del
-								  : (char)quality_of_segment_with_offset);
+		//quality_of_segment.append(1, quality_of_last_segment_before_del > quality_of_segment_with_offset
+		//						  ? (char)quality_of_last_segment_before_del
+		//						  : (char)quality_of_segment_with_offset);
+		quality_segment_sum += quality_of_last_segment_before_del > quality_of_segment_with_offset
+			                   ? quality_of_last_segment_before_del
+			                   : quality_of_segment_with_offset;
+		quality_segment_count += 1;
 	}
 
 	//if reference position is inside region of interest
 	if(start >= region.start && start <= region.end){
 		addVariationForDeletion(mappingQuality, numberOfMismatches, direction, readLengthIncludeMatchingAndInsertions,
-								desc_string_of_deletion_element, quality_of_segment, nmoff);
+								desc_string_of_deletion_element, quality_segment_sum, quality_segment_count, nmoff);
 	}
 	//adjust reference position by offset + multoffs
 	start += cigar_element_length + offset + multoffs;
@@ -1760,7 +1800,8 @@ void CigarParser::processNotMatched() {
 
 
 void CigarParser::appendSegments(char* querySequence, uint8_t* queryQuality, int ci,
-							string &descStringOfElement, string &qualitySegment,
+							string &descStringOfElement, long& quality_segment_sum,
+							int& quality_segment_count,
 							int mLen, int indelLen, int begin, bool isInsertion) {
 
 	stringstream descstream, qsstream;
@@ -1770,7 +1811,10 @@ void CigarParser::appendSegments(char* querySequence, uint8_t* queryQuality, int
 	descstream << "#" << string(querySequence, begin, mLen);
     //append quality string of next matched segment from read
     //qualitySegment.append(string((char*)queryQuality, begin, mLen));
-	qsstream << string((char*)queryQuality, begin, mLen);
+	//qsstream << string((char*)queryQuality, begin, mLen);
+	for(int i = begin; i < begin + mLen; i++){
+		quality_segment_sum += queryQuality[i];
+	}
 
     //if an insertion is two segments ahead, append '^' + part of sequence corresponding
     // to next-next segment otherwise (deletion) append '^' + length of a next-next segment
@@ -1790,17 +1834,32 @@ void CigarParser::appendSegments(char* querySequence, uint8_t* queryQuality, int
 		// qualitySegment.append(bam_cigar_op(cigar[ci+2]) == 1
 		//         ? string(queryQuality, begin + mLen, indelLen)
 		//         : queryQuality.charAt(begin + mLen));
-		qsstream << (bam_cigar_op(cigar[ci+2]) == 1
-					 ? string((char*)queryQuality, begin + mLen, indelLen)
-					 : string(1,queryQuality[begin + mLen]));
+		//qsstream << (bam_cigar_op(cigar[ci+2]) == 1
+		//			 ? string((char*)queryQuality, begin + mLen, indelLen)
+		//			 : string(1,queryQuality[begin + mLen]));
+		if(bam_cigar_op(cigar[ci+2]) == 1){
+			for(int i = begin+mLen; i < begin+mLen+indelLen; i++){
+				quality_segment_sum += queryQuality[i];
+			}
+			quality_segment_count += indelLen;
+		}else{
+			quality_segment_sum += queryQuality[begin + mLen];
+			quality_segment_count += 1;
+		}
 
     } else {
-        qsstream << (bam_cigar_op(cigar[ci+2]) == 1
-					 ? string((char*)queryQuality, begin + mLen, indelLen)
-					 : "");
+        //qsstream << (bam_cigar_op(cigar[ci+2]) == 1
+		//			 ? string((char*)queryQuality, begin + mLen, indelLen)
+		//			 : "");
+		if(bam_cigar_op(cigar[ci+2]) == 1){
+			for(int i = begin+mLen; i < begin+mLen+indelLen; i++){
+				quality_segment_sum += queryQuality[i];
+			}
+			quality_segment_count += indelLen;
+		}
 	}
 	descStringOfElement += descstream.str();
-	qualitySegment += qsstream.str();
+	//qualitySegment += qsstream.str();
 }
 bool CigarParser::isInsertionOrDeletionWithNextMatched(int ci) {
     return conf->performLocalRealignment && record->core.n_cigar > ci+2

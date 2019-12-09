@@ -776,7 +776,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
         smatch sm;
         
         //Matcher mm = DUP_NUM.matcher(genotype1);
-        if (regex_match(genotype1, sm, conf->patterns->DUP_NUM)) {
+        if (regex_search(genotype1, sm, conf->patterns->DUP_NUM)) {
             genotype1 = "+" + to_string(CONF_SVFLANK + atoi(sm[1].str().c_str()));
         }
         else {
@@ -812,7 +812,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
             int deletionLength = 0; //$dellen
             //Matcher matcher = BEGIN_MINUS_NUMBER.matcher(descriptionString);
             smatch sm;
-            if (regex_match(descriptionString, sm, conf->patterns->BEGIN_MINUS_NUMBER)) {
+            if (regex_search(descriptionString, sm, conf->patterns->BEGIN_MINUS_NUMBER)) {
                 deletionLength = atoi(sm[1].str().c_str());
             }
             //effective position (??): p + dellen - 1 for deletion, p otherwise
@@ -858,7 +858,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                 }
                 
                 //Matcher mm = DUP_NUM.matcher(varallele);
-                if (regex_match(varallele, sm, conf->patterns->DUP_NUM)) {
+                if (regex_search(varallele, sm, conf->patterns->DUP_NUM)) {
                     int dupCount = atoi(sm[1].str().c_str());
                     endPosition = startPosition + (2 * CONF_SVFLANK + dupCount) - 1;
                     genotype2 = "+" + to_string(2 * CONF_SVFLANK + dupCount);
@@ -875,7 +875,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                     //remove '-' and number from beginning of variant string
                     varallele = descriptionString;
                     replaceFirst_re(varallele, "^-\\d+", "");
-					printf("varallel: %s => %s\n", descriptionString.c_str(), varallele.c_str());
+					printf("%d varallel: %s => %s\n", position, descriptionString.c_str(), varallele.c_str());
 
                     refVariantMsi = proceedVrefIsDeletion(position, deletionLength);
                     msi = refVariantMsi->msi;
@@ -907,7 +907,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                     startPosition--;
                 }
                 //Matcher mm = SOME_SV_NUMBERS.matcher(descriptionString);
-                if (regex_match(descriptionString,conf->patterns->SOME_SV_NUMBERS)) {
+                if (regex_search(descriptionString,conf->patterns->SOME_SV_NUMBERS)) {
                     refallele = ref.count(position) ? string(1, ref[position]) : "";
                 }
                 else if (deletionLength < conf->SVMINLEN) {
@@ -936,7 +936,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
 
             //Matcher mtch = AMP_ATGC.matcher(descriptionString);
 
-            if (regex_match(descriptionString, sm, conf->patterns->AMP_ATGC)) { //If variant is followed by matched sequence
+            if (regex_search(descriptionString, sm, conf->patterns->AMP_ATGC)) { //If variant is followed by matched sequence
                 //following matching sequence
                 string extra = sm[1];
                 //remove '&' symbol from variant allele
@@ -950,7 +950,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                 endPosition += extra.length();
 
                 //mtch = AMP_ATGC.matcher(varallele);
-                if (regex_match(varallele, sm, conf->patterns->AMP_ATGC)) {
+                if (regex_search(varallele, sm, conf->patterns->AMP_ATGC)) {
                     string vextra = sm[1];
                     replaceFirst(varallele, "&", "");
                     tch = joinRef(ref, endPosition + 1, endPosition + vextra.length());
@@ -981,11 +981,11 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
 			//printf("%d-2 %s,%s\n", position, genotype1.c_str(), genotype2.c_str());
 			//If variant is followed by short matched sequence and insertion/deletion
             //mtch = HASH_GROUP_CARET_GROUP.matcher(descriptionString);
-            if (regex_match(descriptionString, sm, conf->patterns->HASH_GROUP_CARET_GROUP)) {
+            if (regex_search(descriptionString, sm, conf->patterns->HASH_GROUP_CARET_GROUP)) {
                 string matchedSequence = sm[1]; //$mseq
                 //insertion/deletion tail
                 string tail = sm[2];
-				printf("%d HASH_GROUP find!%s,%s\n", position, matchedSequence.c_str(), tail.c_str());
+				printf("%d HASH_GROUP find!: %s,%s\n", position, matchedSequence.c_str(), tail.c_str());
 
                 //adjust position by length of matched sequence
                 endPosition += matchedSequence.length();
@@ -996,7 +996,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                 //If tail is a deletion
                 //mtch = BEGIN_DIGITS.matcher(tail);
                 smatch smq;
-                if (regex_match(tail, smq, conf->patterns->BEGIN_DIGITS)) {
+                if (regex_search(tail, smq, conf->patterns->BEGIN_DIGITS)) {
                     //append (deletion length) bases from reference sequence to reference allele
                     int deletion = atoi(smq.str().c_str()); //$d
                     refallele += joinRef(ref, endPosition + 1, endPosition + deletion);
@@ -1017,9 +1017,9 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
             //mtch = CARET_ATGNC.matcher(descriptionString); // for deletion followed directly by insertion in novolign
             if (regex_search(descriptionString, conf->patterns->CARET_ATGNC)) {
                 //remove '^' sign from varallele
-				printf("varallel before: %s\n", varallele.c_str());
+				//printf("varallel before: %s\n", varallele.c_str());
                 replaceFirst(varallele, "^", "");
-				printf("varallel after: %s\n", varallele.c_str());
+				//printf("varallel after: %s\n", varallele.c_str());
 
                 //replace '^' sign with 'i' in genotypes
                 replaceFirst(genotype1, "^", "i");

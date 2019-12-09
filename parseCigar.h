@@ -33,6 +33,7 @@ struct Offset{
 	int offset;
 	string sequence;
 	string qualitySequence;
+	long q_sum;
 	int offsetNumberOfMismatches;
 };
 struct DataScope{
@@ -59,8 +60,12 @@ public:
 						 uint8_t* queryQuality, int numberOfMismatches, bool direction,
 						 int readLengthIncludeMatchingAndInsertions, int ci);
 	void processNotMatched() ;
+	//void appendSegments(char* querySequence, uint8_t* queryQuality, int ci,
+	//					string &descStringOfElement, string &qualitySegment,
+	//					int mLen, int indelLen, int begin, bool isInsertion);
 	void appendSegments(char* querySequence, uint8_t* queryQuality, int ci,
-						string &descStringOfElement, string &qualitySegment,
+						string &descStringOfElement, long& quality_segment_sum,
+						int& quality_segment_count,
 						int mLen, int indelLen, int begin, bool isInsertion);
 	bool isInsertionOrDeletionWithNextMatched(int ci) ;
     bool isCloserThenVextAndGoodBase(char* querySequence, unordered_map<int, char> ref, uint8_t* queryQuality, int ci, int i, string ss, int CigatOperator);
@@ -74,8 +79,10 @@ public:
 	void cleanupCigar(uint32_t* cigar, int n_cigar);
 	bool isReadsOverlap(bam1_t *record, int position, int mateAlignmentStart);
 	bool skipOverlappingReads(bam1_t *record, int position, bool dir, int mateAlignmentStart);
+	//void addVariationForDeletion(uint8_t mappingQuality, int nm, bool dir, int rlen1,
+	//										  string descStringOfDeletedElement, string qualityOfSegment, int nmoff);
 	void addVariationForDeletion(uint8_t mappingQuality, int nm, bool dir, int rlen1,
-											  string descStringOfDeletedElement, string qualityOfSegment, int nmoff);
+											  string descStringOfDeletedElement, long quality_segment_sum, int quality_segment_count, int nmoff);
 	//void subCnt(Variation *variation, bool direction, int readPosition, double baseQuality,
 	//			int mappingBaseQuality, int numberOfMismatches);
 	//void addCnt(Variation *variation, bool direction, int readPosition, double baseQuality,
