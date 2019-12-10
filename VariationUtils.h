@@ -27,7 +27,7 @@ inline bool isNotEquals(char ch1, char ch2){
 	return !(ch1 == ch2);
 }
 
-inline bool isHasAndEquals(char ch1, unordered_map<int, char> &ref, int index) {
+inline bool isHasAndEquals(char ch1, robin_hood::unordered_map<int, char> &ref, int index) {
 	if(ref.find(index) == ref.end()){
 		return false;
     }else{
@@ -35,14 +35,14 @@ inline bool isHasAndEquals(char ch1, unordered_map<int, char> &ref, int index) {
 	}
 }
 
-inline bool isHasAndEquals(int index, unordered_map<int, char> &ref, int index2) {
+inline bool isHasAndEquals(int index, robin_hood::unordered_map<int, char> &ref, int index2) {
 	if((ref.find(index) == ref.end()) || (ref.find(index2) == ref.end())){
 		return false;
 	}
 	return ref[index] == ref[index2];
 }
 
-inline bool isHasAndEquals(unordered_map<int, char> &ref, int index1, string str, int index2) {
+inline bool isHasAndEquals(robin_hood::unordered_map<int, char> &ref, int index1, string str, int index2) {
 	if(ref.find(index1) == ref.end()){
         return false;
 	}
@@ -51,19 +51,19 @@ inline bool isHasAndEquals(unordered_map<int, char> &ref, int index1, string str
 	return ref[index1] == str[index2];
 }
 
-inline bool isHasAndNotEquals(char ch1, unordered_map<int, char> &ref, int index) {
+inline bool isHasAndNotEquals(char ch1, robin_hood::unordered_map<int, char> &ref, int index) {
 	if(ref.find(index) == ref.end())
         return false;
 	return !(ref[index] == ch1);
 }
 
-inline bool isHasAndNotEquals(unordered_map<int, char> &ref, int index1, string &str, int index2) {
+inline bool isHasAndNotEquals(robin_hood::unordered_map<int, char> &ref, int index1, string &str, int index2) {
 	if(ref.find(index1) == ref.end())
 		return false;
 	return !(ref[index1] == str[index2]);
 }
 
-inline bool isHasAndNotEquals(unordered_map<int, char> &ref, int index1, char* str, int index2) {
+inline bool isHasAndNotEquals(robin_hood::unordered_map<int, char> &ref, int index1, char* str, int index2) {
 	if(ref.find(index1) == ref.end())
 		return false;
 	return !(ref[index1] == str[index2]);
@@ -77,7 +77,7 @@ inline bool isHasAndNotEquals(unordered_map<int, char> &ref, int index1, char* s
  * @param ref map of reference bases
  * @return Tuple of (int bi, String ins, int bi)
  */
-inline BaseInsertion* adjInsPos(int bi, string &ins, unordered_map<int, char> &ref) {
+inline BaseInsertion* adjInsPos(int bi, string &ins, robin_hood::unordered_map<int, char> &ref) {
     int n = 1;
     int len = ins.length();
     while(ref[bi] == ins[ins.length() - n]) {
@@ -126,13 +126,13 @@ inline BaseInsertion* adjInsPos(int bi, string &ins, unordered_map<int, char> &r
 //    return variation;
 //}
 
-inline Variation* getVariation(unordered_map<int, VariationMap* > &hash,
+inline Variation* getVariation(robin_hood::unordered_map<int, VariationMap* > &hash,
                                      int start,
                                      string descriptionString) {
 	//cout << "get variation: " << start << " ==> " << descriptionString << endl;
 	VariationMap *vmap;
 	Variation* variation;
-	unordered_map<int, VariationMap*>::iterator itr;
+	robin_hood::unordered_map<int, VariationMap*>::iterator itr;
 	if((itr = hash.find(start)) != hash.end()){
 		//map  = new VariationMap<string, Variation*>();
 		vmap = itr->second;
@@ -145,7 +145,7 @@ inline Variation* getVariation(unordered_map<int, VariationMap* > &hash,
 	}
 
 
-	unordered_map<string, Variation*>::iterator itr2;
+	robin_hood::unordered_map<string, Variation*>::iterator itr2;
 	if((itr2 = vmap->variation_map.find(descriptionString)) != vmap->variation_map.end()){
 		return itr2->second;
 	}else{
@@ -188,7 +188,7 @@ inline Variation* getVariation(unordered_map<int, VariationMap* > &hash,
 //	}
 //    return variation;
 //}
-inline Variation* getVariationMaybe(unordered_map<int, VariationMap* > &hash,
+inline Variation* getVariationMaybe(robin_hood::unordered_map<int, VariationMap* > &hash,
 							 int start,
 							 char refBase) {
 	if(refBase == (char)0)
@@ -201,7 +201,7 @@ inline Variation* getVariationMaybe(unordered_map<int, VariationMap* > &hash,
 	if(hash.find(start) == hash.end()){
 		return NULL;
 	}else{
-		unordered_map<string, Variation*> vmap = hash.at(start)->variation_map;
+		robin_hood::unordered_map<string, Variation*> vmap = hash.at(start)->variation_map;
 		string s_refBase(1, refBase);
 		if(vmap.find(s_refBase) == vmap.end()){
 			return NULL;
@@ -306,14 +306,14 @@ inline void adjCnt(Variation *varToAdd, Variation *variant) {
 
 
 
-inline string joinRef(unordered_map<int, char> &baseToPosition, int from, int to){
+inline string joinRef(robin_hood::unordered_map<int, char> &baseToPosition, int from, int to){
     string res="";
     for(int i=from; i <= to; i++){
         res+=baseToPosition[i];
     }
     return res;
 }
-inline string joinRef_double(unordered_map<int, char> &baseToPosition, int from, double to){
+inline string joinRef_double(robin_hood::unordered_map<int, char> &baseToPosition, int from, double to){
     string res="";
     for(int i=from; i < to; i++){
         res+=baseToPosition[i];
@@ -395,7 +395,7 @@ inline string findconseq(Sclip *softClip, int dir) {
     bool flag = false;
     for (auto& nve : softClip->nt) {
         int positionInSclip = nve.first;
-        unordered_map<char, int> nv = nve.second;
+        robin_hood::unordered_map<char, int> nv = nve.second;
         int maxCount = 0; //$max
         double maxQuality = 0; //$maxq
         char chosenBase = 0; //$mnt
@@ -495,12 +495,12 @@ inline int strandBias(int forwardCount, int reverseCount, Configuration* conf){
 
 }
 
-inline Vars* getOrPutVars(unordered_map<int, Vars*> &mapv, int position){
+inline Vars* getOrPutVars(robin_hood::unordered_map<int, Vars*> &mapv, int position){
     //Vars *vars = mapv[position];
     //mapv[position] = vars;
     //return vars;
 	Vars *vars;
-	unordered_map<int, Vars*>::iterator itr;
+	robin_hood::unordered_map<int, Vars*>::iterator itr;
 	if((itr = mapv.find(position)) != mapv.end()){
 		vars = itr->second;
 	}else{

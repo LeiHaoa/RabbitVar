@@ -9,7 +9,8 @@
 #include "VariationData.h"
 
 #include<vector>
-#include<unordered_map>
+//#include<unordered_map>
+#include "../robin_hood.h"
 #include<string>
 
 
@@ -19,26 +20,26 @@
  */
 class RealignedVariationData {
     public:
-        unordered_map<int, VariationMap* > nonInsertionVariants;
-        unordered_map<int, VariationMap* > insertionVariants;
-        unordered_map<int, Sclip* > softClips5End;
-        unordered_map<int, Sclip* > softClips3End;
-        unordered_map<int, int> refCoverage;
+        robin_hood::unordered_map<int, VariationMap* > nonInsertionVariants;
+        robin_hood::unordered_map<int, VariationMap* > insertionVariants;
+        robin_hood::unordered_map<int, Sclip* > softClips5End;
+        robin_hood::unordered_map<int, Sclip* > softClips3End;
+        robin_hood::unordered_map<int, int> refCoverage;
         int maxReadLength;
         double duprate;
         CurrentSegment CURSEG;
-        unordered_map<int, vector<Sclip*> > SOFTP2SV;
+        robin_hood::unordered_map<int, vector<Sclip*> > SOFTP2SV;
         Scope<VariationData> *previousScope;
 
-        RealignedVariationData(unordered_map<int, VariationMap* > nonInsertionVariants,
-                            unordered_map<int, VariationMap* > insertionVariants,
-                            unordered_map<int, Sclip* > softClips3End,
-							   unordered_map<int, Sclip* > softClips5End,
-							   unordered_map<int, int> refCoverage,
+        RealignedVariationData(robin_hood::unordered_map<int, VariationMap* > nonInsertionVariants,
+                            robin_hood::unordered_map<int, VariationMap* > insertionVariants,
+                            robin_hood::unordered_map<int, Sclip* > softClips3End,
+							   robin_hood::unordered_map<int, Sclip* > softClips5End,
+							   robin_hood::unordered_map<int, int> refCoverage,
 							   int maxReadLength,
 							   double duprate,
 							   CurrentSegment CURSEG,
-							   unordered_map<int, vector<Sclip*> > SOFTP2SV,
+							   robin_hood::unordered_map<int, vector<Sclip*> > SOFTP2SV,
 							   Scope<VariationData> *preScope ) 
     {
         this->softClips3End = softClips3End;

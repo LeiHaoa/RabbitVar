@@ -3,6 +3,7 @@
 
 #include "Configuration.h"
 #include "Region.h"
+#include "./robin_hood.h"
 
 class VarDictLauncher {
 public:
@@ -15,7 +16,7 @@ public:
 	void start(Configuration *config);
     void initResources(Configuration *conf);
     std::tuple<string, bool, vector<string> > readBedFile(Configuration *conf);
-    void readChr(string bam, unordered_map<string, int> &chrs);
+    void readChr(string bam, robin_hood::unordered_map<string, int> &chrs);
     std::tuple<string, string> getSampleNames(Configuration *conf);
     std::tuple<string, string> getSampleNamesSomatic(Configuration *conf);
 };

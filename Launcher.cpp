@@ -12,6 +12,7 @@
 #include "./patterns.h"
 #include "./cmdline.h"
 #include <omp.h>
+#include <assert.h>
 
 using namespace std;
 
@@ -55,8 +56,7 @@ void VarDictLauncher::initResources(Configuration *conf) {
 	//try {
 		printf("init!\n");
         //unordered_map<std::string, int> chrLengths;
-        unordered_map<std::string, int> chrLengths;
-		printf("2!\n");
+        robin_hood::unordered_map<std::string, int> chrLengths;
 		readChr(conf->bam.getBamX(), chrLengths);
 		std::tuple<string, string> samples;
         if ((conf->regionOfInterest != "") && (conf->bam.hasBam2())) {
@@ -65,7 +65,9 @@ void VarDictLauncher::initResources(Configuration *conf) {
             samples = getSampleNames(conf);
         }
 
-        RegionBuilder builder(chrLengths, *conf);
+		printf("2!\n");
+        RegionBuilder builder(chrLengths, conf);
+		printf("3!\n");
         string ampliconBasedCalling = "";
 
         if (conf->regionOfInterest != "") {
@@ -94,8 +96,8 @@ void VarDictLauncher::initResources(Configuration *conf) {
 		//	}
 		//}
         //Fill adaptor maps
-        unordered_map<string, int> adaptorForward;
-        unordered_map<string, int> adaptorReverse;
+        robin_hood::unordered_map<string, int> adaptorForward;
+        robin_hood::unordered_map<string, int> adaptorReverse;
         if (!conf->adaptor.size()) {
             for(string sequence : conf->adaptor) {
                 for (int i = 0; i <= 6 && i + CONF_ADSEED < sequence.length(); i++) {
@@ -120,6 +122,7 @@ void VarDictLauncher::initResources(Configuration *conf) {
 		//	cerr << "initResources function error!!" << endl;
 		//}
 		//exit(0);
+		printf("end\n");
 }
 
 /**
@@ -154,7 +157,7 @@ std::tuple<string, bool, vector<string> > VarDictLauncher::readBedFile(Configura
 				//Matcher column6Matcher = INTEGER_ONLY.matcher(columnValues[6]);
 				//Matcher column7Matcher = INTEGER_ONLY.matcher(columnValues[7]);
 				
-				if (regex_match(columnValues[6], conf->patterns->INTEGER_ONLY) && regex_match(columnValues[7], conf->patterns->INTEGER_ONLY)) {
+				if (regex_search(columnValues[6], conf->patterns->INTEGER_ONLY) && regex_search(columnValues[7], conf->patterns->INTEGER_ONLY)) {
 					try {
 						int startRegion_a1 = std::stoi(columnValues[1]);
 						int endRegion_a2 = std::stoi(columnValues[2]);
@@ -187,7 +190,7 @@ std::tuple<string, bool, vector<string> > VarDictLauncher::readBedFile(Configura
  * @return Map of chromosome lengths. Key - chromosome name, value - length
  * @throws IOException if BAM/SAM file can't be opened
  */
-void VarDictLauncher::readChr(string bam, unordered_map<string, int> &chrs) {
+void VarDictLauncher::readChr(string bam, robin_hood::unordered_map<string, int> &chrs) {
 	samFile* in = sam_open(bam.c_str(), "r");
 	if(in){
 		bam_hdr_t* header = sam_hdr_read(in);
@@ -216,10 +219,10 @@ std::tuple<string, string> VarDictLauncher::getSampleNames(Configuration *conf) 
     } else {
         if (conf->sampleNameRegexp == "") {
             //rn = SAMPLE_PATTERN;
-			match = regex_match(bam_raw, sm, regex(SAMPLE_PATTERN));
+			match = regex_search(bam_raw, sm, regex(SAMPLE_PATTERN));
         } else {
 			// rn = Pattern.compile(conf.sampleNameRegexp);
-			match = regex_match(bam_raw, sm, regex(conf->sampleNameRegexp));
+			match = regex_search(bam_raw, sm, regex(conf->sampleNameRegexp));
         }
 
         if (match) {
@@ -229,7 +232,7 @@ std::tuple<string, string> VarDictLauncher::getSampleNames(Configuration *conf) 
 
     if (sample == "") {
         //Matcher matcher = SAMPLE_PATTERN2.matcher(conf.bam.getBamRaw());
-		match = regex_match(bam_raw, sm, regex(SAMPLE_PATTERN));
+		match = regex_search(bam_raw, sm, regex(SAMPLE_PATTERN));
 		if (match) {
             sample = sm.str(1);
         }
@@ -254,11 +257,11 @@ std::tuple<string, string> VarDictLauncher::getSampleNamesSomatic(Configuration 
 	if (conf->sampleNameRegexp != "") {
 		//Pattern rn = Pattern.compile(conf.sampleNameRegexp);
 		//Matcher m = rn.matcher(conf.bam.getBam1());
-		if (regex_match(bam1, sm, regex(conf->sampleNameRegexp))) {
+		if (regex_search(bam1, sm, regex(conf->sampleNameRegexp))) {
 			sample = sm.str(1);
 		}
 		//m = rn.matcher(conf.bam.getBam2());
-		if (regex_match(bam1, sm, regex(conf->sampleNameRegexp))) {
+		if (regex_search(bam1, sm, regex(conf->sampleNameRegexp))) {
 				samplem = sm.str(1);
 		}
 	}else{
@@ -439,6 +442,38 @@ Configuration* cmdParse(int argc, char* argv[]){
             config->sampleNameRegexp = regexp;
         }
         config->bam = BamNames(cmd.get<string>('b'));
+		//----add by haoz: init bamReader------//
+		if(config->bam.getBam1() != ""){
+			samFile* in = sam_open(config->bam.getBam1().c_str(), "r");
+			bam_hdr_t* header;
+			hts_idx_t* idx;
+			if(in){
+				header = sam_hdr_read(in);
+				idx = sam_index_load(in, config->bam.getBam1().c_str());
+				assert(idx != NULL);
+			}else{
+				printf("read bamFile: %s error!", config->bam.getBam1().c_str());
+				exit(1);
+			}
+			config->bamReaders.push_back(bamReader(in, header, idx));
+		}
+		if(config->bam.hasBam2() && config->bam.getBam2() != ""){
+			samFile* in = sam_open(config->bam.getBam2().c_str(), "r");
+			bam_hdr_t* header;
+			hts_idx_t* idx;
+			if(in){
+				header = sam_hdr_read(in);
+				idx = sam_index_load(in, config->bam.getBam2().c_str());
+				assert(idx != NULL);
+			}else{
+				printf("read bamFile2: %s error!", config->bam.getBam2().c_str());
+				exit(1);
+			}
+			config->bamReaders.push_back(bamReader(in, header, idx));
+		}
+		assert(config->bamReaders.size() > 0);
+		//----init bamReader end------//
+		
 
         int c_col = (cmd.exist('c')?-1:0) + cmd.get<int>('c');
         int S_col = (cmd.exist('S')?-1:0) + cmd.get<int>('S');
@@ -569,7 +604,7 @@ inline void one_region_run(Region region, Configuration* conf){
 		 << " to varBuilder Time: " << end3 - start3
 		 << endl;
 
-	delete preprocessor;
+	//delete preprocessor;
 
 }
 
@@ -594,7 +629,7 @@ int main_single(int argc, char* argv[]){
 			//for(Region reg: reg_vec){
 			for(int i = 0; i < reg_vec.size(); i++){
 				Region reg = reg_vec[i];
-				//cout << reg.chr << " - " << reg.start << " - " << reg.end  << endl;
+				cout << reg.chr << " - " << reg.start << " - " << reg.end  << endl;
 				one_region_run(reg, conf);
 			}
 		}

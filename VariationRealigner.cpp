@@ -326,7 +326,7 @@ void VariationRealigner::adjustMNP() {
             if (nonInsertionVariants.count(position)==0) {
                 continue;
             }
-		   	unordered_map<string, Variation*> varsOnPosition = nonInsertionVariants[position]->variation_map;
+		   	robin_hood::unordered_map<string, Variation*> varsOnPosition = nonInsertionVariants[position]->variation_map;
 			
             if (varsOnPosition.count(vn)==0) { // The variant is likely already been used by indel realignment
                 continue;
@@ -480,7 +480,7 @@ void VariationRealigner::realignIndels()  {
  * @param positionToDeletionsCount deletion variants count on positions
  * @param bamsParameter BAM file list (can be NULL in few cases of running realigndel)
 */
-void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map<int, unordered_map<string, int> > positionToDeletionCount) {
+void VariationRealigner::realigndel(vector<string> *bamsParameter, robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > positionToDeletionCount) {
 	//if(positionToDeletionCount.size() == 1){
 	//	for(auto& vm: positionToDeletionCount){
 	//		for(auto v: vm.second){
@@ -488,7 +488,7 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
 	//		}
 	//	}
 	//}
-    unordered_map<int, char> ref = reference.referenceSequences;
+    robin_hood::unordered_map<int, char> ref = reference.referenceSequences;
     vector<string> *bams;
     if (bamsParameter == NULL || bamsParameter->size() == 0) {
         bams = NULL;
@@ -713,7 +713,7 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
                     && pe - p >= 5
                     && pe - p < maxReadLength - 10
                     && h != NULL && h->varsCount != 0
-                    && noPassingReads(chr, p, pe, *bams)
+				    && noPassingReads(chr, p, pe, *bams)
                     && vref->varsCount > 2 * h->varsCount * (1 - (pe - p) / (double) maxReadLength)) {
                 adjCnt(vref, h, h);
             }
@@ -767,8 +767,8 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
      * @param positionToInsertionCount insertion variants count on positions
      * @return insertion sequence
      */
-    string VariationRealigner::realignins(unordered_map<int, unordered_map<string, int> > &positionToInsertionCount) {
-        unordered_map<int, char> ref = reference.referenceSequences;
+    string VariationRealigner::realignins(robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > &positionToInsertionCount) {
+        robin_hood::unordered_map<int, char> ref = reference.referenceSequences;
         vector<SortPositionDescription*> tmp = fillAndSortTmp(positionToInsertionCount);
 		//cout << "tmp size: " << tmp.size() << endl;
 		//for(SortPositionDescription* tpl: tmp){
@@ -1513,7 +1513,7 @@ public void realignlgdel(list<Sclip> svfdel,
  * This will try to realign large insertions (typically larger than 30bp)
  */
 void VariationRealigner::realignlgins30() {
-    unordered_map<int, char> ref = reference.referenceSequences;
+    robin_hood::unordered_map<int, char> ref = reference.referenceSequences;
 
     vector<SortPositionSclip*> tmp5;
     for (auto& ent5 : softClips5End) {
@@ -1729,8 +1729,8 @@ void VariationRealigner::realignlgins30() {
                                 && vref->varsCount > 2 * mvref->varsCount) {
                             adjCnt(vref, mvref, mvref);
                         }
-                        unordered_map<int, unordered_map<string, int> > tins;
-                        unordered_map<string, int> mapp;
+                        robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > tins;
+                        robin_hood::unordered_map<string, int> mapp;
                         mapp[ins] = vref->varsCount;
                         tins[bi] = mapp;
                         realignins(tins);
@@ -1739,8 +1739,8 @@ void VariationRealigner::realignlgins30() {
                         adjCnt(vref, sc3v, getVariationMaybe(nonInsertionVariants, bi, ref[bi]));
                         adjCnt(vref, sc5v);
 						printf("find deletion2: %s : varsCount: %d\n", ins.c_str(), vref->varsCount);
-                        unordered_map<int, unordered_map<string, int> > tdel;
-                        unordered_map<string, int> mapp ;
+                        robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > tdel;
+                        robin_hood::unordered_map<string, int> mapp ;
                         mapp[ins]= vref->varsCount;
                         tdel[bi]= mapp;
                         realigndel(NULL, tdel);
@@ -2118,13 +2118,13 @@ public void realignlgins(list<Sclip> svfdup,
  * @param changes initial hash map
  * @return tuple of (position, descriptions string and variation count).
  */
-vector<SortPositionDescription*> VariationRealigner::fillAndSortTmp(unordered_map<int, unordered_map<string, int> > &changes) {
+vector<SortPositionDescription*> VariationRealigner::fillAndSortTmp(robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > &changes) {
     //TODO: perl here have non-deterministic results because of hash, maybe we need to
     // make the sort in Perl more stringent (except simple sort b[2]<=>a[2]
     vector<SortPositionDescription*> tmp;
     for (auto& entry : changes) {
         int position = entry.first;
-        unordered_map<string, int> v = entry.second;
+        robin_hood::unordered_map<string, int> v = entry.second;
         for (auto& entV : v) {
             string descriptionstring = entV.first;
             int cnt = entV.second;
@@ -2211,43 +2211,70 @@ bool VariationRealigner::noPassingReads(string& chr, int start, int end, vector<
 	uint32_t dlenqr = (dlen << 4) | BAM_CDEL;
     //Region* region = new Region(chr, start, end, "");
 	string region_string = chr + ":" + to_string(start) + "-" + to_string(end);
+	vector<bamReader> bam_readers = conf->bamReaders;
 	bam_hdr_t* header;
 	hts_idx_t* idx;
 	hts_itr_t* iter;
+	samFile* in;
 	bam1_t* record = bam_init1();
 	
-    for (string bam : bams) {
+    //for (string bam : bams) {
+    for (bamReader bam : bam_readers) {
         //try (SamView *reader = new SamView(bam, "0", region, conf.validationstringency)) {
-		try{
-			samFile* in = sam_open(bam.c_str(), "r");
-			if(in){
-				header = sam_hdr_read(in);
-				idx = sam_index_load(in, bam.c_str());
-				assert(idx != NULL);
-				iter = sam_itr_querys(idx, header, region_string.c_str());
-				int ret = 0;
-				uint32_t* cigar;
-				//printf("bam: %s, region: %s\n", bam.c_str(), region_string.c_str());
-				while( (ret = sam_itr_next(in, iter, record)) >= 0){
-					//if (record.getCigarstring().count(dlenqr))
-					cigar = bam_get_cigar(record);
-					if(cigar_has_element(cigar, record->core.n_cigar, dlenqr)){
-						continue;
-					}
-					int readStart = getAlignmentStart(record);
-					int readLengthIncludeMatchedAndDeleted = getAlignedLength(cigar, record->core.n_cigar);
-					int readEnd = readStart + readLengthIncludeMatchedAndDeleted;
-					if (readEnd > end + 2 && readStart < start - 2) {
-						cnt++;
-					}
-					if (readStart < start - 2 && readEnd > start && readEnd < end) {
-						midcnt++;
-					}
-				}
+		header = bam.header;
+		idx = bam.idx;
+		in = bam.in;
+
+		iter = sam_itr_querys(idx, header, region_string.c_str());
+		int ret = 0;
+		uint32_t* cigar;
+		//printf("bam: %s, region: %s\n", bam.c_str(), region_string.c_str());
+		while( (ret = sam_itr_next(in, iter, record)) >= 0){
+			//if (record.getCigarstring().count(dlenqr))
+			cigar = bam_get_cigar(record);
+			if(cigar_has_element(cigar, record->core.n_cigar, dlenqr)){
+				continue;
 			}
-		}catch(...){
-			printf("there is an error in realigner reader!!");
+			int readStart = getAlignmentStart(record);
+			int readLengthIncludeMatchedAndDeleted = getAlignedLength(cigar, record->core.n_cigar);
+			int readEnd = readStart + readLengthIncludeMatchedAndDeleted;
+			if (readEnd > end + 2 && readStart < start - 2) {
+				cnt++;
+			}
+			if (readStart < start - 2 && readEnd > start && readEnd < end) {
+				midcnt++;
+			}
 		}
+		//try{
+		//	samFile* in = sam_open(bam.c_str(), "r");
+		//	if(in){
+		//		header = sam_hdr_read(in);
+		//		idx = sam_index_load(in, bam.c_str());
+		//		assert(idx != NULL);
+		//		iter = sam_itr_querys(idx, header, region_string.c_str());
+		//		int ret = 0;
+		//		uint32_t* cigar;
+		//		//printf("bam: %s, region: %s\n", bam.c_str(), region_string.c_str());
+		//		while( (ret = sam_itr_next(in, iter, record)) >= 0){
+		//			//if (record.getCigarstring().count(dlenqr))
+		//			cigar = bam_get_cigar(record);
+		//			if(cigar_has_element(cigar, record->core.n_cigar, dlenqr)){
+		//				continue;
+		//			}
+		//			int readStart = getAlignmentStart(record);
+		//			int readLengthIncludeMatchedAndDeleted = getAlignedLength(cigar, record->core.n_cigar);
+		//			int readEnd = readStart + readLengthIncludeMatchedAndDeleted;
+		//			if (readEnd > end + 2 && readStart < start - 2) {
+		//				cnt++;
+		//			}
+		//			if (readStart < start - 2 && readEnd > start && readEnd < end) {
+		//				midcnt++;
+		//			}
+		//		}
+		//	}
+		//}catch(...){
+		//	printf("there is an error in realigner reader!!");
+		//}
 	}
 	//bam_hdr_destroy(header);
 	//if(in) sam_close(in);
@@ -2330,7 +2357,7 @@ int VariationRealigner::count(string &str, char chr) {
  */
 BaseInsertion* VariationRealigner::findbi(string &seq,
                      int position,
-                     unordered_map<int, char> &ref,
+                     robin_hood::unordered_map<int, char> &ref,
                      int dir,
                      string &chr) {
     const int maxmm = 3; // maximum mismatches allowed
@@ -2456,7 +2483,7 @@ BaseInsertion* VariationRealigner::findbi(string &seq,
  */
 int VariationRealigner::findbp(string &sequence,
               int startPosition,
-              unordered_map<int, char> &ref,
+              robin_hood::unordered_map<int, char> &ref,
               int direction,
               string &chr) {
 
@@ -2616,7 +2643,7 @@ void VariationRealigner::addVarFactor(Variation *vref, double factor_f) {
  * @param wupseq sequence
  * @return MismatchResult contains mismatches lists and clipping positions
  */
-MismatchResult* VariationRealigner::findMM5(unordered_map<int, char> &ref,
+MismatchResult* VariationRealigner::findMM5(robin_hood::unordered_map<int, char> &ref,
                               int position,
                               string wupseq) {
     string seq = regex_replace(wupseq,regex("#|\\^"), "");
@@ -2678,7 +2705,7 @@ MismatchResult* VariationRealigner::findMM5(unordered_map<int, char> &ref,
  * @param sanpseq sequence
  * @return MismatchResult contains mismatches lists and clipping positions
  */
-MismatchResult* VariationRealigner::findMM3(unordered_map<int, char> &ref,
+MismatchResult* VariationRealigner::findMM3(robin_hood::unordered_map<int, char> &ref,
                               int p,
                               string sanpseq) {
     string seq = regex_replace(sanpseq, regex("#|\\^"), ""); // ~ s/#|\^//g;
@@ -2745,7 +2772,7 @@ MismatchResult* VariationRealigner::findMM3(unordered_map<int, char> &ref,
  * @return true if sequence is matched to reference
  */
 bool VariationRealigner::ismatchref(string sequence,
-                                 unordered_map<int, char> &ref,
+                                 robin_hood::unordered_map<int, char> &ref,
                                  int position,
                                  int dir) {
     int MM = 3;
@@ -2762,7 +2789,7 @@ bool VariationRealigner::ismatchref(string sequence,
  * @return true if sequence is matched to reference
  */
 bool VariationRealigner::ismatchref(string sequence,
-                                 unordered_map<int, char> &ref,
+                                 robin_hood::unordered_map<int, char> &ref,
                                  int position,
                                  int dir,
                                  int MM=3) {

@@ -2,7 +2,8 @@
 #define _REFERENCE_H
 
 #include <string>
-#include <unordered_map>
+//#include <unordered_map>
+#include "../robin_hood.h"
 #include <list>
 /**
  * Class to store already loaded region in reference to avoid excess operations on it
@@ -19,8 +20,8 @@ struct LoadedRegion {
 class Reference {
 public:
     list<LoadedRegion*> loadedRegions;
-    unordered_map<int, char> referenceSequences;
-    unordered_map<string, list<int>> seed;
+    robin_hood::unordered_map<int, char> referenceSequences;
+    robin_hood::unordered_map<string, list<int>> seed;
 	int ref_start;
 	int ref_end;
 

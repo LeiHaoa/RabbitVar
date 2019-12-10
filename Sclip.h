@@ -1,15 +1,16 @@
 #ifndef _SCLIP_H
 #define _SCLIP_H
 
-#include <unordered_map>
+//#include <unordered_map>
+#include "./robin_hood.h"
 #include <string>
 
 #include "Variation.h"
 
 class Sclip : public Variation{
 public:
-	map<int, unordered_map<char, int> > nt;
-	map<int, unordered_map<char, Variation*> > seq;
+	map<int, robin_hood::unordered_map<char, int> > nt;
+	map<int, robin_hood::unordered_map<char, Variation*> > seq;
 
 	string sequence = "";
 	bool used = false;

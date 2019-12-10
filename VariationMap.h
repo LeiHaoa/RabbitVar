@@ -2,7 +2,8 @@
 #define _VARIATIONMAP_H
 
 #include <string>
-#include <unordered_map>
+//#include <unordered_map>
+#include "robin_hood.h"
 #include <map>
 #include "Variation.h"
 
@@ -24,7 +25,7 @@ class SV {
 class VariationMap{//:public unordered_map<string, Variation*>{
 public:
 	SV* sv;
-	unordered_map<string, Variation*> variation_map;
+	robin_hood::unordered_map<string, Variation*> variation_map;
     /**
      * Structural variant content
      */

@@ -5,7 +5,7 @@
 BedRowFormat CUSTOM_BED_ROW_FORMAT(0, 1, 2, 3, 1, 2);
 BedRowFormat AMP_BED_ROW_FORMAT(0, 1, 2, 6, 7, 3);
 
-RegionBuilder::RegionBuilder(unordered_map<string, int> chromosomesLengths, Configuration config) {
+RegionBuilder::RegionBuilder(robin_hood::unordered_map<string, int> chromosomesLengths, Configuration* config) {
 	this->chromosomesLengths = chromosomesLengths;
 	this->config = config;
 }
@@ -20,16 +20,16 @@ RegionBuilder::RegionBuilder(unordered_map<string, int> chromosomesLengths, Conf
  */
 vector<vector<Region> > RegionBuilder::buildRegions(vector<string>& segRaws, bool zeroBased) {
 	//bool isZeroBased = config.isZeroBasedDefined() ? config.zeroBased : false;
-	bool isZeroBased = config.zeroBased;
+	bool isZeroBased = config->zeroBased;
 	vector<vector<Region> > segs;
-	BedRowFormat format = config.bedRowFormat;
+	BedRowFormat format = config->bedRowFormat;
 	//cout << "format info: "  << format.chrColumn << " - " << format.startColumn << " - " << format.endColumn << " - " << format.geneColumn
 	//	 << " thickStartColumn: " << format.thickStartColumn << " thickendcolumn: " << format.thickEndColumn << endl;
 	//BedRowFormat format = (0, 1, 2, 3, 1, 2);
 	for (string seg : segRaws) {
-		vector<string> columnValues = ssplit(seg, config.delimiter);
+		vector<string> columnValues = ssplit(seg, config->delimiter);
 		// For Custom Bed Row format columns number must be 4 and parameter -c doesn't set
-		if (!config.isColumnForChromosomeSet() && columnValues.size() == 4) {
+		if (!config->isColumnForChromosomeSet() && columnValues.size() == 4) {
 			try {
 				int a1 = std::stoi(columnValues[1]);
 				int a2 = std::stoi(columnValues[2]);
@@ -70,8 +70,8 @@ vector<vector<Region> > RegionBuilder::buildRegions(vector<string>& segRaws, boo
 				thickStart = cdsStart;
 			if (thickEnd > cdsEnd)
 				thickEnd = cdsEnd;
-			thickStart -= config.numberNucleotideToExtend;
-			thickEnd += config.numberNucleotideToExtend;
+			thickStart -= config->numberNucleotideToExtend;
+			thickEnd += config->numberNucleotideToExtend;
 			// increment start if zero based parameter true (coordinates start from 0)
 			if (isZeroBased && thickStart < thickEnd) {
 				//printf("isZeroBase:" + isZeroBased);
@@ -92,9 +92,9 @@ vector<vector<Region> > RegionBuilder::buildRegions(vector<string>& segRaws, boo
  */
 vector<vector<Region> > RegionBuilder::buildAmpRegions(vector<string>& segRaws, bool zeroBased) {
 	vector<vector<Region> > segs;// = new LinkedList<>();
-	unordered_map<string, vector<Region> > tsegs; //= new HashMap<>();
+	robin_hood::unordered_map<string, vector<Region> > tsegs; //= new HashMap<>();
 	for (string str : segRaws) {
-		vector<string> split = ssplit(str, config.delimiter);
+		vector<string> split = ssplit(str, config->delimiter);
 		for(string spi: split){
 			cout << "spi: " << spi << endl;
 		}
@@ -122,7 +122,7 @@ vector<vector<Region> > RegionBuilder::buildAmpRegions(vector<string>& segRaws, 
 	}
 	vector<Region> *regions; 
 	int previousEnd = -1;
-	//fon (unordered_map.Entry<string, vector<Region> > entry : tsegs.entrySet()) {
+	//fon (robin_hood::unordered_map.Entry<string, vector<Region> > entry : tsegs.entrySet()) {
 	//TODO: this part maybe buggy
 	for (auto& entry : tsegs) {
 		vector<Region> chrRegions = entry.second;
@@ -153,17 +153,17 @@ vector<vector<Region> > RegionBuilder::buildAmpRegions(vector<string>& segRaws, 
  * @return singleton list in list of one Region
  */
 void RegionBuilder::buildRegionFromConfiguration(vector<vector<Region> >& segments ) {
-	vector<string> split = ssplit(config.regionOfInterest, ":");
+	vector<string> split = ssplit(config->regionOfInterest, ":");
 	string chr = split[0];
 	chr = correctChromosome(chromosomesLengths, chr);
 	string gene = split.size() < 3 ? chr : split[2];
 	vector<string> range = ssplit(split[1], "-");
 	int start = std::stoi(erase_all_char(range[0], ','));
 	int end = range.size() < 2 ? start : std::stoi(erase_all_char(range[1], ','));
-	start -= config.numberNucleotideToExtend;
-	end += config.numberNucleotideToExtend;
+	start -= config->numberNucleotideToExtend;
+	end += config->numberNucleotideToExtend;
 	//TODO:bool zeroBased = config.isZeroBasedDefined() ? config.zeroBased : false;
-	bool zeroBased = config.zeroBased;
+	bool zeroBased = config->zeroBased;
 	if (zeroBased && start < end) {
 		start++;
 	}
@@ -181,7 +181,7 @@ void RegionBuilder::buildRegionFromConfiguration(vector<vector<Region> >& segmen
  * @param chr chromosome name
  * @return corrected chromosome name
  */
-string RegionBuilder::correctChromosome(unordered_map<string, int>& chromosomesLengths, string chr) {
+string RegionBuilder::correctChromosome(robin_hood::unordered_map<string, int>& chromosomesLengths, string chr) {
 	if (!chromosomesLengths.count(chr)) {
 		if (starts_with(chr, CHR_LABEL)) {
 			chr = chr.substr(CHR_LABEL.length());

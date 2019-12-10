@@ -15,7 +15,8 @@
 #include<regex>
 #include<string>
 #include<cmath>
-#include<unordered_map>
+//#include<unordered_map>
+#include "./robin_hood.h"
 
 class MSI {
 	public:
@@ -37,13 +38,13 @@ class MSI {
 class ToVarsBuilder {
     private: 
 		Region region;
-    	unordered_map<int, int> refCoverage;
-    	unordered_map<int, VariationMap* > insertionVariants;
-    	unordered_map<int, VariationMap* > nonInsertionVariants;
-    	unordered_map<int, char> ref;
+    	robin_hood::unordered_map<int, int> refCoverage;
+    	robin_hood::unordered_map<int, VariationMap* > insertionVariants;
+    	robin_hood::unordered_map<int, VariationMap* > nonInsertionVariants;
+    	robin_hood::unordered_map<int, char> ref;
 		Configuration *conf;
     	double duprate;
-		unordered_map<string, string> IUPAC_AMBIGUITY_CODES ={
+		robin_hood::unordered_map<string, string> IUPAC_AMBIGUITY_CODES ={
                {"M","A"},
                {"R","A"},
                {"W","A"},
@@ -60,17 +61,17 @@ class ToVarsBuilder {
 		ToVarsBuilder(Configuration *conf);
 		void initFromScope(Scope<RealignedVariationData> &scope);
 		Scope<AlignedVarsData> process(Scope<RealignedVariationData> &scope);
-		bool isTheSameVariationOnRef(int position, unordered_map<string, Variation*> &varsAtCurPosition);
+		bool isTheSameVariationOnRef(int position, robin_hood::unordered_map<string, Variation*> &varsAtCurPosition);
 		MSI* proceedVrefIsDeletion(int position, int dellen);
 		MSI* proceedVrefIsInsertion(int position, string vn);
-		double collectVarsAtPosition(unordered_map<int, Vars*> &alignedVariants, int position, vector<Variant*> &var);
+		double collectVarsAtPosition(robin_hood::unordered_map<int, Vars*> &alignedVariants, int position, vector<Variant*> &var);
 		int createInsertion(double duprate, int position, int totalPosCoverage, vector<Variant* > &var, vector<string> &debugLines, int hicov);
-		void createVariant(double duprate, unordered_map<int, Vars* > &alignedVars, int position,
+		void createVariant(double duprate, robin_hood::unordered_map<int, Vars* > &alignedVars, int position,
                        VariationMap* nonInsertionVariations, int totalPosCoverage, vector<Variant* > &var,
                        vector<string> &debugLines, vector<string> &keys, int hicov);
 		void adjustVariantCounts(int p, Variant* vref);
-		int calcHicov(unordered_map<string, Variation*> *insertionVariations,
-                          unordered_map<string, Variation*> &nonInsertionVariations);
+		int calcHicov(robin_hood::unordered_map<string, Variation*> *insertionVariations,
+                          robin_hood::unordered_map<string, Variation*> &nonInsertionVariations);
 		MSI* findMSI(const string& tseq1, const string& tseq2, const string& left);
 		void collectReferenceVariants(int position, int totalPosCoverage, Vars* variationsAtPos, vector<string> &debugLines);
 		string validateRefallele(string& refallele);

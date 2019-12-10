@@ -6,35 +6,42 @@
 
 using namespace std;
 
-RecordPreprocessor::RecordPreprocessor(Region& region, Configuration *conf){
+RecordPreprocessor::RecordPreprocessor(Region region, Configuration *conf){
 	this->region = region;
 	this->conf = conf;
-	string infname;
-	if( (infname = conf->bam.getBam1()) != ""){
-		in = sam_open(infname.c_str(), "r");
-	}else{
-		cerr << "no vailde bam file!" << endl;
-	}
+	//string infname;
+	//if( (infname = conf->bam.getBam1()) != ""){
+	//	in = sam_open(infname.c_str(), "r");
+	//}else{
+	//	cerr << "no vailde bam file!" << endl;
+	//}
+	//if(in){
+	//	header = sam_hdr_read(in);
+	//	idx = sam_index_load(in, infname.c_str());
+	//	assert(idx != NULL);
+	//	iter = sam_itr_querys(idx, header, region_string.c_str());
+	//	printf("in preprocessor: region_string: %s\n", region_string.c_str());
+	//}else{
+	//	printf("open file %s error!!\n", infname.c_str());
+	//	exit(0);
+	//}
+	printf("debug info: bamsize: %d\n", conf->bamReaders.size());
+	this->in = conf->bamReaders[0].in;
  	string region_string = "";
 	region_string += region.chr + ":"+to_string(region.start) + "-" + to_string(region.end);
-	if(in){
-		header = sam_hdr_read(in);
-		idx = sam_index_load(in, infname.c_str());
-		assert(idx != NULL);
-		iter = sam_itr_querys(idx, header, region_string.c_str());
-		printf("in preprocessor: region_string: %s\n", region_string.c_str());
-	}else{
-		printf("open file %s error!!\n", infname.c_str());
-		exit(0);
-	}
+	this->header = conf->bamReaders[0].header;
+	this->idx = conf->bamReaders[0].idx;
+	iter = sam_itr_querys(idx, header, region_string.c_str());
+	printf("in preprocessor: region_string: %s\n", region_string.c_str());
+
 	makeReference(conf->fasta);
 }
 
-RecordPreprocessor::~RecordPreprocessor(){
-	bam_hdr_destroy(header);
-	if(in) sam_close(in);
-	//free(reference.referenceSequences);
-}
+//RecordPreprocessor::~RecordPreprocessor(){
+//	//bam_hdr_destroy(header);
+//	//if(in) sam_close(in);
+//	//free(reference.referenceSequences);
+//}
 
 void RecordPreprocessor::makeReference(string fa_file_path){
 	int extension = conf->referenceExtension;

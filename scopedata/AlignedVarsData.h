@@ -1,6 +1,7 @@
 #ifndef _ALIGNEDVARSDATA_H
 #define  _ALIGNEDVARSDATA_H
-#include<unordered_map>
+//#include<unordered_map>
+#include "../robin_hood.h"
 
 /**
  * The data after ToVarsBuilder step in pipeline. Used for creating output variants in all modes of VarDict.
@@ -10,9 +11,9 @@
 class AlignedVarsData {
     public:
 		int maxReadLength;
-    	unordered_map<int, Vars*> alignedVariants;
+    	robin_hood::unordered_map<int, Vars*> alignedVariants;
 
-    	AlignedVarsData(int maxReadLength, unordered_map<int, Vars*> alignedVariants) {
+    	AlignedVarsData(int maxReadLength, robin_hood::unordered_map<int, Vars*> alignedVariants) {
         	this->maxReadLength = maxReadLength;
         	this->alignedVariants = alignedVariants;
     	};

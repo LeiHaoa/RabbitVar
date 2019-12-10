@@ -5,6 +5,10 @@
 #include <vector>
 #include "util.h"
 #include "./patterns.h"
+#include "htslib/hts.h"
+#include "htslib/sam.h"
+//#include "htslib/faidx.h"
+#include "./robin_hood.h"
 #include <iostream>
 
 #define CONF_LOWQUAL     10
@@ -78,6 +82,17 @@ public:
 		return bamRaw;
 	}
 
+};
+
+struct bamReader{
+	samFile* in;
+	bam_hdr_t* header;
+	hts_idx_t* idx;
+	bamReader(samFile* in, bam_hdr_t* header, hts_idx_t* idx){
+		this->in = in;
+		this->header = header;
+		this->idx = idx;
+	}
 };
 
 class Configuration {
@@ -406,13 +421,17 @@ public:
 	 /**
 	  *	some variable that used to store in instance
 	 */
-	 unordered_map<string, int> chrLengths;
+	 robin_hood::unordered_map<string, int> chrLengths;
 	 string sample;
 	 string samplem;
 	 //PrinterType printerTypeOut;
-	 unordered_map<string, int> adaptorForward;
-	 unordered_map<string, int> adaptorReverse;
+	 robin_hood::unordered_map<string, int> adaptorForward;
+	 robin_hood::unordered_map<string, int> adaptorReverse;
 	 Patterns* patterns;
+	 /**
+	  * added for optimizition
+	  */
+	 vector<bamReader> bamReaders;
 
 };
 
