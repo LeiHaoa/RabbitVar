@@ -44,8 +44,6 @@
 #include "scopedata/RealignedVariationData.h"
 #include "scopedata/Scope.h"
 #include "scopedata/VariationData.h"
-using namespace std;
-
 
 /**
  * The step of pipeline which try to realign variations: softclips, indels, long insertions.
@@ -137,6 +135,7 @@ private:
 	Configuration* conf;
 
 
+
 public:
 	void print_result(); //only for debug
 	VariationRealigner(Configuration* conf);
@@ -180,6 +179,7 @@ public:
 	bool ismatch(string seq1, string seq2, int dir);
 	bool noPassingReads(string &chr, int start, int end, vector<string> bams);
 	Match35* find35match(string &seq5, string &seq3);
+	int debug_valide_count = 0;
 
 };
 #endif

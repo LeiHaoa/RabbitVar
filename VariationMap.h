@@ -8,8 +8,6 @@
 #include "Variation.h"
 
 
-using namespace std;
-
 /* LinkedHashMap contains additional field to store information about found Structural variants
  * @param <K> commonly String - description string of variant
  * @param <V> commonly Variation

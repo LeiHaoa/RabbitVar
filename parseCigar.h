@@ -48,7 +48,7 @@ public:
 	Scope<VariationData> process();
 	void parseCigar(string chrName, bam1_t* record, int count);
 	void addVariationForMatchingPart(uint8_t mappingQuality, int nm, bool dir,
-									  int rlen1, int nmoff, string s,
+									  int rlen1, int nmoff, string &s,
 									  bool startWithDeletion, double q, int qbases,
 									  int qibases, int ddlen, int pos);
 	void process_softclip(string chrName, bam1_t* record, char* querySequence, uint8_t mappingQuality,
@@ -118,7 +118,7 @@ private:
     Region region;
     set<string> splice;
     Reference reference;
-    int maxReadLength;
+    int maxReadLength = 0;
 
     uint32_t* cigar;
 	bam1_t* record;

@@ -527,7 +527,7 @@ inline int getAlignmentEnd(bam1_t* record){
 inline int getAlignedLength(uint32_t* cigar, int n_cigar){
 	int length = 0;
 	for(int c_i = 0; c_i < n_cigar; c_i++){
-		if(bam_cigar_op(cigar[c_i]) == 0 || bam_cigar_op(cigar[c_i]) == 2){
+		if(bam_cigar_op(cigar[c_i]) == BAM_CMATCH || bam_cigar_op(cigar[c_i]) == BAM_CDEL){
 			length += bam_cigar_oplen(cigar[c_i]);	
 		}
 	}

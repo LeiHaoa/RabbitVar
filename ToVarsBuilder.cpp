@@ -112,7 +112,7 @@ Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &sco
             
             // skip position if there are no variants on position (both insertion and non-insertion)
             if (varsAtCurPosition->variation_map.empty() && !insertionVariants.count(position)) {
-				printf("tovar: continue for 1\n");
+				//printf("tovar: continue for 1\n");
                 continue;
             }
 
@@ -137,7 +137,7 @@ Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &sco
             if (!refCoverage.count(position) || refCoverage[position] == 0) { // ignore when there's no coverage
                 //System.err.printf("Error tcov: %s %d %d %d %s\n",
                 //        region.chr, position, region.start, region.end, varsAtCurPosition.sv.type);
-				printf("tovar: continue for 3\n");
+				//printf("tovar: continue for 3\n");
                 continue;
             }
 
@@ -875,7 +875,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                     //remove '-' and number from beginning of variant string
                     varallele = descriptionString;
                     replaceFirst_re(varallele, "^-\\d+", "");
-					printf("%d varallel: %s => %s\n", position, descriptionString.c_str(), varallele.c_str());
+					//printf("%d varallel: %s => %s\n", position, descriptionString.c_str(), varallele.c_str());
 
                     refVariantMsi = proceedVrefIsDeletion(position, deletionLength);
                     msi = refVariantMsi->msi;
@@ -985,7 +985,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                 string matchedSequence = sm[1]; //$mseq
                 //insertion/deletion tail
                 string tail = sm[2];
-				printf("%d HASH_GROUP find!: %s,%s\n", position, matchedSequence.c_str(), tail.c_str());
+				//printf("%d HASH_GROUP find!: %s,%s\n", position, matchedSequence.c_str(), tail.c_str());
 
                 //adjust position by length of matched sequence
                 endPosition += matchedSequence.length();
@@ -1149,7 +1149,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
         //    variationsAtPos->variants.end = remove_if(variationsAtPos->variants.begin(),variationsAtPos->variants.end(),regex_match(vref->varallele, regex(ANY_SV)));
         //}
     } else if (variationsAtPos->referenceVariant != NULL) {
-		printf("%d in else if case!\n", position);
+		//printf("%d in else if case!\n", position);
         Variant* vref = variationsAtPos->referenceVariant; //no variant reads are detected.
         vref->totalPosCoverage = totalPosCoverage;
         vref->positionCoverage = 0;

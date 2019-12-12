@@ -588,11 +588,12 @@ inline void one_region_run(Region region, Configuration* conf){
 	CigarParser cp(dscope, preprocessor);
 	Scope<VariationData> svd =  cp.process();
 	double end1 = get_time();
-	cout << "bam: " << svd.bam << endl;
+	//cout << "bam: " << svd.bam << endl;
 	//cout << "refcov: " << svd.data->refCoverage.size() << endl;
 	double start2 = get_time();
 	VariationRealigner var_realinger(conf);
 	Scope<RealignedVariationData> rvd = var_realinger.process(svd);
+	cout << "valide count : " << var_realinger.debug_valide_count << endl;
 	double end2 = get_time();
 	double start3 = get_time();
 	ToVarsBuilder vars_builder(conf);

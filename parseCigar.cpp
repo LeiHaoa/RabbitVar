@@ -429,6 +429,7 @@ Scope<VariationData> CigarParser::process(){
 	//	for(auto &vm : insert_count){
 	//		printf("%d - %s - %d\n", position, vm.first.c_str(), vm.second);
 	//	}
+
 	//}	
 	//int res[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	//for(auto &v: insertionVariants){
@@ -496,10 +497,6 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 	//-----------step1: for every cigar element-----------------//
 	cigar = bam_get_cigar(record);
 	bool debug_flag = false;
-	if(get_cigar_string(cigar, record->core.n_cigar) == "8"){
-		printf("----------------found it!!!!!!!!!!!!!!!!!!-------------------\n");
-		debug_flag = false;
-	}
 	//---haoz: filter the cigar that n_cigar = 0
 	if(record->core.n_cigar <= 0){
 		return;
@@ -930,7 +927,7 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 	}
 
 }
-bool isATGC(char ch) {
+inline bool isATGC(char ch) {
     switch (ch) {
         case 'A':
         case 'T':
@@ -942,7 +939,7 @@ bool isATGC(char ch) {
             return false;
     }
 }
-bool isBEGIN_ATGC_AMP_ATGCs_END(string &sequence) {
+inline bool isBEGIN_ATGC_AMP_ATGCs_END(string &sequence) {
     if (sequence.length() > 2) {
         char firstChar = sequence[0];
         char secondChar = sequence[1];
@@ -959,8 +956,12 @@ bool isBEGIN_ATGC_AMP_ATGCs_END(string &sequence) {
 	//return regex_match(sequence, regex("\\^[ATGC]&[ATGC]+$"));
 }
 
+//void CigarParser::addVariationForMatchingPart(uint8_t mappingQuality, int nm, bool dir,
+//								 int rlen1, int nmoff, string &s,
+//								 bool startWithDeletion, double q, int qbases,
+//								 int qibases, int ddlen, int pos){
 void CigarParser::addVariationForMatchingPart(uint8_t mappingQuality, int nm, bool dir,
-								 int rlen1, int nmoff, string s,
+								 int rlen1, int nmoff, string &s,
 								 bool startWithDeletion, double q, int qbases,
 								 int qibases, int ddlen, int pos){
 	Variation *hv = getVariation(nonInsertionVariants, pos, s);
@@ -1065,7 +1066,7 @@ void CigarParser::addVariationForDeletion(uint8_t mappingQuality, int nm, bool d
     //}
     //tmpq = tmpq / qualityOfSegment.length();
 	double tmpq = ((double)quality_segment_sum) / quality_segment_count;
-	printf("tmp in process deletion: %f\n", tmpq);
+	//printf("tmp in process deletion: %f\n", tmpq);
 
     //pstd is a flag that is 1 if the variant is covered by at least 2 read segments with different positions
     if (!hv->pstd && hv->pp != 0 && tp != hv->pp) {
@@ -1486,7 +1487,7 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
 		//}
 		//tmpq = tmpq / quality_string.length();
 		tmpq = ((double)quality_segment_sum) / quality_segment_count;
-		printf("tmpq in process insertion: %f\n", tmpq);
+		//printf("tmpq in process insertion: %f\n", tmpq);
 		//pstd is a flag that is 1 if the variant is covered by at least 2 read segments with different positions
 		if (!hv->pstd && hv->pp != 0 && tp != hv->pp) {
 			hv->pstd = true;
