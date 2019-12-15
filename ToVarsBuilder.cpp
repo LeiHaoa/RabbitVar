@@ -93,7 +93,6 @@ void ToVarsBuilder::initFromScope(Scope<RealignedVariationData> &scope) {
 Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &scope) {
     initFromScope(scope);
     //Configuration config = instance().conf;
-	//print_result();
 
     //if (config.y) {
     //    System.err.printf("Current segment: %s:%d-%d \n", region.chr, region.start, region.end);
@@ -208,17 +207,17 @@ Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &sco
     AlignedVarsData *avdata= new AlignedVarsData(scope.maxReadLength, alignedVariants);
 	//print_result();
 	//-----------print alignedVariants--------------//
-	for(auto& var : alignedVariants){
-		int pos = var.first;
-		for(auto &v : var.second->varDescriptionStringToVariants){
-			string desc = v.first;
-			printf("%d - %s - %s\n", pos, desc.c_str(), v.second->tostring().c_str());
-			//printf("%d - %s\n", pos, desc.c_str());
-		}
-	}
+	//for(auto& var : alignedVariants){
+	//	int pos = var.first;
+	//	for(auto &v : var.second->varDescriptionStringToVariants){
+	//		string desc = v.first;
+	//		printf("%d - %s - %s\n", pos, desc.c_str(), v.second->tostring().c_str());
+	//		//printf("%d - %s\n", pos, desc.c_str());
+	//	}
+	//}
 
     return Scope<AlignedVarsData>(scope.bam, scope.region, scope.regionRef, scope.maxReadLength,
-             scope.splice, avdata);
+								  scope.splice, scope.bamReaders, avdata);
 }
 
 /**

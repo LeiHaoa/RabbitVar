@@ -6,7 +6,8 @@
 
 using namespace std;
 
-RecordPreprocessor::RecordPreprocessor(Region region, Configuration *conf){
+//TODO next_reader funtion not implemented: 多个reader的功能并没有实现。
+RecordPreprocessor::RecordPreprocessor(Region region, Configuration *conf, vector<bamReader>& bamReaders){
 	this->region = region;
 	this->conf = conf;
 	//string infname;
@@ -25,12 +26,12 @@ RecordPreprocessor::RecordPreprocessor(Region region, Configuration *conf){
 	//	printf("open file %s error!!\n", infname.c_str());
 	//	exit(0);
 	//}
-	printf("debug info: bamsize: %d\n", conf->bamReaders.size());
-	this->in = conf->bamReaders[0].in;
+	printf("debug info: bamsize: %d\n", bamReaders.size());
+	this->in = bamReaders[0].in;
  	string region_string = "";
 	region_string += region.chr + ":"+to_string(region.start) + "-" + to_string(region.end);
-	this->header = conf->bamReaders[0].header;
-	this->idx = conf->bamReaders[0].idx;
+	this->header = bamReaders[0].header;
+	this->idx = bamReaders[0].idx;
 	iter = sam_itr_querys(idx, header, region_string.c_str());
 	printf("in preprocessor: region_string: %s\n", region_string.c_str());
 

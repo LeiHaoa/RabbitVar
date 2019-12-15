@@ -442,37 +442,6 @@ Configuration* cmdParse(int argc, char* argv[]){
             config->sampleNameRegexp = regexp;
         }
         config->bam = BamNames(cmd.get<string>('b'));
-		//----add by haoz: init bamReader------//
-		if(config->bam.getBam1() != ""){
-			samFile* in = sam_open(config->bam.getBam1().c_str(), "r");
-			bam_hdr_t* header;
-			hts_idx_t* idx;
-			if(in){
-				header = sam_hdr_read(in);
-				idx = sam_index_load(in, config->bam.getBam1().c_str());
-				assert(idx != NULL);
-			}else{
-				printf("read bamFile: %s error!", config->bam.getBam1().c_str());
-				exit(1);
-			}
-			config->bamReaders.push_back(bamReader(in, header, idx));
-		}
-		if(config->bam.hasBam2() && config->bam.getBam2() != ""){
-			samFile* in = sam_open(config->bam.getBam2().c_str(), "r");
-			bam_hdr_t* header;
-			hts_idx_t* idx;
-			if(in){
-				header = sam_hdr_read(in);
-				idx = sam_index_load(in, config->bam.getBam2().c_str());
-				assert(idx != NULL);
-			}else{
-				printf("read bamFile2: %s error!", config->bam.getBam2().c_str());
-				exit(1);
-			}
-			config->bamReaders.push_back(bamReader(in, header, idx));
-		}
-		assert(config->bamReaders.size() > 0);
-		//----init bamReader end------//
 		
 
         int c_col = (cmd.exist('c')?-1:0) + cmd.get<int>('c');
@@ -580,13 +549,48 @@ Configuration* cmdParse(int argc, char* argv[]){
 
     //-----------------------------------end----------------------
 }
-inline void one_region_run(Region region, Configuration* conf){
-	DataScope dscope;
-	dscope.region = region;
+void one_region_run(Region region, Configuration* conf){
+	//DataScope dscope;
+	//dscope.region = region;
+	InitialData init_data;
+	//----add by haoz: init bamReader------//
+	vector<bamReader> bamReaders;
+	if(conf->bam.getBam1() != ""){
+		samFile* in = sam_open(conf->bam.getBam1().c_str(), "r");
+		bam_hdr_t* header;
+		hts_idx_t* idx;
+		if(in){
+			header = sam_hdr_read(in);
+			idx = sam_index_load(in, conf->bam.getBam1().c_str());
+			assert(idx != NULL);
+		}else{
+			printf("read bamFile: %s error!", conf->bam.getBam1().c_str());
+			exit(1);
+		}
+		bamReaders.push_back(bamReader(in, header, idx));
+	}
+	if(conf->bam.hasBam2() && conf->bam.getBam2() != ""){
+		samFile* in = sam_open(conf->bam.getBam2().c_str(), "r");
+		bam_hdr_t* header;
+		hts_idx_t* idx;
+		if(in){
+			header = sam_hdr_read(in);
+			idx = sam_index_load(in, conf->bam.getBam2().c_str());
+			assert(idx != NULL);
+		}else{
+			printf("read bamFile2: %s error!", conf->bam.getBam2().c_str());
+			exit(1);
+		}
+		bamReaders.push_back(bamReader(in, header, idx));
+	}
+	assert(bamReaders.size() > 0);
+	//----init bamReader end------//
+
+	RecordPreprocessor *preprocessor = new RecordPreprocessor(region, conf, bamReaders);
+	Scope<InitialData> initialScope(conf->bam.getBamRaw(), region, preprocessor->reference, 0, set<string>(), bamReaders, &init_data);
 	double start1 = get_time();
-	RecordPreprocessor *preprocessor = new RecordPreprocessor(region, conf);
-	CigarParser cp(dscope, preprocessor);
-	Scope<VariationData> svd =  cp.process();
+	CigarParser cp(preprocessor);
+	Scope<VariationData> svd =  cp.process(initialScope);
 	double end1 = get_time();
 	//cout << "bam: " << svd.bam << endl;
 	//cout << "refcov: " << svd.data->refCoverage.size() << endl;
@@ -625,14 +629,24 @@ int main_single(int argc, char* argv[]){
 		one_region_run(region, conf);
 	}else{
 		cout << "bed file name: " << conf->bed << " and regions is: " << endl;
+		Region reg;
+		vector<Region> regs;
 		for(vector<Region> reg_vec: launcher.segments){
-//#pragma omp parallel for num_threads(2)
-			//for(Region reg: reg_vec){
 			for(int i = 0; i < reg_vec.size(); i++){
-				Region reg = reg_vec[i];
-				cout << reg.chr << " - " << reg.start << " - " << reg.end  << endl;
-				one_region_run(reg, conf);
+				//int reg_i = omp_get_thread_num();
+				regs.push_back(reg_vec[i]);
 			}
+		}
+	    const int reg_num = regs.size();
+#pragma omp parallel for default(shared) private(reg) //num_threads(2)
+		for(int i = 0; i < reg_num; i++){
+		    double start2 = get_time();
+			reg = regs[i];
+			cout <<"thread: " << omp_get_thread_num() << " processing: " << reg.chr << " - " << reg.start << " - " << reg.end  << endl;
+			one_region_run(reg, conf);
+			double end2 = get_time();
+			cerr << " omp time: " << end2 - start2 << endl;
+			cerr << "regid: " << i << " thread_id: " << omp_get_thread_num()  << endl;
 		}
 	}
 
@@ -647,3 +661,5 @@ int main(int argc, char* argv[]){
 	printf("total time: %f s \n", (end_time - start_time));
 	return 0;
 }
+
+//xintai bengle ;

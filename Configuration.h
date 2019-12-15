@@ -431,7 +431,7 @@ public:
 	 /**
 	  * added for optimizition
 	  */
-	 vector<bamReader> bamReaders;
+	 //vector<bamReader> bamReaders;
 
 };
 

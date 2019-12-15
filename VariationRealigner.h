@@ -133,6 +133,7 @@ private:
     //SVStructures svStructures;
     //VariantPrinter variantPrinter;
 	Configuration* conf;
+	vector<bamReader> bamReaders;
 
 
 

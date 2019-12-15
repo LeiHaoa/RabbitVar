@@ -21,17 +21,19 @@ class Scope{
     	// ReferenceResource referenceResource;
     	 int maxReadLength;
     	 set<string> splice;
+		 vector<bamReader> bamReaders;
     	// VariantPrinter out;
     	 T *data;
 		
     	Scope(string bam, Region region, Reference regionRef, int maxReadLength,
-    	             set<string> splice, T* data) {
+			  set<string> splice, vector<bamReader> bamReaders, T* data) {
     	    this->bam = bam;
     	    this->region = region;
     	    this->regionRef = regionRef;
     	    //th->s.referenceResource = referenceResource;
     	    this->maxReadLength = maxReadLength;
     	    this->splice = splice;
+			this-> bamReaders = bamReaders;
     	    this->data = data;
     	    //this.out = out;
     	}

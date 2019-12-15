@@ -35,7 +35,7 @@ class VariationData {
 			robin_hood::unordered_map<int, int> refCoverage,
 			robin_hood::unordered_map<int, Sclip*> softClips5End,
 			robin_hood::unordered_map<int, Sclip*> softClips3End,
-			int maxReadLength,
+			//int maxReadLength,
 			set<string> splice,
 			robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > mnp,
 			robin_hood::unordered_map<string, vector<int> > spliceCount,
@@ -48,7 +48,7 @@ class VariationData {
 			this->refCoverage = refCoverage;
 			this->softClips5End = softClips5End;
 			this->softClips3End = softClips3End;
-			this->maxReadLength = maxReadLength;
+			//this->maxReadLength = maxReadLength;
 			this->splice;
 			this->mnp = mnp;
 			this->spliceCount = spliceCount;

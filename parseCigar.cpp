@@ -107,13 +107,28 @@ bool CigarParser::isPairedAndSameChromosome(bam1_t *record){
 		&& record->core.tid == record->core.mtid;
 		//&& getMateReferenceName(record) == "=";
 }
-CigarParser::CigarParser(DataScope scope, RecordPreprocessor *preprocessor){
+void CigarParser::initFromScope(Scope<InitialData> scope) {
+	this->insertionVariants = scope.data->insertionVariants;
+	this->nonInsertionVariants = scope.data->nonInsertionVariants;
+	this->refCoverage = scope.data->refCoverage;
+	this->softClips3End = scope.data->softClips3End;
+	this->softClips5End = scope.data->softClips5End;
+	this->region = scope.region;
+	this->splice = scope.splice;
+	this->reference = scope.regionRef;
+	this->maxReadLength = scope.maxReadLength;
+	//this->duplicateReads = scope.data->duplicateReads;
+	//this->totalReads = scope.data->totalReads;
+}
+CigarParser::CigarParser(RecordPreprocessor *preprocessor){
 	//this->spliceCount = new unordered_map<string, int>();
 	//this->positionToDeletionCount = new unordered_map<int map<string, int> >();
-	this->region = scope.region;
+	//this->region = scope.region;
 	this->preprocessor = preprocessor;
 	this->conf = preprocessor->conf;
-	this->reference = preprocessor->reference;
+	this->duplicateReads = preprocessor->duplicateReads;
+	//this->totalReads = preprocessor->totalReads;
+	//this->reference = preprocessor->reference;
 }
 inline char toupper(char c){
 	if(c >= 'a' && c <= 'z'){
@@ -359,7 +374,7 @@ Variation* getVariationFromSeq(Sclip* softClip,
     return variation;
 }
 void CigarParser::print_result(){
-	cout << "result infom: " << nonInsertionVariants.size() <<
+	cout << "cigarparser " << "result infom: " << nonInsertionVariants.size() <<
 		" - " << insertionVariants.size() <<
 		" - " << refCoverage.size() << endl;
 
@@ -374,7 +389,7 @@ void CigarParser::print_result(){
 	//	//}
 	//		
 	//}
-	for(auto &v:nonInsertionVariants ){
+	for(auto &v:insertionVariants ){
 		int position = v.first;
 		VariationMap* var_map = v.second;
 		for(auto &vm : var_map -> variation_map){
@@ -405,9 +420,9 @@ void CigarParser::print_result(){
 	//}
 }
 
-Scope<VariationData> CigarParser::process(){
+Scope<VariationData> CigarParser::process(Scope<InitialData> scope){
 //void CigarParser::process(){
-
+	initFromScope(scope);
 	bam1_t *record = bam_init1();
 	int count = 0;
 	//makeReference(conf->fasta, preprocessor->header);
@@ -453,8 +468,9 @@ Scope<VariationData> CigarParser::process(){
 	//	printf("%d - %d\n", pos, sc->varsCount);
 	//}
 	//------------------------------------
-	VariationData *vardata = new VariationData(nonInsertionVariants, insertionVariants, positionToInsertionCount, positionToDeletionCount, refCoverage, softClips5End, softClips3End, maxReadLength, splice, mnp, spliceCount, 0);
-	Scope<VariationData> toData(conf->bam.getBamRaw(), this->region, this->reference, this->maxReadLength, this->splice, vardata);
+	VariationData *vardata = new VariationData(nonInsertionVariants, insertionVariants, positionToInsertionCount, positionToDeletionCount, refCoverage, softClips5End, softClips3End, splice, mnp, spliceCount, 0);
+	//Scope<VariationData> toData(conf->bam.getBamRaw(), this->region, this->reference, this->maxReadLength, this->splice, vardata);
+	Scope<VariationData> toData(scope.bam, scope.region, scope.regionRef, maxReadLength, scope.splice, scope.bamReaders, vardata);
 	//------------------------------------
 	//bam_hdr_destroy(header);
 	//if(in) sam_close(in);
@@ -487,6 +503,36 @@ inline void print_quality_33(uint8_t* query_quality, int length){
 	}
 	printf("\n");
 }
+
+inline bool isATGC(char ch) {
+    switch (ch) {
+        case 'A':
+        case 'T':
+        case 'G':
+        case 'C':
+            return true;
+
+        default:
+            return false;
+    }
+}
+inline bool isBEGIN_ATGC_AMP_ATGCs_END(string &sequence) {
+    if (sequence.length() > 2) {
+        char firstChar = sequence[0];
+        char secondChar = sequence[1];
+        if (secondChar == '&' && isATGC(firstChar)) {
+            for (int i = 2; i < sequence.length(); i++) {
+                if (!isATGC(sequence[i])) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+    return false;
+	//return regex_match(sequence, regex("\\^[ATGC]&[ATGC]+$"));
+}
+
 void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 	uint8_t *seq_sam = bam_get_seq(record);
 	int32_t lseq = record->core.l_qseq;
@@ -887,7 +933,80 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 				const int pos = start - qbases + 1;
 				if(pos >= region.start && pos <= region.end){
 					//addVariationForMathchingPart(mapping_quality, numberOfMismatches, direction, readLengthIncludeMatchingAndInsertions, nmoff, s,start_with_deletion, q, qbases, qibases, ddlen, pos); //TODO
-					addVariationForMatchingPart(mapping_quality, number_of_mismatches, direction, read_length_include_matching_and_insertions, nmoff, s,start_with_deletion, q, qbases, qibases, ddlen, pos); //TODO
+					//addVariationForMatchingPart(mapping_quality, number_of_mismatches, direction, read_length_include_matching_and_insertions, nmoff, s,start_with_deletion, q, qbases, qibases, ddlen, pos); //TODO
+					Variation *hv = getVariation(nonInsertionVariants, pos, s);
+					hv->incDir(direction);
+					if(isBEGIN_ATGC_AMP_ATGCs_END(s)){
+						//increment(mnp, pos, s);
+						//if(!mnp.contains(pos)){
+						//	unordered_map<string, int> umap = new unordered_map<string, int>();
+						//	umap[s] = 1;
+						//	mnp[pos] = umap;
+						//}else{
+						//	mnp[pos][s]++;
+						//}
+						mnp[pos][s]++;
+					} 
+					hv->varsCount++;
+
+					//minimum of position from start of read and end of read
+					int tp = readPositionExcludingSoftClipped < read_length_include_matching_and_insertions - readPositionExcludingSoftClipped
+																? readPositionExcludingSoftClipped + 1
+																: read_length_include_matching_and_insertions - readPositionExcludingSoftClipped;
+					//average quality of bases in the variation
+					q = q / (qbases + qibases);
+
+					if(!hv->pstd && hv->pp != 0 && tp != hv->pp){
+						hv->pstd = true;
+					}
+
+					if(!hv->qstd && hv->pq != 0 && q != hv->pq){
+						hv->qstd = true;
+					}
+					//printf("matching part: %d\n", tp);
+					hv->meanPosition += tp;
+					hv->meanQuality += q;
+					hv->meanMappingQuality += mapping_quality;
+					hv->pp = tp;
+					hv->pq = q;
+					hv->numberOfMismatches += number_of_mismatches - nmoff;
+					if (q >= conf->goodq) {
+						hv->highQualityReadsCount++;
+					} else {
+						hv->lowQualityReadsCount++;
+					}
+
+					//increase coverage for bases covered by the variation
+					for (int qi = 1; qi <= qbases; qi++) {
+						//incCnt(refCoverage, start - qi + 1, 1);
+						refCoverage[start-qi+1]++;
+						//refCoverage.insert(map<int, int>::value_type(start-qi+1, refCoverage[start-qi+1]++));
+					}
+		
+
+					//If variation starts with a deletion ('-' character)
+					if (start_with_deletion) {
+						//add variation to deletions map
+						//startf: increment(positionToDeletionCount, pos, s);
+						//if(!positionToDeletionCount.contians(pos)){
+						//	unordered_map<uint8_t, int> umap = new unordered_map<uint8_t, int>();
+						//	umap[s] = 1;
+						//	positionToDeletionCount[pos] = umap;
+						//}else{
+						//	positionToDeletionCount[pos][s]++; //如果这地方有问题，就是map的默认值不是0；
+						//}
+						positionToDeletionCount[pos][s]++;
+						//endf
+		
+
+						//increase coverage for next CIGAR segment
+						for (int qi = 1; qi < ddlen; qi++) {
+							//incCnt(refCoverage, start + qi, 1);
+							//refCoverage.insert(map<int, int>::value_type(start+qi, refCoverage[start+qi]++));
+							refCoverage[start+qi]++;
+						}
+					}
+
 				}
 			}
 
@@ -927,39 +1046,7 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 	}
 
 }
-inline bool isATGC(char ch) {
-    switch (ch) {
-        case 'A':
-        case 'T':
-        case 'G':
-        case 'C':
-            return true;
 
-        default:
-            return false;
-    }
-}
-inline bool isBEGIN_ATGC_AMP_ATGCs_END(string &sequence) {
-    if (sequence.length() > 2) {
-        char firstChar = sequence[0];
-        char secondChar = sequence[1];
-        if (secondChar == '&' && isATGC(firstChar)) {
-            for (int i = 2; i < sequence.length(); i++) {
-                if (!isATGC(sequence[i])) {
-                    return false;
-                }
-            }
-            return true;
-        }
-    }
-    return false;
-	//return regex_match(sequence, regex("\\^[ATGC]&[ATGC]+$"));
-}
-
-//void CigarParser::addVariationForMatchingPart(uint8_t mappingQuality, int nm, bool dir,
-//								 int rlen1, int nmoff, string &s,
-//								 bool startWithDeletion, double q, int qbases,
-//								 int qibases, int ddlen, int pos){
 void CigarParser::addVariationForMatchingPart(uint8_t mappingQuality, int nm, bool dir,
 								 int rlen1, int nmoff, string &s,
 								 bool startWithDeletion, double q, int qbases,

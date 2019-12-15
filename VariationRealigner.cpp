@@ -139,7 +139,7 @@ Scope<RealignedVariationData> VariationRealigner::process(Scope<VariationData> s
 																refCoverage, maxReadLength, duprate, CURSEG, SOFTP2SV, &scope);
 
 	Scope<RealignedVariationData> scopeTo(scope.bam, scope.region, scope.regionRef, scope.maxReadLength,
-										  scope.splice, rvdata);
+										  scope.splice, scope.bamReaders, rvdata);
 
 	return scopeTo;
 }
@@ -165,6 +165,8 @@ void VariationRealigner::initFromScope(Scope<VariationData> scope) {
     //this->svStructures = scope.data->svStructures;
     this->duprate = scope.data->duprate;
     //this->variantPrinter = scope.out;
+	this->bamReaders = scope.bamReaders;
+	//printf("------------realigner bamReader size: %d\n", this->bamReaders.size());
 }
 
 
@@ -507,7 +509,7 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, robin_hood::u
             string vn = tpl->descriptionstring;
             int dcnt = tpl->count;
             //if (conf.y) {
-			printf("  Realigndel for: %d %s %d cov: %d\n", p, vn.c_str(), dcnt, refCoverage[p]);
+			//printf("  Realigndel for: %d %s %d cov: %d\n", p, vn.c_str(), dcnt, refCoverage[p]);
 			//}
             Variation* vref = getVariation(nonInsertionVariants, p, vn);
             int dellen = 0;
@@ -717,7 +719,6 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, robin_hood::u
             int pe = p + dellen + extra.length() - extrains.length();
             Variation *h = getVariationMaybe(nonInsertionVariants, p, ref[p]);
             // taking the size of gap into account
-			//printf("before if: pe: %d, p: %d, h_count: %d, vref_cnt: %d, maxl: %d", pe, p, h->varsCount, vref->varsCount, maxReadLength);
             if (bams != NULL && bams->size() > 0
                     && pe - p >= 5
                     && pe - p < maxReadLength - 10
@@ -2226,7 +2227,7 @@ bool VariationRealigner::noPassingReads(string& chr, int start, int end, vector<
 	uint32_t dlenqr = (dlen << 4) | BAM_CDEL;
     //Region* region = new Region(chr, start, end, "");
 	string region_string = chr + ":" + to_string(start) + "-" + to_string(end);
-	vector<bamReader> bam_readers = conf->bamReaders;
+	//vector<bamReader> bam_readers = bamReaders;
 	bam_hdr_t* header;
 	hts_idx_t* idx;
 	hts_itr_t* iter;
@@ -2234,7 +2235,7 @@ bool VariationRealigner::noPassingReads(string& chr, int start, int end, vector<
 	bam1_t* record = bam_init1();
 	
     //for (string bam : bams) {
-    for (bamReader bam : bam_readers) {
+    for (bamReader bam : this->bamReaders) {
         //try (SamView *reader = new SamView(bam, "0", region, conf.validationstringency)) {
 		header = bam.header;
 		idx = bam.idx;

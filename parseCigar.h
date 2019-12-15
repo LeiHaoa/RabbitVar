@@ -23,6 +23,7 @@
 #include "recordPreprocessor.h"
 #include "scopedata/Scope.h"
 #include "scopedata/VariationData.h"
+#include "scopedata/InitialData.h"
 #include <map>
 //#include <unordered_map>
 #include "./robin_hood.h"
@@ -37,16 +38,14 @@ struct Offset{
 	long q_sum;
 	int offsetNumberOfMismatches;
 };
-struct DataScope{
-	Region region;
-	Reference reference;
-};
+
 class CigarParser{
 public:
-	CigarParser(DataScope scope, RecordPreprocessor *preprocessor);
+	CigarParser(RecordPreprocessor *preprocessor);
 	//~CigarParser();
-	Scope<VariationData> process();
+	Scope<VariationData> process(Scope<InitialData>);
 	void parseCigar(string chrName, bam1_t* record, int count);
+	void initFromScope(Scope<InitialData> scope);
 	void addVariationForMatchingPart(uint8_t mappingQuality, int nm, bool dir,
 									  int rlen1, int nmoff, string &s,
 									  bool startWithDeletion, double q, int qbases,
