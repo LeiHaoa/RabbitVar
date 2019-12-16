@@ -3,6 +3,7 @@
 
 #include <string>
 #include <sstream>
+#include <iostream>
 /**
  * Intermediate variant structure
  */
@@ -89,7 +90,8 @@ public:
             this->varsCountOnReverse++;
         else
             this->varsCountOnForward++;
-    }
+		//std::cout << "address: " << static_cast<const void*>(this)  << " - " << this->varsCountOnReverse<< std::endl;
+	}
 
     /**
      * Decrement count for direction

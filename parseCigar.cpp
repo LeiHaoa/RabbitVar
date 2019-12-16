@@ -120,7 +120,7 @@ void CigarParser::initFromScope(Scope<InitialData> scope) {
 	//this->duplicateReads = scope.data->duplicateReads;
 	//this->totalReads = scope.data->totalReads;
 }
-CigarParser::CigarParser(RecordPreprocessor *preprocessor){
+CigarParser::CigarParser(RecordPreprocessor *preprocessor, dataPool* data_pool){
 	//this->spliceCount = new unordered_map<string, int>();
 	//this->positionToDeletionCount = new unordered_map<int map<string, int> >();
 	//this->region = scope.region;
@@ -129,6 +129,7 @@ CigarParser::CigarParser(RecordPreprocessor *preprocessor){
 	this->duplicateReads = preprocessor->duplicateReads;
 	//this->totalReads = preprocessor->totalReads;
 	//this->reference = preprocessor->reference;
+	this->data_pool = data_pool;
 }
 inline char toupper(char c){
 	if(c >= 'a' && c <= 'z'){
@@ -934,8 +935,12 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 				if(pos >= region.start && pos <= region.end){
 					//addVariationForMathchingPart(mapping_quality, numberOfMismatches, direction, readLengthIncludeMatchingAndInsertions, nmoff, s,start_with_deletion, q, qbases, qibases, ddlen, pos); //TODO
 					//addVariationForMatchingPart(mapping_quality, number_of_mismatches, direction, read_length_include_matching_and_insertions, nmoff, s,start_with_deletion, q, qbases, qibases, ddlen, pos); //TODO
-					Variation *hv = getVariation(nonInsertionVariants, pos, s);
+					//cout << "getting variation 1" << endl;
+					Variation *hv = getVariation(data_pool, nonInsertionVariants, pos, s);
+					//cout << "getting variation 2" << endl;
+					//cout << "pos and string: " << pos << " - " << s << " - " << static_cast<const void*>(hv) << endl;
 					hv->incDir(direction);
+					//cout << "pos and string: " << pos << " - " << s << " - " << static_cast<const void*>(hv) << endl;
 					if(isBEGIN_ATGC_AMP_ATGCs_END(s)){
 						//increment(mnp, pos, s);
 						//if(!mnp.contains(pos)){
@@ -1051,7 +1056,7 @@ void CigarParser::addVariationForMatchingPart(uint8_t mappingQuality, int nm, bo
 								 int rlen1, int nmoff, string &s,
 								 bool startWithDeletion, double q, int qbases,
 								 int qibases, int ddlen, int pos){
-	Variation *hv = getVariation(nonInsertionVariants, pos, s);
+	Variation *hv = getVariation(data_pool, nonInsertionVariants, pos, s);
 	hv->incDir(dir);
 	if(isBEGIN_ATGC_AMP_ATGCs_END(s)){
 		//increment(mnp, pos, s);
@@ -1131,7 +1136,7 @@ void CigarParser::addVariationForMatchingPart(uint8_t mappingQuality, int nm, bo
 void CigarParser::addVariationForDeletion(uint8_t mappingQuality, int nm, bool dir, int rlen1,
 										  string descStringOfDeletedElement, long quality_segment_sum, int quality_segment_count, int nmoff) {
     //add variant structure for deletion at this position
-	Variation* hv = getVariation(nonInsertionVariants, start, descStringOfDeletedElement); //variation structure [v]
+	Variation* hv = getVariation(data_pool, nonInsertionVariants, start, descStringOfDeletedElement); //variation structure [v]
     //add record for deletion in deletions map
     //increment(positionToDeletionCount, start, descStringOfDeletedElement.toString());
 	positionToDeletionCount[start][descStringOfDeletedElement]++;
@@ -1274,7 +1279,7 @@ void CigarParser::process_softclip(string chrName, bam1_t* record, char* querySe
 			  && queryQuality[cigar_element_length-1]  > 10){
 			//create variant if it is not present
 			
-			Variation* variation = getVariation(nonInsertionVariants, start-1, string(1,ref[start-1]));//ref[start-1] as string [v]
+			Variation* variation = getVariation(data_pool, nonInsertionVariants, start-1, string(1,ref[start-1]));//ref[start-1] as string [v]
 			//add count
 			addCnt(variation, direction, cigar_element_length, queryQuality[cigar_element_length-1], mappingQuality, numberOfMismatches, conf->goodq);
 			//increase -> incCnt(refCoverage, start-1, 1);
@@ -1357,7 +1362,7 @@ void CigarParser::process_softclip(string chrName, bam1_t* record, char* querySe
 			   && queryQuality[readPositionIncludingSoftClipped]  > 10){
 			//create variant if it is not present
 			//printf("add variation nonInsert : %d-%c\n", readPositionIncludingSoftClipped, ref.at(start));
-			Variation* variation = getVariation(nonInsertionVariants, start, string(1, ref.at(start)));
+			Variation* variation = getVariation(data_pool, nonInsertionVariants, start, string(1, ref.at(start)));
 			//add count
 			addCnt(variation, direction, totalLengthIncludingSoftClipped - readPositionExcludingSoftClipped,
 				   queryQuality[readPositionIncludingSoftClipped], mappingQuality, numberOfMismatches, conf->goodq);
@@ -1560,7 +1565,7 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
 		//}
 		positionToInsertionCount[insertion_pointion]["+"+desc_string_of_insertion_segment]++;
 		//add insertion to table of vartions
-		Variation* hv = getVariation(insertionVariants, insertion_pointion, "+" + desc_string_of_insertion_segment); //variation structure for this insertion
+		Variation* hv = getVariation(data_pool, insertionVariants, insertion_pointion, "+" + desc_string_of_insertion_segment); //variation structure for this insertion
 		hv->incDir(direction);
 		hv->varsCount++;
 		//minimum of positions from start of read and end of read
@@ -1631,7 +1636,7 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
 						|| bam_cigar_op(cigar[0]) == 5)) { // if cigar[0] operator is S or H
             //Add one more variant corresponding to base at start - 1 to hash
 			//[haoz:] bookmark here
-            Variation* ttref = getVariation(nonInsertionVariants, insertion_pointion, string(1, ref[insertion_pointion]));
+            Variation* ttref = getVariation(data_pool, nonInsertionVariants, insertion_pointion, string(1, ref[insertion_pointion]));
             ttref->incDir(direction);
             ttref->varsCount++;
             ttref->pstd = hv->pstd;

@@ -57,8 +57,9 @@ bool CMP_tmp(SortPositionDescription *o1, SortPositionDescription *o2){
     string s2 = o2->descriptionstring;
     return s1.compare(s2)>0;
 }
-VariationRealigner::VariationRealigner(Configuration* conf){
+VariationRealigner::VariationRealigner(Configuration* conf, dataPool* data_pool){
 	this->conf = conf;
+	this->data_pool = data_pool;
 }
 
 void VariationRealigner::print_result(){
@@ -511,7 +512,7 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, robin_hood::u
             //if (conf.y) {
 			//printf("  Realigndel for: %d %s %d cov: %d\n", p, vn.c_str(), dcnt, refCoverage[p]);
 			//}
-            Variation* vref = getVariation(nonInsertionVariants, p, vn);
+            Variation* vref = getVariation(data_pool, nonInsertionVariants, p, vn);
             int dellen = 0;
             //----regex------regex_match(desc_string_of_insertion_segment, regex(BEGIN_ATGC_END)
             smatch sm;
@@ -902,7 +903,7 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, robin_hood::u
                 vector<Mismatch*> mmm = mm3;
                 mmm.insert(mmm.end(), mm5.begin(), mm5.end());
 				//printf("mm3 size: %d, mm5 size: %d\n", mm3.size(), mm5.size());
-                Variation* vref = getVariation(insertionVariants, position, vn);
+                Variation* vref = getVariation(data_pool, insertionVariants, position, vn);
                 for (Mismatch* mismatch : mmm) {
                     // $mm mismatch nucleotide
                     string mismatchBases = mismatch->mismatchSequence;
@@ -1660,17 +1661,17 @@ void VariationRealigner::realignlgins30() {
                         if (tmp.length() > ins.length()) { // deletion is longer
                             ins = to_string(p3 - p5) + "^" + ins;
                             bi = p3;
-                            vref = getVariation(nonInsertionVariants, p3, ins);
+                            vref = getVariation(data_pool, nonInsertionVariants, p3, ins);
 							//printf("find deletion1587: %s : varsCount: %d\n", ins.c_str(), vref->varsCount);
                         } else if (tmp.length() < ins.length()) {
                             ins = vc_substr(ins, 0, ins.length() - tmp.length()) + "&" + vc_substr(ins, p3 - p5);
                             ins = "+" + ins;
                             bi = p3 - 1;
-                            vref = getVariation(insertionVariants, bi, ins);
+                            vref = getVariation(data_pool, insertionVariants, bi, ins);
                         } else { // long MNP
                             ins = "-" + to_string(ins.length()) + "^" + ins;
                             bi = p3;
-                            vref = getVariation(nonInsertionVariants, p3, ins);
+                            vref = getVariation(data_pool, nonInsertionVariants, p3, ins);
 							//printf("find deletion1599: %s : varsCount: %d\n", ins.c_str(), vref->varsCount);
                         }
                     } else {
@@ -1722,7 +1723,7 @@ void VariationRealigner::realignlgins30() {
                         //    System.err.printf("Found lgins30: %s %s %s %s + %s\n", p3, p5, ins.length(), tmp, ins);
                        // }
                         bi = p5 - 1;
-                        vref = getVariation(insertionVariants, bi, ins);
+                        vref = getVariation(data_pool, insertionVariants, bi, ins);
                     }
                     sc3v->used = true;
                     sc5v->used = true;

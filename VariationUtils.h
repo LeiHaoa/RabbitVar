@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include "Configuration.h"
 #include "Vars.h"
+#include "data/data_pool.h"
 #include <regex>
 #include <map>
 
@@ -126,7 +127,7 @@ inline BaseInsertion* adjInsPos(int bi, string &ins, robin_hood::unordered_map<i
 //    return variation;
 //}
 
-inline Variation* getVariation(robin_hood::unordered_map<int, VariationMap* > &hash,
+inline Variation* getVariation(dataPool* data_pool, robin_hood::unordered_map<int, VariationMap* > &hash,
                                      int start,
                                      string descriptionString) {
 	//cout << "get variation: " << start << " ==> " << descriptionString << endl;
@@ -138,8 +139,10 @@ inline Variation* getVariation(robin_hood::unordered_map<int, VariationMap* > &h
 		vmap = itr->second;
 	}else{
 		vmap = new VariationMap();
+		//vmap = data_pool->get_variation();
 		hash[start] = vmap;
-		variation = new Variation();
+		//variation = new Variation();
+		variation = data_pool->get_variation();
 		vmap->variation_map[descriptionString] = variation;
 		return variation;
 	}
@@ -149,7 +152,8 @@ inline Variation* getVariation(robin_hood::unordered_map<int, VariationMap* > &h
 	if((itr2 = vmap->variation_map.find(descriptionString)) != vmap->variation_map.end()){
 		return itr2->second;
 	}else{
-		variation = new Variation();
+		//variation = new Variation();
+		variation = data_pool->get_variation();
 		//map[descriptionString] = variation;
 		//vmap->variation_map.insert(unordered_map<string, Variation*>::value_type(descriptionString, variation));
 		vmap->variation_map[descriptionString] = variation;

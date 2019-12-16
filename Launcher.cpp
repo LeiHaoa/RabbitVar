@@ -549,9 +549,10 @@ Configuration* cmdParse(int argc, char* argv[]){
 
     //-----------------------------------end----------------------
 }
-void one_region_run(Region region, Configuration* conf){
+void one_region_run(Region region, Configuration* conf, dataPool* data_pool){
 	//DataScope dscope;
 	//dscope.region = region;
+	data_pool->reset();
 	InitialData init_data;
 	//----add by haoz: init bamReader------//
 	vector<bamReader> bamReaders;
@@ -589,13 +590,13 @@ void one_region_run(Region region, Configuration* conf){
 	RecordPreprocessor *preprocessor = new RecordPreprocessor(region, conf, bamReaders);
 	Scope<InitialData> initialScope(conf->bam.getBamRaw(), region, preprocessor->reference, 0, set<string>(), bamReaders, &init_data);
 	double start1 = get_time();
-	CigarParser cp(preprocessor);
+	CigarParser cp(preprocessor, data_pool);
 	Scope<VariationData> svd =  cp.process(initialScope);
 	double end1 = get_time();
 	//cout << "bam: " << svd.bam << endl;
 	//cout << "refcov: " << svd.data->refCoverage.size() << endl;
 	double start2 = get_time();
-	VariationRealigner var_realinger(conf);
+	VariationRealigner var_realinger(conf, data_pool);
 	Scope<RealignedVariationData> rvd = var_realinger.process(svd);
 	cout << "valide count : " << var_realinger.debug_valide_count << endl;
 	double end2 = get_time();
@@ -622,28 +623,44 @@ int main_single(int argc, char* argv[]){
 	launcher.start(conf); //launcher 里面有segments变量存的是region信息
 	if(conf->regionOfInterest != ""){
 		//DataScope dscope;
+
 		Region region;
 		region = launcher.segments[0][0];
 		//dscope.region = region;
 		cout << "interest region info: " << region.start << "-" << region.end << endl;
-		one_region_run(region, conf);
+		one_region_run(region, conf, new dataPool(region.end - region.start));
 	}else{
 		cout << "bed file name: " << conf->bed << " and regions is: " << endl;
 		Region reg;
 		vector<Region> regs;
+		int max_ref_size = 0;
 		for(vector<Region> reg_vec: launcher.segments){
 			for(int i = 0; i < reg_vec.size(); i++){
 				//int reg_i = omp_get_thread_num();
 				regs.push_back(reg_vec[i]);
+				if((reg_vec[i].end - reg_vec[i].start) > max_ref_size){
+					max_ref_size = reg_vec[i].end - reg_vec[i].start;
+				}
 			}
 		}
 	    const int reg_num = regs.size();
+		int num_thread;
+#pragma omp parallel
+	{
+        #pragma omp single
+		num_thread = omp_get_num_threads();
+	}
+		vector<dataPool*> data_pools;
+		cout << "num_thread: " << num_thread << endl;
+		for(int i = 0; i < num_thread; i++){
+			data_pools.push_back(new dataPool(100000));
+		}
 #pragma omp parallel for default(shared) private(reg) //num_threads(2)
 		for(int i = 0; i < reg_num; i++){
 		    double start2 = get_time();
 			reg = regs[i];
 			cout <<"thread: " << omp_get_thread_num() << " processing: " << reg.chr << " - " << reg.start << " - " << reg.end  << endl;
-			one_region_run(reg, conf);
+			one_region_run(reg, conf, data_pools[omp_get_thread_num()]);
 			double end2 = get_time();
 			cerr << " omp time: " << end2 - start2 << endl;
 			cerr << "regid: " << i << " thread_id: " << omp_get_thread_num()  << endl;

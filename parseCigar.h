@@ -24,6 +24,7 @@
 #include "scopedata/Scope.h"
 #include "scopedata/VariationData.h"
 #include "scopedata/InitialData.h"
+#include "data/data_pool.h"
 #include <map>
 //#include <unordered_map>
 #include "./robin_hood.h"
@@ -41,7 +42,7 @@ struct Offset{
 
 class CigarParser{
 public:
-	CigarParser(RecordPreprocessor *preprocessor);
+	CigarParser(RecordPreprocessor *preprocessor, dataPool* data_pool);
 	//~CigarParser();
 	Scope<VariationData> process(Scope<InitialData>);
 	void parseCigar(string chrName, bam1_t* record, int count);
@@ -132,6 +133,7 @@ private:
     int readPositionExcludingSoftClipped; // keep track the position in the alignment, excluding softclipped
 
 	RecordPreprocessor *preprocessor;
+	dataPool* data_pool;
 	//char seq[150];
 };
 

@@ -44,6 +44,7 @@
 #include "scopedata/RealignedVariationData.h"
 #include "scopedata/Scope.h"
 #include "scopedata/VariationData.h"
+#include "data/data_pool.h"
 
 /**
  * The step of pipeline which try to realign variations: softclips, indels, long insertions.
@@ -134,12 +135,13 @@ private:
     //VariantPrinter variantPrinter;
 	Configuration* conf;
 	vector<bamReader> bamReaders;
+	dataPool* data_pool;
 
 
 
 public:
 	void print_result(); //only for debug
-	VariationRealigner(Configuration* conf);
+	VariationRealigner(Configuration* conf, dataPool* data_pool);
 	Scope<RealignedVariationData> process(Scope<VariationData> scope);
 	//void process(Scope<VariationData> &scope);
 
