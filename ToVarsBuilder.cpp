@@ -27,9 +27,9 @@ bool CMP_VARI(Variant *o1, Variant *o2){
 }
 
 void ToVarsBuilder::print_result(){
-	cout << "result infom: " << nonInsertionVariants.size() <<
-		" - " << insertionVariants.size() <<
-		" - " << refCoverage.size() << endl;
+	cout << "result infom: " << nonInsertionVariants->size() <<
+		" - " << insertionVariants->size() <<
+		" - " << refCoverage->size() << endl;
 
     //RealignedVariationData *rvdata = new RealignedVariationData(nonInsertionVariants, insertionVariants, softClips3End, softClips5End,
     //                refCoverage, maxReadLength, duprate, &CURSEG, SOFTP2SV, &scope);
@@ -43,7 +43,7 @@ void ToVarsBuilder::print_result(){
 	//		
 	//}
 	//for(auto &v:nonInsertionVariants ){
-	for(auto &v:insertionVariants ){
+	for(auto &v: *insertionVariants ){
 		int position = v.first;
 		VariationMap* var_map = v.second;
 		for(auto &vm : var_map -> variation_map){
@@ -83,6 +83,8 @@ void ToVarsBuilder::initFromScope(Scope<RealignedVariationData> &scope) {
     this->insertionVariants = scope.data->insertionVariants;
     this->nonInsertionVariants = scope.data->nonInsertionVariants;
     this->duprate = scope.data->duprate;
+
+	delete scope.data;
 }
 
 /**
@@ -102,7 +104,7 @@ Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &sco
     robin_hood::unordered_map<int, Vars*> alignedVariants;
     int lastPosition = 0;
     //Loop over positions
-    for (auto& entH : nonInsertionVariants) {
+    for (auto& entH : *nonInsertionVariants) {
 		//printf("%d\n", entH.first);
 		 try {
             int position = entH.first;
@@ -110,7 +112,7 @@ Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &sco
             VariationMap* varsAtCurPosition = entH.second;
             
             // skip position if there are no variants on position (both insertion and non-insertion)
-            if (varsAtCurPosition->variation_map.empty() && !insertionVariants.count(position)) {
+            if (varsAtCurPosition->variation_map.empty() && !insertionVariants->count(position)) {
 				//printf("tovar: continue for 1\n");
                 continue;
             }
@@ -133,7 +135,7 @@ Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &sco
                 continue;
             }
 
-            if (!refCoverage.count(position) || refCoverage[position] == 0) { // ignore when there's no coverage
+            if (!refCoverage->count(position) || (*refCoverage)[position] == 0) { // ignore when there's no coverage
                 //System.err.printf("Error tcov: %s %d %d %d %s\n",
                 //        region.chr, position, region.start, region.end, varsAtCurPosition.sv.type);
 				//printf("tovar: continue for 3\n");
@@ -141,13 +143,13 @@ Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &sco
             }
 
             //total position coverage
-            int totalPosCoverage = refCoverage[position];
+            int totalPosCoverage = (*refCoverage)[position];
 
 			int hicov;
             //position coverage by high-quality reads
-			if(insertionVariants.count(position)){
+			if(insertionVariants->count(position)){
 
-				hicov = calcHicov(&(insertionVariants[position]->variation_map), varsAtCurPosition->variation_map);
+				hicov = calcHicov(&(insertionVariants->at(position)->variation_map), varsAtCurPosition->variation_map);
 			}else{
 				hicov = calcHicov(NULL, varsAtCurPosition->variation_map);
 			}
@@ -190,8 +192,6 @@ Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &sco
             Vars* variationsAtPos = getOrPutVars(alignedVariants, position);
 
             collectReferenceVariants(position, totalPosCoverage, variationsAtPos, debugLines);
-			//------------print vars--------------//
-			//for(Variant* vp : variationsAtPos->variants){
 			//	printf("%d varsatpos info: %s\n", position, vp->tostring().c_str());
 			//}
 			//---------pirnt vars over------------//
@@ -231,7 +231,7 @@ bool ToVarsBuilder::isTheSameVariationOnRef(int position, robin_hood::unordered_
     for(auto& key_v:varsAtCurPosition){
         vk.insert(key_v.first);
     } 
-    if (insertionVariants.count(position)) {
+    if (insertionVariants->count(position)) {
         vk.insert("I");
     }
     //if (vk.size() == 1 && ref.count(position) && vk.count(to_string(ref[position]))) {
@@ -279,6 +279,8 @@ MSI* ToVarsBuilder::proceedVrefIsDeletion(int position, int dellen) {
     if (msi <= shift3 / (double) dellen) {
         msi = shift3 / (double) dellen;
     }
+	delete msiData;
+	delete msiDataWIthoutLeft;
     return new MSI(msi, shift3, msint);
 }
 
@@ -319,6 +321,8 @@ MSI* ToVarsBuilder::proceedVrefIsInsertion(int position, string vn){
     if (msi <= shift3 / (double)tseq1.length()) {
         msi = shift3 / (double)tseq1.length();
     }
+	delete msiData;
+	delete msiDataWithoutLeft;
     return new MSI(msi, shift3, msint);
 }
 
@@ -363,9 +367,9 @@ double ToVarsBuilder::collectVarsAtPosition(robin_hood::unordered_map<int, Vars*
 int ToVarsBuilder::createInsertion(double duprate, int position, int totalPosCoverage,
                     vector<Variant* > &var, vector<string> &debugLines, int hicov) {
     //Handle insertions separately
-    if(insertionVariants.count(position)!=0){
+    if(insertionVariants->count(position)!=0){
 		
-		robin_hood::unordered_map<string, Variation*> insertionVariations = insertionVariants[position]->variation_map;      
+		robin_hood::unordered_map<string, Variation*> insertionVariations = insertionVariants->at(position)->variation_map;      
         vector<string> insertionDescriptionStrings;
         for(auto& key_v:insertionVariations){
             insertionDescriptionStrings.push_back(key_v.first);
@@ -406,10 +410,10 @@ int ToVarsBuilder::createInsertion(double duprate, int position, int totalPosCov
 
             if (ttcov < cnt->varsCount) {
                 ttcov = cnt->varsCount;
-                if (refCoverage.count(position + 1) && ttcov < refCoverage[position + 1] - cnt->varsCount) {
-                    ttcov = refCoverage[position + 1];
+                if (refCoverage->count(position + 1) && ttcov < refCoverage->at(position + 1) - cnt->varsCount) {
+                    ttcov = refCoverage->at(position + 1);
                     // Adjust the reference
-                    Variation* variantNextPosition = getVariationMaybe(nonInsertionVariants, position + 1, ref[position + 1]);
+                    Variation* variantNextPosition = getVariationMaybe(*nonInsertionVariants, position + 1, ref[position + 1]);
                     if (variantNextPosition != NULL) {
                         variantNextPosition->varsCountOnForward -= fwd;
                         variantNextPosition->varsCountOnReverse -= rev;
@@ -785,10 +789,11 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
     //description string for any other variant
     string genotype2;
 
-    if (totalPosCoverage > refCoverage[position] && nonInsertionVariants.count(position + 1)
+    if (totalPosCoverage > (*refCoverage)[position] && nonInsertionVariants->count(position + 1)
             && ref.count(position + 1)
-		    && nonInsertionVariants[position + 1]->variation_map.count(string(1, ref[position + 1]))) {
-		Variation* tpref = getVariationMaybe(nonInsertionVariants, position + 1, ref[position + 1]);
+		&& nonInsertionVariants->at(position + 1)->variation_map.count(string(1, ref[position + 1]))) {
+		//Variation* tpref = getVariationMaybe(*nonInsertionVariants, position + 1, ref[position + 1]);
+		Variation* tpref = nonInsertionVariants->at(position+1)->variation_map.at(string(1, ref[position+1]));
         referenceForwardCoverage = tpref->varsCountOnForward;
         referenceReverseCoverage = tpref->varsCountOnReverse;
     }
@@ -841,6 +846,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                     msi = refVariantMsi->msi;
                     shift3 = refVariantMsi->shift3;
                     msint = refVariantMsi->msint;
+					delete refVariantMsi;
                 }
                 //Shift position to 3' if -3 option is set
                 if (conf->moveIndelsTo3) {
@@ -880,6 +886,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                     msi = refVariantMsi->msi;
                     shift3 = refVariantMsi->shift3;
                     msint = refVariantMsi->msint;
+					delete refVariantMsi;
 
                     if (matcherINV) {
                         varallele = "<INV>";
@@ -931,6 +938,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                 //variant allele is same as description string
                 varallele = descriptionString;
 				//printf("%d-3 tseq1: %s, tseq2: %s, msint: %s\n", position, tseq1.c_str(), tseq2.c_str(), msint.c_str());
+				delete msiData;
             }
 
             //Matcher mtch = AMP_ATGC.matcher(descriptionString);
@@ -967,8 +975,8 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
 
                 if (varallele=="<DEL>" && refallele.length() >= 1) {
                     refallele = ref.count(startPosition) ? string(1, ref[startPosition]) : "";
-                    if (refCoverage.count(startPosition - 1)) {
-                        totalPosCoverage = refCoverage[startPosition - 1];
+                    if (refCoverage->count(startPosition - 1)) {
+                        totalPosCoverage = refCoverage->at(startPosition - 1);
                     }
                     if (vref->positionCoverage > totalPosCoverage ){
                         totalPosCoverage = vref->positionCoverage;

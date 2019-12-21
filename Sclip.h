@@ -27,6 +27,13 @@ public:
 	//TODO: variable soft is only used in SV process step, consider it latter
 	//map<int, int> soft =  new LinkedHashmap<>();
 	//List<mate> = new ArrayList<>();
+	~Sclip(){
+		for(auto &s: seq){
+			for(auto si: s.second){
+				delete si.second;
+			}
+		}
+	}
 	
 	
 };

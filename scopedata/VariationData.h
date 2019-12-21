@@ -12,33 +12,33 @@
  */
 class VariationData {
     public: 
-		robin_hood::unordered_map<int, VariationMap*> nonInsertionVariants;
-    	robin_hood::unordered_map<int, VariationMap*> insertionVariants;
-    	robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > positionToInsertionCount;
-    	robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > positionToDeletionCount;
+		robin_hood::unordered_map<int, VariationMap*> *nonInsertionVariants;
+    	robin_hood::unordered_map<int, VariationMap*> *insertionVariants;
+    	robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > *positionToInsertionCount;
+    	robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > *positionToDeletionCount;
     	//SVStructures svStructures;
-    	robin_hood::unordered_map<int, int> refCoverage;
-    	robin_hood::unordered_map<int, Sclip*> softClips5End;
-    	robin_hood::unordered_map<int, Sclip*> softClips3End;
+    	robin_hood::unordered_map<int, int> *refCoverage;
+    	robin_hood::unordered_map<int, Sclip*> *softClips5End;
+    	robin_hood::unordered_map<int, Sclip*> *softClips3End;
     	int maxReadLength;
-    	set<string> splice;
-    	robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > mnp;
-    	robin_hood::unordered_map<string, vector<int> > spliceCount;
+    	set<string> *splice;
+    	robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > *mnp;
+    	robin_hood::unordered_map<string, vector<int> > *spliceCount;
     	double duprate;
 
 		VariationData(
-			robin_hood::unordered_map<int, VariationMap*> nonInsertionVariants,
-			robin_hood::unordered_map<int, VariationMap*> insertionVariants,
-			robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > positionToInsertionCount,
-			robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > positionToDeletionCount,
+			robin_hood::unordered_map<int, VariationMap*> *nonInsertionVariants,
+			robin_hood::unordered_map<int, VariationMap*> *insertionVariants,
+			robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > *positionToInsertionCount,
+			robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > *positionToDeletionCount,
 			//SVStructures svStructures,
-			robin_hood::unordered_map<int, int> refCoverage,
-			robin_hood::unordered_map<int, Sclip*> softClips5End,
-			robin_hood::unordered_map<int, Sclip*> softClips3End,
+			robin_hood::unordered_map<int, int> *refCoverage,
+			robin_hood::unordered_map<int, Sclip*> *softClips5End,
+			robin_hood::unordered_map<int, Sclip*> *softClips3End,
 			//int maxReadLength,
-			set<string> splice,
-			robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > mnp,
-			robin_hood::unordered_map<string, vector<int> > spliceCount,
+			set<string> *splice,
+			robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > *mnp,
+			robin_hood::unordered_map<string, vector<int> > *spliceCount,
 			double duprate
 			){
 			this->nonInsertionVariants = nonInsertionVariants;

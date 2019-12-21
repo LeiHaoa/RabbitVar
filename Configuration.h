@@ -432,6 +432,9 @@ public:
 	  * added for optimizition
 	  */
 	 //vector<bamReader> bamReaders;
+	 ~Configuration(){
+		 delete patterns;
+	 }
 
 };
 

@@ -34,6 +34,7 @@ RecordPreprocessor::RecordPreprocessor(Region region, Configuration *conf, vecto
 	this->idx = bamReaders[0].idx;
 	iter = sam_itr_querys(idx, header, region_string.c_str());
 	printf("in preprocessor: region_string: %s\n", region_string.c_str());
+	//printf("reader info: %p - %p - %p - %p\n", this->in, this->header, this->idx, this->iter);
 
 	makeReference(conf->fasta);
 }
@@ -81,6 +82,8 @@ void RecordPreprocessor::makeReference(string fa_file_path){
 	//exit(0);
 	//printf("\n");
 	//reference.referenceSequences = seq;
+	fai_destroy(fasta_reference);
+	delete seq;
 }	
 
 string getMateReferenceName(bam_hdr_t* header, bam1_t* record) {

@@ -20,22 +20,22 @@
  */
 class RealignedVariationData {
     public:
-        robin_hood::unordered_map<int, VariationMap* > nonInsertionVariants;
-        robin_hood::unordered_map<int, VariationMap* > insertionVariants;
-        robin_hood::unordered_map<int, Sclip* > softClips5End;
-        robin_hood::unordered_map<int, Sclip* > softClips3End;
-        robin_hood::unordered_map<int, int> refCoverage;
+        robin_hood::unordered_map<int, VariationMap* > *nonInsertionVariants;
+        robin_hood::unordered_map<int, VariationMap* > *insertionVariants;
+        robin_hood::unordered_map<int, Sclip* > *softClips5End;
+        robin_hood::unordered_map<int, Sclip* > *softClips3End;
+        robin_hood::unordered_map<int, int> *refCoverage;
         int maxReadLength;
         double duprate;
         CurrentSegment CURSEG;
         robin_hood::unordered_map<int, vector<Sclip*> > SOFTP2SV;
         Scope<VariationData> *previousScope;
 
-        RealignedVariationData(robin_hood::unordered_map<int, VariationMap* > nonInsertionVariants,
-                            robin_hood::unordered_map<int, VariationMap* > insertionVariants,
-                            robin_hood::unordered_map<int, Sclip* > softClips3End,
-							   robin_hood::unordered_map<int, Sclip* > softClips5End,
-							   robin_hood::unordered_map<int, int> refCoverage,
+        RealignedVariationData(robin_hood::unordered_map<int, VariationMap* > *nonInsertionVariants,
+                            robin_hood::unordered_map<int, VariationMap* > *insertionVariants,
+                            robin_hood::unordered_map<int, Sclip* > *softClips3End,
+							   robin_hood::unordered_map<int, Sclip* > *softClips5End,
+							   robin_hood::unordered_map<int, int> *refCoverage,
 							   int maxReadLength,
 							   double duprate,
 							   CurrentSegment CURSEG,

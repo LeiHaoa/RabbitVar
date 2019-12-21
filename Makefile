@@ -1,5 +1,5 @@
 TARGET=sam
-CC=g++ -std=c++11
+CC=icpc -std=c++11
 
 INCLUDE=/home/haoz/tools/htslib/include
 
@@ -7,7 +7,7 @@ LIBS=/home/haoz/tools/htslib/lib
 #LIBS=/home/haoz/tools/htslib/lib/libhts.a
 
 #FLAGS= -std=c++11 -lhts -I/home/haoz/tools/htslib/include -L/home/haoz/tools/htslib/lib -O3
-FLAGS= -std=c++11 -lhts -O3 -g -fopenmp
+FLAGS= -std=c++11 -lhts -O3 -g -qopenmp
 
 #$(CC) parseCigar.o $(FLAGS) -I$(INCLUDE) -L$(LIBS)   -o parseCigar 
 

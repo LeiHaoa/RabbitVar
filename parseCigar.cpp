@@ -113,6 +113,7 @@ void CigarParser::initFromScope(Scope<InitialData> scope) {
 	this->refCoverage = scope.data->refCoverage;
 	this->softClips3End = scope.data->softClips3End;
 	this->softClips5End = scope.data->softClips5End;
+
 	this->region = scope.region;
 	this->splice = scope.splice;
 	this->reference = scope.regionRef;
@@ -352,6 +353,8 @@ Variation* getVariationFromSeq(Sclip* softClip,
 		//(*seq_map)[ch] = variation;
 		seq_map->insert(robin_hood::unordered_map<char, Variation*>::value_type(ch, variation));
 		softClip->seq[idx] = *seq_map;
+		//TODO: 不知道会不会*seq_map 不是复制一个拷贝。
+		delete seq_map;
 		return variation;
 	}
 
@@ -375,9 +378,9 @@ Variation* getVariationFromSeq(Sclip* softClip,
     return variation;
 }
 void CigarParser::print_result(){
-	cout << "cigarparser " << "result infom: " << nonInsertionVariants.size() <<
-		" - " << insertionVariants.size() <<
-		" - " << refCoverage.size() << endl;
+	cout << "cigarparser " << "result infom: " << nonInsertionVariants->size() <<
+		" - " << insertionVariants->size() <<
+		" - " << refCoverage->size() << endl;
 
     //RealignedVariationData *rvdata = new RealignedVariationData(nonInsertionVariants, insertionVariants, softClips3End, softClips5End,
     //                refCoverage, maxReadLength, duprate, &CURSEG, SOFTP2SV, &scope);
@@ -390,7 +393,7 @@ void CigarParser::print_result(){
 	//	//}
 	//		
 	//}
-	for(auto &v:insertionVariants ){
+	for(auto &v: *insertionVariants ){
 		int position = v.first;
 		VariationMap* var_map = v.second;
 		for(auto &vm : var_map -> variation_map){
@@ -469,7 +472,7 @@ Scope<VariationData> CigarParser::process(Scope<InitialData> scope){
 	//	printf("%d - %d\n", pos, sc->varsCount);
 	//}
 	//------------------------------------
-	VariationData *vardata = new VariationData(nonInsertionVariants, insertionVariants, positionToInsertionCount, positionToDeletionCount, refCoverage, softClips5End, softClips3End, splice, mnp, spliceCount, 0);
+	VariationData *vardata = new VariationData(nonInsertionVariants, insertionVariants, &positionToInsertionCount, &positionToDeletionCount, refCoverage, softClips5End, softClips3End, &splice, &mnp, &spliceCount, 0);
 	//Scope<VariationData> toData(conf->bam.getBamRaw(), this->region, this->reference, this->maxReadLength, this->splice, vardata);
 	Scope<VariationData> toData(scope.bam, scope.region, scope.regionRef, maxReadLength, scope.splice, scope.bamReaders, vardata);
 	//------------------------------------
@@ -498,6 +501,7 @@ void inline get_record_form_samtool_resulet(uint8_t* seq_sam, int len, char* seq
 		seq[i] = seq_nt16_str[bam_seqi(seq_sam, i)];
 	}
 }
+
 inline void print_quality_33(uint8_t* query_quality, int length){
 	for(int i = 0; i < length; i++){
 		printf("%c", query_quality[i]+33);
@@ -875,7 +879,7 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 				}
 				//if is next after num matched
 				if(isNextAfterNumMatched(ci, 1)){
-					Offset tpl = findOffset(start + ddlen + 1, readPositionIncludingSoftClipped+1, bam_cigar_oplen(cigar[ci + 1]), seq, query_quality, ref, refCoverage);
+					Offset tpl = findOffset(start + ddlen + 1, readPositionIncludingSoftClipped+1, bam_cigar_oplen(cigar[ci + 1]), seq, query_quality, ref, (*refCoverage));
 					int toffset = tpl.offset;
 					if(toffset != 0){
 						moffset = toffset;
@@ -936,7 +940,7 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 					//addVariationForMathchingPart(mapping_quality, numberOfMismatches, direction, readLengthIncludeMatchingAndInsertions, nmoff, s,start_with_deletion, q, qbases, qibases, ddlen, pos); //TODO
 					//addVariationForMatchingPart(mapping_quality, number_of_mismatches, direction, read_length_include_matching_and_insertions, nmoff, s,start_with_deletion, q, qbases, qibases, ddlen, pos); //TODO
 					//cout << "getting variation 1" << endl;
-					Variation *hv = getVariation(data_pool, nonInsertionVariants, pos, s);
+					Variation *hv = getVariation(data_pool, *nonInsertionVariants, pos, s);
 					//cout << "getting variation 2" << endl;
 					//cout << "pos and string: " << pos << " - " << s << " - " << static_cast<const void*>(hv) << endl;
 					hv->incDir(direction);
@@ -984,7 +988,7 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 					//increase coverage for bases covered by the variation
 					for (int qi = 1; qi <= qbases; qi++) {
 						//incCnt(refCoverage, start - qi + 1, 1);
-						refCoverage[start-qi+1]++;
+						(*refCoverage)[start-qi+1]++;
 						//refCoverage.insert(map<int, int>::value_type(start-qi+1, refCoverage[start-qi+1]++));
 					}
 		
@@ -1008,7 +1012,7 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 						for (int qi = 1; qi < ddlen; qi++) {
 							//incCnt(refCoverage, start + qi, 1);
 							//refCoverage.insert(map<int, int>::value_type(start+qi, refCoverage[start+qi]++));
-							refCoverage[start+qi]++;
+							(*refCoverage)[start+qi]++;
 						}
 					}
 
@@ -1056,7 +1060,7 @@ void CigarParser::addVariationForMatchingPart(uint8_t mappingQuality, int nm, bo
 								 int rlen1, int nmoff, string &s,
 								 bool startWithDeletion, double q, int qbases,
 								 int qibases, int ddlen, int pos){
-	Variation *hv = getVariation(data_pool, nonInsertionVariants, pos, s);
+	Variation *hv = getVariation(data_pool, *nonInsertionVariants, pos, s);
 	hv->incDir(dir);
 	if(isBEGIN_ATGC_AMP_ATGCs_END(s)){
 		//increment(mnp, pos, s);
@@ -1101,7 +1105,7 @@ void CigarParser::addVariationForMatchingPart(uint8_t mappingQuality, int nm, bo
 	//increase coverage for bases covered by the variation
 	for (int qi = 1; qi <= qbases; qi++) {
 		//incCnt(refCoverage, start - qi + 1, 1);
-		refCoverage[start-qi+1]++;
+		(*refCoverage)[start-qi+1]++;
 		//refCoverage.insert(map<int, int>::value_type(start-qi+1, refCoverage[start-qi+1]++));
 	}
 		
@@ -1125,7 +1129,7 @@ void CigarParser::addVariationForMatchingPart(uint8_t mappingQuality, int nm, bo
 		for (int qi = 1; qi < ddlen; qi++) {
 			//incCnt(refCoverage, start + qi, 1);
 			//refCoverage.insert(map<int, int>::value_type(start+qi, refCoverage[start+qi]++));
-			refCoverage[start+qi]++;
+			(*refCoverage)[start+qi]++;
 		}
 	}
 }
@@ -1136,7 +1140,7 @@ void CigarParser::addVariationForMatchingPart(uint8_t mappingQuality, int nm, bo
 void CigarParser::addVariationForDeletion(uint8_t mappingQuality, int nm, bool dir, int rlen1,
 										  string descStringOfDeletedElement, long quality_segment_sum, int quality_segment_count, int nmoff) {
     //add variant structure for deletion at this position
-	Variation* hv = getVariation(data_pool, nonInsertionVariants, start, descStringOfDeletedElement); //variation structure [v]
+	Variation* hv = getVariation(data_pool, *nonInsertionVariants, start, descStringOfDeletedElement); //variation structure [v]
     //add record for deletion in deletions map
     //increment(positionToDeletionCount, start, descStringOfDeletedElement.toString());
 	positionToDeletionCount[start][descStringOfDeletedElement]++;
@@ -1184,7 +1188,7 @@ void CigarParser::addVariationForDeletion(uint8_t mappingQuality, int nm, bool d
     //increase coverage count for reference bases missing from the read
     for (int i = 0; i < cigar_element_length; i++) {
         //incCnt(refCoverage, start + i, 1);
-		refCoverage[start+i]++;
+		(*refCoverage)[start+i]++;
     }
 	//printf("Add VariationForDeletion!: %d - %s - %d - %d - %f\n", start, descStringOfDeletedElement.c_str(), hv->highQualityReadsCount, hv->lowQualityReadsCount, tmpq);
 }
@@ -1279,11 +1283,11 @@ void CigarParser::process_softclip(string chrName, bam1_t* record, char* querySe
 			  && queryQuality[cigar_element_length-1]  > 10){
 			//create variant if it is not present
 			
-			Variation* variation = getVariation(data_pool, nonInsertionVariants, start-1, string(1,ref[start-1]));//ref[start-1] as string [v]
+			Variation* variation = getVariation(data_pool, *nonInsertionVariants, start-1, string(1,ref[start-1]));//ref[start-1] as string [v]
 			//add count
 			addCnt(variation, direction, cigar_element_length, queryQuality[cigar_element_length-1], mappingQuality, numberOfMismatches, conf->goodq);
 			//increase -> incCnt(refCoverage, start-1, 1);
-			refCoverage[start-1]++;
+			(*refCoverage)[start-1]++;
 
 			start--;
 			cigar_element_length--;
@@ -1309,11 +1313,11 @@ void CigarParser::process_softclip(string chrName, bam1_t* record, char* querySe
 			if(num_of_highquality_base >= 1 && num_of_highquality_base > num_of_lowquality_base
 			   && start >= region.start && start <= region.end){
 
-				if(softClips5End.find(start) == softClips5End.end()){
+				if(softClips5End->find(start) == softClips5End->end()){
 					//Sclip sclip = new Sclip();
-					softClips5End[start] = new Sclip();
+					(*softClips5End)[start] = new Sclip();
 				}
-				Sclip *sclip = softClips5End[start];
+				Sclip *sclip = softClips5End->at(start);
 				for(int si = cigar_element_length - 1; cigar_element_length - si <= num_of_highquality_base; si--){
 					char ch = querySequence[si];
 					int idx = cigar_element_length - 1 - si;
@@ -1362,12 +1366,12 @@ void CigarParser::process_softclip(string chrName, bam1_t* record, char* querySe
 			   && queryQuality[readPositionIncludingSoftClipped]  > 10){
 			//create variant if it is not present
 			//printf("add variation nonInsert : %d-%c\n", readPositionIncludingSoftClipped, ref.at(start));
-			Variation* variation = getVariation(data_pool, nonInsertionVariants, start, string(1, ref.at(start)));
+			Variation* variation = getVariation(data_pool, *nonInsertionVariants, start, string(1, ref.at(start)));
 			//add count
 			addCnt(variation, direction, totalLengthIncludingSoftClipped - readPositionExcludingSoftClipped,
 				   queryQuality[readPositionIncludingSoftClipped], mappingQuality, numberOfMismatches, conf->goodq);
 			//increase -> incCnt(refCoverage, start, 1);
-			refCoverage[start]++;
+			(*refCoverage)[start]++;
 			
 			readPositionIncludingSoftClipped++;
 			start++;
@@ -1397,12 +1401,12 @@ void CigarParser::process_softclip(string chrName, bam1_t* record, char* querySe
 			   && start >= region.start && start <= region.end){
 
 				Sclip* sclip;
-				if(softClips3End.find(start) == softClips3End.end()){
+				if(softClips3End->find(start) == softClips3End->end()){
 					sclip = new Sclip();
-					//softClips3End.insert(map<int, Sclip*>::value_type(start, sclip));
-					softClips3End[start] = sclip;
+					softClips3End->insert(robin_hood::unordered_map<int, Sclip*>::value_type(start, sclip));
+					//softClips3End[start] = sclip;
 				}else{
-					sclip = softClips3End[start];
+					sclip = softClips3End->at(start);
 				}
 				//if(sclip == NULL){
 				//	sclip = new Sclip();
@@ -1481,7 +1485,7 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
 		if(ci6 != 0 && bam_cigar_op(cigar[ci+3]) == 0){
 			Offset tpl = findOffset(start + multoffs,
 									readPositionIncludingSoftClipped + cigar_element_length + multoffp,
-									ci6, querySequence, queryQuality, ref, refCoverage);
+									ci6, querySequence, queryQuality, ref, (*refCoverage));
 			offset = tpl.offset;
 			ss = tpl.sequence;
 			quality_segment_sum += tpl.q_sum;
@@ -1533,7 +1537,7 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
 				for(int osi = 0; osi < offset; osi++){
 					//incCnt(refCoverage, start + osi, 1);
 					//refCoverage.insert(map<int, int>::value_type(start+osi, refCoverage[start+osi]++));
-					refCoverage[start+osi]++;
+					(*refCoverage)[start+osi]++;
 				}
 			}
 		}
@@ -1565,7 +1569,7 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
 		//}
 		positionToInsertionCount[insertion_pointion]["+"+desc_string_of_insertion_segment]++;
 		//add insertion to table of vartions
-		Variation* hv = getVariation(data_pool, insertionVariants, insertion_pointion, "+" + desc_string_of_insertion_segment); //variation structure for this insertion
+		Variation* hv = getVariation(data_pool, *insertionVariants, insertion_pointion, "+" + desc_string_of_insertion_segment); //variation structure for this insertion
 		hv->incDir(direction);
 		hv->varsCount++;
 		//minimum of positions from start of read and end of read
@@ -1608,7 +1612,7 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
          */
         int index = readPositionIncludingSoftClipped - 1 - (start - 1 - insertion_pointion);
         if (insertion_pointion > position && isHasAndEquals(querySequence[index], ref, insertion_pointion)) {
-            Variation* tv = getVariationMaybe(nonInsertionVariants, insertion_pointion, querySequence[index]);
+            Variation* tv = getVariationMaybe(*nonInsertionVariants, insertion_pointion, querySequence[index]);
             //Substract count.
             if (tv != NULL) {
 				//if(1){
@@ -1636,7 +1640,7 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
 						|| bam_cigar_op(cigar[0]) == 5)) { // if cigar[0] operator is S or H
             //Add one more variant corresponding to base at start - 1 to hash
 			//[haoz:] bookmark here
-            Variation* ttref = getVariation(data_pool, nonInsertionVariants, insertion_pointion, string(1, ref[insertion_pointion]));
+            Variation* ttref = getVariation(data_pool, *nonInsertionVariants, insertion_pointion, string(1, ref[insertion_pointion]));
             ttref->incDir(direction);
             ttref->varsCount++;
             ttref->pstd = hv->pstd;
@@ -1649,7 +1653,7 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
             ttref->numberOfMismatches += numberOfMismatches - nmoff;
             //incCnt(refCoverage, insertion_pointion, 1);
 			//refCoverage.insert(map<int, int>::value_type(insertion_pointion, refCoverage[insertion_pointion]++));
-			refCoverage[insertion_pointion]++;
+			(*refCoverage)[insertion_pointion]++;
         }
 	}
 	//adjust read position by m (CIGAR segment length) + offset + multoffp

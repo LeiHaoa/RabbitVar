@@ -29,6 +29,16 @@ class Vars {
     	robin_hood::unordered_map<string, Variant*> varDescriptionStringToVariants;
 
     	string sv = "";
+
+		~Vars(){
+			delete referenceVariant;
+			for(Variant* v: variants){
+				delete v;
+			}
+			//for(auto& vstv: varDescriptionStringToVariants){
+			//	delete vstv.second;
+			//}
+		}
 };
 
 #endif

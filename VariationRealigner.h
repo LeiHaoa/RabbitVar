@@ -113,13 +113,13 @@ public :
 class VariationRealigner {
 private:
 	robin_hood::unordered_map<int, vector<Sclip*> > SOFTP2SV;
-	robin_hood::unordered_map<int, VariationMap*> nonInsertionVariants;
-	robin_hood::unordered_map<int, VariationMap*> insertionVariants;
-	robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > positionToInsertionCount;
-	robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > positionToDeletionCount;
-	robin_hood::unordered_map<int, int> refCoverage;
-	robin_hood::unordered_map<int, Sclip*> softClips5End;
-	robin_hood::unordered_map<int, Sclip*> softClips3End;
+	robin_hood::unordered_map<int, VariationMap*> *nonInsertionVariants;
+	robin_hood::unordered_map<int, VariationMap*> *insertionVariants;
+	robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > *positionToInsertionCount;
+	robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > *positionToDeletionCount;
+	robin_hood::unordered_map<int, int> *refCoverage;
+	robin_hood::unordered_map<int, Sclip*> *softClips5End;
+	robin_hood::unordered_map<int, Sclip*> *softClips3End;
 
     //ReferenceResource referenceResource;
     Reference reference;
@@ -130,7 +130,7 @@ private:
     double duprate;
     vector<string> bams;
     string bam;
-    robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > mnp;
+    robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > *mnp;
     //SVStructures svStructures;
     //VariantPrinter variantPrinter;
 	Configuration* conf;
@@ -142,7 +142,7 @@ private:
 public:
 	void print_result(); //only for debug
 	VariationRealigner(Configuration* conf, dataPool* data_pool);
-	Scope<RealignedVariationData> process(Scope<VariationData> scope);
+	Scope<RealignedVariationData> process(Scope<VariationData> &scope);
 	//void process(Scope<VariationData> &scope);
 
 	//bool COMP2(SortPositionSclip &o1, SortPositionSclip &o2);

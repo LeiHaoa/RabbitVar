@@ -81,7 +81,7 @@ inline bool isHasAndNotEquals(robin_hood::unordered_map<int, char> &ref, int ind
 inline BaseInsertion* adjInsPos(int bi, string &ins, robin_hood::unordered_map<int, char> &ref) {
     int n = 1;
     int len = ins.length();
-    while(ref[bi] == ins[ins.length() - n]) {
+    while(ref[bi] == ins[len - n]) {
         n++;
         if (n > len) {
             n = 1;
@@ -205,7 +205,7 @@ inline Variation* getVariationMaybe(robin_hood::unordered_map<int, VariationMap*
 	if(hash.find(start) == hash.end()){
 		return NULL;
 	}else{
-		robin_hood::unordered_map<string, Variation*> vmap = hash.at(start)->variation_map;
+		robin_hood::unordered_map<string, Variation*> &vmap = hash.at(start)->variation_map;
 		string s_refBase(1, refBase);
 		if(vmap.find(s_refBase) == vmap.end()){
 			return NULL;
@@ -438,6 +438,7 @@ inline string findconseq(Sclip *softClip, int dir) {
     string SEQ;
     int ntSize = softClip->nt.size();
 	//printf("seq1: %s\n", seqq.c_str());
+	//printf("total: %d, match: %d, seqqlent: %d, ntSize: %d\n", total, match, seqq.length(), ntSize);
     if (total != 0
             && match / (double)total > 0.9
             && seqq.length() / 1.5 > ntSize - seqq.length()
@@ -446,7 +447,8 @@ inline string findconseq(Sclip *softClip, int dir) {
             || seqq.length() > 25)) {
         SEQ = seqq;
     } else {
-        SEQ = "";
+		//printf("set SEQ to empty/blank\n");
+        SEQ = " ";
     }
 
     //if (!SEQ.empty() && SEQ.length() > Configuration.SEED_2) {

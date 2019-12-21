@@ -101,14 +101,15 @@ public:
 
 	void print_result();
 private:
-	robin_hood::unordered_map<int, int> refCoverage;
 	Configuration *conf;
 	// Utils maps
 	//------TODO: use pointer instead to save copy time ------//
-	robin_hood::unordered_map<int, VariationMap* > nonInsertionVariants;
-    robin_hood::unordered_map<int, VariationMap* > insertionVariants;
-    robin_hood::unordered_map<int, Sclip*> softClips3End; // soft clipped at 3'
-    robin_hood::unordered_map<int, Sclip*> softClips5End; // soft clipped at 5'
+	robin_hood::unordered_map<int, int> *refCoverage;
+	robin_hood::unordered_map<int, VariationMap* > *nonInsertionVariants;
+    robin_hood::unordered_map<int, VariationMap* > *insertionVariants;
+    robin_hood::unordered_map<int, Sclip*> *softClips3End; // soft clipped at 3'
+    robin_hood::unordered_map<int, Sclip*> *softClips5End; // soft clipped at 5'
+
     robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > positionToInsertionCount;
     robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > mnp; // Keep track of MNPs
     robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > positionToDeletionCount;

@@ -4,12 +4,11 @@
 #include <vector>
 #include "../Variation.h"
 class dataPool{
-private:
+public:
 	vector<Variation*> _data;
 	int _pointer;
 	int _size;
 
-public:
 	dataPool(int init_size){
 		cout << "init a variation with size: " << init_size << endl;
 		//_data.resize(init_size);

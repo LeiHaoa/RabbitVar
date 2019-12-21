@@ -13,17 +13,34 @@
  */
 class InitialData {
 public:
-	robin_hood::unordered_map<int, VariationMap* > nonInsertionVariants;
-	robin_hood::unordered_map<int, VariationMap* > insertionVariants;
-	robin_hood::unordered_map<int, int> refCoverage;
-	robin_hood::unordered_map<int, Sclip* > softClips5End;
-	robin_hood::unordered_map<int, Sclip* > softClips3End;
-	unordered_set<string> duplicates;
+	robin_hood::unordered_map<int, VariationMap* > *nonInsertionVariants = new robin_hood::unordered_map<int, VariationMap*>;
+	robin_hood::unordered_map<int, VariationMap* > *insertionVariants = new robin_hood::unordered_map<int, VariationMap*>;
+	robin_hood::unordered_map<int, int> *refCoverage = new robin_hood::unordered_map<int, int>;
+	robin_hood::unordered_map<int, Sclip* > *softClips5End = new robin_hood::unordered_map<int, Sclip* >;
+	robin_hood::unordered_map<int, Sclip* > *softClips3End = new robin_hood::unordered_map<int, Sclip* >;
+	unordered_set<string> *duplicates = new unordered_set<string>;
 	//vector<bamReader> bamReaders;
 
-	//InitialData(Configuration* conf) {
-	//		
-	//};
+	~InitialData() {
+		for(auto &niv: *nonInsertionVariants){
+			delete niv.second;
+		}
+		delete nonInsertionVariants;
+		for(auto &niv: *insertionVariants){
+			delete niv.second;
+		}
+		delete insertionVariants;
+		delete refCoverage;
+		for(auto &sc : *softClips5End){
+			delete sc.second;
+		}
+		delete softClips5End;
+		for(auto &sc : *softClips3End){
+			delete sc.second;
+		}
+		delete softClips3End;
+		delete duplicates;
+	};
 
 	//InitialData(unordered_map<int, VariationMap* > nonInsertionVariants,
 	//               unordered_map<int, VariationMap* > insertionVariants,

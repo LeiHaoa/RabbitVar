@@ -17,5 +17,10 @@ class AlignedVarsData {
         	this->maxReadLength = maxReadLength;
         	this->alignedVariants = alignedVariants;
     	};
+		~AlignedVarsData(){
+			for(auto &av: alignedVariants){
+				delete av.second;
+			}
+		}
 };
 #endif

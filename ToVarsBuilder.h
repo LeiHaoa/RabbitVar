@@ -38,9 +38,9 @@ class MSI {
 class ToVarsBuilder {
     private: 
 		Region region;
-    	robin_hood::unordered_map<int, int> refCoverage;
-    	robin_hood::unordered_map<int, VariationMap* > insertionVariants;
-    	robin_hood::unordered_map<int, VariationMap* > nonInsertionVariants;
+    	robin_hood::unordered_map<int, int> *refCoverage;
+    	robin_hood::unordered_map<int, VariationMap* > *insertionVariants;
+    	robin_hood::unordered_map<int, VariationMap* > *nonInsertionVariants;
     	robin_hood::unordered_map<int, char> ref;
 		Configuration *conf;
     	double duprate;
