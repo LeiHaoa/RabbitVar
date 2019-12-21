@@ -207,14 +207,16 @@ Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &sco
     AlignedVarsData *avdata= new AlignedVarsData(scope.maxReadLength, alignedVariants);
 	//print_result();
 	//-----------print alignedVariants--------------//
-	//for(auto& var : alignedVariants){
-	//	int pos = var.first;
-	//	for(auto &v : var.second->varDescriptionStringToVariants){
-	//		string desc = v.first;
-	//		printf("%d - %s - %s\n", pos, desc.c_str(), v.second->tostring().c_str());
-	//		//printf("%d - %s\n", pos, desc.c_str());
-	//	}
-	//}
+	for(auto& var : alignedVariants){
+		int pos = var.first;
+		for(auto &v : var.second->varDescriptionStringToVariants){
+			string desc = v.first;
+			//printf("%d - %s - %s\n", pos, desc.c_str(), v.second->tostring().c_str());
+			cerr << pos << " - " << desc << " - " << v.second->tostring() << endl;
+			//printf("%d - %s\n", pos, desc.c_str());
+		}
+	}
+	cerr << "-------------------------------------------------------" << endl;
 
     return Scope<AlignedVarsData>(scope.bam, scope.region, scope.regionRef, scope.maxReadLength,
 								  scope.splice, scope.bamReaders, avdata);
