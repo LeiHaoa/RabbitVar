@@ -1,0 +1,5 @@
+
+class SomaticMode{
+public:
+	process();
+}
