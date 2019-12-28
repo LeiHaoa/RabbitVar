@@ -29,20 +29,6 @@ void one_region_run(Region region, Configuration* conf, dataPool* data_pool){
 			bamReaders.push_back(bamReader(in, header, idx));
 		}
 	}
-	//if(conf->bam.hasBam2() && conf->bam.getBam2() != ""){
-	//	samFile* in = sam_open(conf->bam.getBam2().c_str(), "r");
-	//	bam_hdr_t* header;
-	//	hts_idx_t* idx;
-	//	if(in){
-	//		header = sam_hdr_read(in);
-	//		idx = sam_index_load(in, conf->bam.getBam2().c_str());
-	//		assert(idx != NULL);
-	//	}else{
-	//		printf("read bamFile2: %s error!", conf->bam.getBam2().c_str());
-	//		exit(1);
-	//	}
-	//	bamReaders.push_back(bamReader(in, header, idx));
-	//}
 	cout << "reader info: " << static_cast<void*>(bamReaders[0].in) << " " << static_cast<void*>(bamReaders[0].header) << " "  <<static_cast<void*>(bamReaders[0].idx) << endl;
 	assert(bamReaders.size() > 0);
 	//----init bamReader end------//
@@ -50,28 +36,17 @@ void one_region_run(Region region, Configuration* conf, dataPool* data_pool){
 	RecordPreprocessor *preprocessor = new RecordPreprocessor(region, conf, bamReaders);
 
 	Scope<InitialData> initialScope1(conf->bam.getBam1(), region, preprocessor->reference, 0, set<string>(), bamReaders, init_data);
-	double start1 = get_time();
 	CigarParser cp(preprocessor, data_pool);
 	Scope<VariationData> svd =  cp.process(initialScope1);
-	double end1 = get_time();
 
-	double start2 = get_time();
 	VariationRealigner var_realinger(conf, data_pool);
 	Scope<RealignedVariationData> rvd = var_realinger.process(svd);
 	cout << "valide count : " << var_realinger.debug_valide_count << endl;
-	double end2 = get_time();
 
-	double start3 = get_time();
 	ToVarsBuilder vars_builder(conf);
 	Scope<AlignedVarsData> avd = vars_builder.process(rvd);
 	//cout << avd.data->k
-	double end3 = get_time();
 	
-	cout << "parseCigar Time: " << end1 - start1
-		 << " var realignger Time: " << end2 - start2
-		 << " to varBuilder Time: " << end3 - start3
-		 << endl;
-
 
 	data_pool->reset();
 	Scope<InitialData> initialScope2(conf->bam.getBam2(), region, preprocessor->reference, avd.maxReadLength, set<string>(), bamReaders, init_data);
@@ -95,10 +70,13 @@ void one_region_run(Region region, Configuration* conf, dataPool* data_pool){
 		if(br.in) sam_close(br.in);
 	}
 
+	//return avd.data;
+
 }
 
 void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 	
+	//--------------use interest region parameter: singel thread-------------------//
 	if(conf->regionOfInterest != ""){
 		//DataScope dscope;
 		Region region;
@@ -114,7 +92,10 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 		vector<Variation*>(data_pool->_data).swap(data_pool->_data);
 		delete data_pool;
 
-	}else{
+	}
+	//-------------------use bed file: multithreads------------------------//
+	else 
+	{
 		cout << "bed file name: " << conf->bed << " and regions is: " << endl;
 		Region reg;
 		vector<Region> regs;
@@ -132,14 +113,13 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 	    const int reg_num = regs.size();
 		int num_thread;
 #pragma omp parallel
-	{
-        #pragma omp single
-		num_thread = omp_get_num_threads();
-	}
+		{
+#pragma omp single
+			num_thread = omp_get_num_threads();
+		}
 		double * time = new double[num_thread];
 		for(int i = 0; i < num_thread; i++)	time[i] = 0.0;
 		vector<dataPool*> data_pools;
-		cout << "num_thread: " << num_thread << endl;
 		for(int i = 0; i < num_thread; i++){
 			data_pools.push_back(new dataPool(100000));
 		}
@@ -148,11 +128,11 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 		    double start2 = get_time();
 			reg = regs[i];
 			data_pool = data_pools[omp_get_thread_num()];
-			cout <<"thread: " << omp_get_thread_num() << "region id: " << i <<" processing: " << reg.chr << " - " << reg.start << " - " << reg.end  << endl;
+			//cout <<"thread: " << omp_get_thread_num() << "region id: " << i <<" processing: " << reg.chr << " - " << reg.start << " - " << reg.end  << endl;
 			one_region_run(reg, conf, data_pool);
 			double end2 = get_time();
-			cerr << " regid: " << i << " thread_id: " << omp_get_thread_num();
-			cerr << " omp time: " << end2 - start2 << endl;
+			//cerr << " regid: " << i << " thread_id: " << omp_get_thread_num();
+			//cerr << " omp time: " << end2 - start2 << endl;
 			time[omp_get_thread_num()] += end2 - start2;
 		}
 

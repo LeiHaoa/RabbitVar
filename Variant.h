@@ -129,13 +129,13 @@ class Variant {
     }
 
     void debugVariantsContentSimple(vector<string> &tmp, string n) {
-        tmp.push_back(debugVariantsContent(n));
+        tmp.emplace_back(debugVariantsContent(n));
     }
 
     void debugVariantsContentInsertion(vector<string> &tmp, string n) {
         string sb = "I";
         sb += debugVariantsContent(n);
-        tmp.push_back(sb);
+        tmp.emplace_back(sb);
     }
 
     string debugVariantsContent(string n) {

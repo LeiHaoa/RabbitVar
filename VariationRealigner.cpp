@@ -266,14 +266,14 @@ Cluster* VariationRealigner::checkCluster(vector<Mate> mates, int rlen) {
     sort(mates.begin(), mates.end(), COMP_mate);
     vector<Cluster*> clusters;
     Mate firstMate = mates[0];
-    clusters.push_back(new Cluster(0, firstMate.mateStart_ms, firstMate.mateEnd_me, firstMate.start_s, firstMate.end_e));
+    clusters.emplace_back(new Cluster(0, firstMate.mateStart_ms, firstMate.mateEnd_me, firstMate.start_s, firstMate.end_e));
 
     int cur = 0;
     for (Mate mate_m : mates) {
         Cluster *currentCluster = clusters[cur];
         if (mate_m.mateStart_ms - currentCluster->mateEnd_me > CONF_MINSVCDIST * rlen) {
             cur++;
-            clusters.push_back(new Cluster(0, mate_m.mateStart_ms, mate_m.mateEnd_me, mate_m.start_s, mate_m.end_e));
+            clusters.emplace_back(new Cluster(0, mate_m.mateStart_ms, mate_m.mateEnd_me, mate_m.start_s, mate_m.end_e));
             currentCluster = clusters[cur];
         }
 
@@ -1556,7 +1556,7 @@ void VariationRealigner::realignlgins30() {
                 || p > region.end + CONF_EXTENSION) {
             continue;
         }
-        tmp5.push_back(new SortPositionSclip(ent5.first, ent5.second, ent5.second->varsCount));
+        tmp5.emplace_back(new SortPositionSclip(ent5.first, ent5.second, ent5.second->varsCount));
     }
     sort(tmp5.begin(), tmp5.end(), COMP3);
 
@@ -1567,12 +1567,13 @@ void VariationRealigner::realignlgins30() {
                 || p > region.end + CONF_EXTENSION) {
             continue;
         }
-        tmp3.push_back(new SortPositionSclip(ent3.first, ent3.second, ent3.second->varsCount));
+        tmp3.emplace_back(new SortPositionSclip(ent3.first, ent3.second, ent3.second->varsCount));
     }
     sort(tmp3.begin(), tmp3.end(), COMP3);
     int lastPosition = 0;
+	int continue_times = 0;
 	//printf("haoz--------------m5 size: %d, m3 size: %d------------\n", tmp5.size(), tmp3.size());
-	for (SortPositionSclip *t5 : tmp5) {
+	for (SortPositionSclip* &t5 : tmp5) {
 		//printf("-----------------split line start----------------\n");
 		try {
 			int p5 = t5->position;
@@ -1583,7 +1584,11 @@ void VariationRealigner::realignlgins30() {
 				//printf("sc5v used!\n");
 				continue;
 			}
-			for (SortPositionSclip* t3 : tmp3) {
+			string seq5 = findconseq(sc5v, 5);
+			if(seq5.length() <= 10){
+				continue;
+			}
+			for (SortPositionSclip* &t3 : tmp3) {
 				try {
 					int p3 = t3->position;
 					lastPosition = p3;
@@ -1596,6 +1601,7 @@ void VariationRealigner::realignlgins30() {
 					}
 					if (sc3v->used) {
 						//printf("sc3v used and break this for loop! : %d\n", p3);
+						continue_times++;
 						continue;
 					}
 					if (p5 - p3 > maxReadLength * 2.5) {
@@ -1607,11 +1613,12 @@ void VariationRealigner::realignlgins30() {
                         continue;
                     }
 					debug_valide_count++;
-                     string seq5 = findconseq(sc5v, 5);
-                     string seq3 = findconseq(sc3v, 3);
-                    //next until at least one of consensus sequences has length > 10
+					//string seq5 = findconseq(sc5v, 5);
+					string seq3 = findconseq(sc3v, 3);
+					//next until at least one of consensus sequences has length > 10
 					 //printf("seq5 - seq3: %s - %s\n", seq5 == " " ? "" : seq5.c_str(), seq3.c_str());
-					if (seq5.length() <= 10 || seq3.length() <= 10) {
+					//if (seq5.length() <= 10 || seq3.length() <= 10) {
+					if (seq3.length() <= 10) {
 						//printf("seq len and break this for loop!\n");
                         continue;
                     } 
@@ -1626,7 +1633,7 @@ void VariationRealigner::realignlgins30() {
 						//printf("cnt5/3 and break this for loop!\n");
                         continue;
                     }
-                    Match35* match35 = find35match(seq5, seq3);
+					Match35* match35 = find35match(seq5, seq3);
 					int bp5 = match35->matched5end;
 					int bp3 = match35->matched3End;
                     //length of match
@@ -1803,6 +1810,7 @@ void VariationRealigner::realignlgins30() {
 		delete t5;
 		//exit(0);
     }
+	cout << "tmp5 size: " << tmp5.size() << "tmp3 size: " << tmp3.size() << "continue time: " << continue_times << endl;
 	//------delete vector tmp5----------//
 	vector<SortPositionSclip*>(tmp5).swap(tmp5); 
 	//------delete vector tmp3---------//
@@ -2182,7 +2190,7 @@ vector<SortPositionDescription*> VariationRealigner::fillAndSortTmp(robin_hood::
             // ecnt = mtch.group(1).length();
             // }
             //, /* ecnt */
-            tmp.push_back(new SortPositionDescription(position, descriptionstring, cnt));
+            tmp.emplace_back(new SortPositionDescription(position, descriptionstring, cnt));
         }
     }
     //????????????????
@@ -2708,11 +2716,11 @@ MismatchResult* VariationRealigner::findMM5(robin_hood::unordered_map<int, char>
     vector<int> sc5p;
     while (isHasAndNotEquals(charAt(seq, -1 - n), ref, position - n) && mcnt < longmm) {
         str.insert(0, 1, charAt(seq, -1-n));
-        mismatches.push_back(new Mismatch(str, position - n, 5));
+        mismatches.emplace_back(new Mismatch(str, position - n, 5));
         n++;
         mcnt++;
     }
-    sc5p.push_back(position + 1);
+    sc5p.emplace_back(position + 1);
     // Adjust clipping position if only one mismatch
     int misp = 0;
     char misnt = '\0';
@@ -2730,7 +2738,7 @@ MismatchResult* VariationRealigner::findMM5(robin_hood::unordered_map<int, char>
                 n2++;
             }
             if (n2 > 2) {
-                sc5p.push_back(position - n - n2);
+                sc5p.emplace_back(position - n - n2);
                 misp = position - n;
                 misnt = charAt(seq, -1 - n);
                 if (softClips5End->count(position - n - n2)) {
@@ -2738,7 +2746,7 @@ MismatchResult* VariationRealigner::findMM5(robin_hood::unordered_map<int, char>
                 }
                 mn += n2;
             } else {
-                sc5p.push_back(position - n);
+                sc5p.emplace_back(position - n);
                 if (softClips5End->count(position - n)) {
                     softClips5End->at(position - n)->used = true;
                 }
@@ -2771,11 +2779,11 @@ MismatchResult* VariationRealigner::findMM3(robin_hood::unordered_map<int, char>
     while (n < seq.length() && ref.count(p + n) && (ref[p + n] == seq[n])) {
         n++;
     }
-    sc3p.push_back(p + n);
+    sc3p.emplace_back(p + n);
     int Tbp = p + n;
     while (mcnt <= longmm && n < seq.length() && (ref[p + n]!=seq[n])) {
         str +=seq[n];
-        mismatches.push_back(new Mismatch(str, Tbp, 3));
+        mismatches.emplace_back(new Mismatch(str, Tbp, 3));
         n++;
         mcnt++;
     }
@@ -2795,7 +2803,7 @@ MismatchResult* VariationRealigner::findMM3(robin_hood::unordered_map<int, char>
                 n2++;
             }
             if (n2 > 2 && n + n2 + 1 < seq.length()) {
-                sc3p.push_back(p + n + n2);
+                sc3p.emplace_back(p + n + n2);
                 misp = p + n;
                 misnt = seq[n];
                 if (softClips3End->count(p + n + n2)) {
@@ -2803,7 +2811,7 @@ MismatchResult* VariationRealigner::findMM3(robin_hood::unordered_map<int, char>
                 }
                 mn += n2;
             } else {
-                sc3p.push_back(p + n);
+                sc3p.emplace_back(p + n);
                 if (softClips3End->count(p + n)) {
                     softClips3End->at(p + n)->used = true;
                 }

@@ -439,7 +439,8 @@ Scope<VariationData> CigarParser::process(Scope<InitialData> scope){
 	}
 	double end_time = get_time();
 	//print_result();
-	printf("totally %d record processed over! and time is %f: \n", count, end_time-start_time);
+	//printf("totally %d record processed over! and time is %f: \n", count, end_time-start_time);
+	cerr << "record num: " << count  << "map size: " << nonInsertionVariants->size() << endl;
 	//-----------------------------------------------------//
 	//cout << "non/Insertionvariants: " << nonInsertionVariants.size() << " - " << insertionVariants.size() << " - " << refCoverage.size() << " - " <<positionToDeletionCount.size() << " - " << positionToInsertionCount.size()<< endl;
 	//for(auto &v: mnp){
@@ -1025,11 +1026,11 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 			}
 
 			//shift refence position by 1 if CIGAR segment is not insertion
-			if(c_operator != 1) {
+			if(c_operator != BAM_CINS) {
 				start++;
 			}
             //Shift read position by 1 if CIGAR segment is not deletion
-            if (c_operator != 2) {
+            if (c_operator != BAM_CDEL) {
                 readPositionIncludingSoftClipped++;
                 readPositionExcludingSoftClipped++;
             }
@@ -1881,7 +1882,7 @@ void CigarParser::processNotMatched() {
 
 	if(spliceCount.find(key) == spliceCount.end()){
 		spliceCount[key] = vector<int>();
-		spliceCount[key].push_back(0);
+		spliceCount[key].emplace_back(0);
 	}
     spliceCount[key][0]++;
     //if (cnt == null) {

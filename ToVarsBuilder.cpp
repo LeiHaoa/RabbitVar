@@ -161,7 +161,7 @@ Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &sco
             unordered_set<string> kvs;
             for(auto& key_v : varsAtCurPosition->variation_map){
                 //if(kvs.count(key_v.first)==0)keys.push_back(key_v.first);
-				keys.push_back(key_v.first);
+				keys.emplace_back(key_v.first);
             }
 			sort(keys.begin(),keys.end(),CMP_KEY);
 
@@ -216,7 +216,7 @@ Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &sco
 			//printf("%d - %s\n", pos, desc.c_str());
 		}
 	}
-	cerr << "-------------------------------------------------------" << endl;
+	//cerr << "-------------------------------------------------------" << endl;
 
     return Scope<AlignedVarsData>(scope.bam, scope.region, scope.regionRef, scope.maxReadLength,
 								  scope.splice, scope.bamReaders, avdata);
@@ -346,7 +346,7 @@ double ToVarsBuilder::collectVarsAtPosition(robin_hood::unordered_map<int, Vars*
             getOrPutVars(alignedVariants, position)->referenceVariant = tvar;
         } else {
             //append variant to VAR and put it to VARN with key tvar->n (variant description string)
-            getOrPutVars(alignedVariants, position)->variants.push_back(tvar);
+            getOrPutVars(alignedVariants, position)->variants.emplace_back(tvar);
             getOrPutVars(alignedVariants, position)->varDescriptionStringToVariants[tvar->descriptionString]= tvar;
             if (tvar->frequency > maxfreq) {
                 maxfreq = tvar->frequency;
@@ -374,7 +374,7 @@ int ToVarsBuilder::createInsertion(double duprate, int position, int totalPosCov
 		robin_hood::unordered_map<string, Variation*> insertionVariations = insertionVariants->at(position)->variation_map;      
         vector<string> insertionDescriptionStrings;
         for(auto& key_v:insertionVariations){
-            insertionDescriptionStrings.push_back(key_v.first);
+            insertionDescriptionStrings.emplace_back(key_v.first);
 		}
         sort(insertionDescriptionStrings.begin(), insertionDescriptionStrings.end(), CMP_KEY);
         //Collections.sort(insertionDescriptionStrings);
@@ -449,7 +449,7 @@ int ToVarsBuilder::createInsertion(double duprate, int position, int totalPosCov
             tvref->hicov = hicov;
             tvref->duprate = duprate;
 
-            var.push_back(tvref);
+            var.emplace_back(tvref);
             //if (instance().conf.debug) {
             //    tvref->debugVariantsContentInsertion(debugLines, descriptionString);
             //}
@@ -535,7 +535,7 @@ void ToVarsBuilder::createVariant(double duprate, robin_hood::unordered_map<int,
         tvref->duprate = duprate;
 
         //append variant record
-        var.push_back(tvref);
+        var.emplace_back(tvref);
        // if (instance().conf.debug) {
        //     tvref->debugvariantscontentsimple(debuglines, descriptionstring);
        // }

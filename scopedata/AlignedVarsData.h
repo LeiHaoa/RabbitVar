@@ -2,6 +2,7 @@
 #define  _ALIGNEDVARSDATA_H
 //#include<unordered_map>
 #include "../robin_hood.h"
+#include "../Vars.h"
 
 /**
  * The data after ToVarsBuilder step in pipeline. Used for creating output variants in all modes of VarDict.

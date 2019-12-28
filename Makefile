@@ -1,4 +1,3 @@
-TARGET=sam
 CC=icpc -std=c++11
 
 INCLUDE=/home/haoz/tools/htslib/include
@@ -7,12 +6,14 @@ LIBS=/home/haoz/tools/htslib/lib
 #LIBS=/home/haoz/tools/htslib/lib/libhts.a
 
 #FLAGS= -std=c++11 -lhts -I/home/haoz/tools/htslib/include -L/home/haoz/tools/htslib/lib -O3
-FLAGS= -std=c++11 -lhts -O3 -g -qopenmp
+FLAGS= -std=c++11 -lhts -O3 -g -qopenmp -ffast-math
 
 #$(CC) parseCigar.o $(FLAGS) -I$(INCLUDE) -L$(LIBS)   -o parseCigar 
 
-launcher:Launcher.o RegionBuilder.o parseCigar.o recordPreprocessor.o VariationRealigner.o ToVarsBuilder.o
-	$(CC) -o launcher Launcher.o RegionBuilder.o parseCigar.o recordPreprocessor.o VariationRealigner.o ToVarsBuilder.o $(FLAGS) -I$(INCLUDE) -L$(LIBS) 
+OBJS= Launcher.o RegionBuilder.o parseCigar.o recordPreprocessor.o VariationRealigner.o ToVarsBuilder.o simpleMode.o
+
+launcher: $(OBJS)
+	$(CC) -o launcher $(OBJS) $(FLAGS) -I$(INCLUDE) -L$(LIBS) 
 
 recordPreprocessor.o:recordPreprocessor.cpp
 	$(CC) -c recordPreprocessor.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
@@ -35,6 +36,8 @@ ToVarsBuilder.o: ToVarsBuilder.cpp
 Launcher.o: Launcher.cpp
 	$(CC) -c Launcher.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
 
+simpleMode.o: ./modes/simpleMode.cpp
+	$(CC) -c ./modes/simpleMode.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
 
 
 .PHONY:clean

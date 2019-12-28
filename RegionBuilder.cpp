@@ -77,9 +77,9 @@ vector<vector<Region> > RegionBuilder::buildRegions(vector<string>& segRaws, boo
 				//printf("isZeroBase:" + isZeroBased);
 				thickStart++;
 			}
-			thickRegions.push_back(Region(chr, thickStart, thickEnd, gene));
+			thickRegions.emplace_back(Region(chr, thickStart, thickEnd, gene));
 		}
-		segs.push_back(thickRegions);
+		segs.emplace_back(thickRegions);
 	}
 	return segs;
 }
@@ -110,14 +110,14 @@ vector<vector<Region> > RegionBuilder::buildAmpRegions(vector<string>& segRaws, 
 			insertStart++;
 		}
 		Region tmp_region(chr, start, end, gene, insertStart, insertEnd);
-		tsegs[chr].push_back(tmp_region);
+		tsegs[chr].emplace_back(tmp_region);
 		//if (tsegs.count(chr) == 0) {
 		//	//chrRegions = new ArrayList<>();
 		//	vector<Region> chrRegions;// = tsegs.get(chr);
-		//	chrRegions.push_back(tmp_region);
+		//	chrRegions.emplace_back(tmp_region);
 		//	tsegs[chr] = chrRegions;
 		//}else{
-		//	tsegs[chr].push_back(tmp_region);
+		//	tsegs[chr].emplace_back(tmp_region);
 		//}
 	}
 	vector<Region> *regions; 
@@ -130,15 +130,15 @@ vector<vector<Region> > RegionBuilder::buildAmpRegions(vector<string>& segRaws, 
 		string previousChr = "";
 		for (Region region : chrRegions) {
 			if (previousEnd != -1 && (region.chr != previousChr || region.insertStart > previousEnd)) {
-				segs.push_back(*regions);
+				segs.emplace_back(*regions);
 				regions = new vector<Region>();//= new LinkedList<>();
 			}
-			regions->push_back(region);
+			regions->emplace_back(region);
 			previousChr = region.chr;
 			previousEnd = region.insertEnd;
 		}
 	}
-	segs.push_back(*regions);
+	segs.emplace_back(*regions);
 	for(int i = 0; i < segs.size(); i++){
 		int n = segs[i].size();
 		for(int j = 0; j < n; j++){
@@ -171,8 +171,8 @@ void RegionBuilder::buildRegionFromConfiguration(vector<vector<Region> >& segmen
 		start = end;
 	Region tmp(chr, start, end, gene);
 	vector<Region> one_region;
-	one_region.push_back(tmp);
-	segments.push_back(one_region);
+	one_region.emplace_back(tmp);
+	segments.emplace_back(one_region);
 }
 
 /**

@@ -175,7 +175,7 @@ std::tuple<string, bool, vector<string> > VarDictLauncher::readBedFile(Configura
 				}
 			}
 		}
-		segraw.push_back(line);
+		segraw.emplace_back(line);
 	}
 	std::tuple<string, bool, vector<string> > tpl(ampliconParameters, zeroBased, segraw);
 	return tpl;
@@ -563,6 +563,7 @@ int main_single(int argc, char* argv[]){
 	//}
 
     SimpleMode *mode = new SimpleMode();
+	cout << "seg size: " << launcher.segments.size() << " - " << launcher.segments[0].size() << endl;
 	mode->process(conf, launcher.segments);
 
 	delete conf;
