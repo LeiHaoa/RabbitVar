@@ -1,7 +1,6 @@
 #ifndef _VARIATIONREALIGNER_H
 #define _VARIATIONREALIGNER_H
 
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>

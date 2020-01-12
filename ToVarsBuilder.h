@@ -60,7 +60,7 @@ class ToVarsBuilder {
     public:
 		ToVarsBuilder(Configuration *conf);
 		void initFromScope(Scope<RealignedVariationData> &scope);
-		Scope<AlignedVarsData> process(Scope<RealignedVariationData> &scope);
+		Scope<AlignedVarsData>* process(Scope<RealignedVariationData> &scope);
 		bool isTheSameVariationOnRef(int position, robin_hood::unordered_map<string, Variation*> &varsAtCurPosition);
 		MSI* proceedVrefIsDeletion(int position, int dellen);
 		MSI* proceedVrefIsInsertion(int position, string vn);

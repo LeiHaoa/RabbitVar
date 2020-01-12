@@ -140,10 +140,14 @@ inline Variation* getVariation(dataPool* data_pool, robin_hood::unordered_map<in
 	}else{
 		vmap = new VariationMap();
 		//vmap = data_pool->get_variation();
-		hash[start] = vmap;
+		//hash[start] = vmap;
+		hash.insert(robin_hood::unordered_map<int, VariationMap*>::value_type(start, vmap));
+		//hash.emplace(start, vmap);
 		//variation = new Variation();
 		variation = data_pool->get_variation();
-		vmap->variation_map[descriptionString] = variation;
+		//vmap->variation_map[descriptionString] = variation;
+		//vmap->variation_map.emplace(descriptionString, variation);
+		vmap->variation_map.insert(robin_hood::unordered_map<string, Variation*>::value_type(descriptionString, variation));
 		return variation;
 	}
 
@@ -155,8 +159,9 @@ inline Variation* getVariation(dataPool* data_pool, robin_hood::unordered_map<in
 		//variation = new Variation();
 		variation = data_pool->get_variation();
 		//map[descriptionString] = variation;
-		//vmap->variation_map.insert(unordered_map<string, Variation*>::value_type(descriptionString, variation));
-		vmap->variation_map[descriptionString] = variation;
+		vmap->variation_map.insert(robin_hood::unordered_map<string, Variation*>::value_type(descriptionString, variation));
+		//vmap->variation_map[descriptionString] = variation;
+		//vmap->variation_map.emplace(descriptionString, variation);
 		return variation;
 	}
 	//VariationMap<string, Variation> map = hash[start];

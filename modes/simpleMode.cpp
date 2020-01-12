@@ -11,10 +11,10 @@
 //#include <stdlib.h>
 //#include 
 void SimpleMode::InitItemRepository(const int size){
-	mRepo = new AlignedVarsData*[size];
+	mRepo = new Scope<AlignedVarsData>*[size];
 	mRepo_pos = 0;
 }
-AlignedVarsData* one_region_run(Region region, Configuration* conf, dataPool* data_pool, vector<bamReader> bamReaders){
+Scope<AlignedVarsData>* one_region_run(Region region, Configuration* conf, dataPool* data_pool, vector<bamReader> bamReaders){
 //AlignedVarsData* one_region_run(Region region, Configuration* conf, dataPool* data_pool){
 	
 	cout << "reader info2: " << static_cast<void*>(bamReaders[0].in) << " " << static_cast<void*>(bamReaders[0].header) << " "  <<static_cast<void*>(bamReaders[0].idx) << endl;
@@ -39,7 +39,7 @@ AlignedVarsData* one_region_run(Region region, Configuration* conf, dataPool* da
 
 	double start3 = get_time();
 	ToVarsBuilder vars_builder(conf);
-	Scope<AlignedVarsData> avd = vars_builder.process(rvd);
+	Scope<AlignedVarsData> *avd = vars_builder.process(rvd);
 	//cout << avd.data->k
 	double end3 = get_time();
 	
@@ -54,8 +54,134 @@ AlignedVarsData* one_region_run(Region region, Configuration* conf, dataPool* da
 	delete preprocessor;
 	delete init_data;
 
-	return avd.data;
+	return avd;
 
+}
+
+void print_output_variant_simple(const Variant* variant, Region &region, std::string sv, int position, std::string sample){
+	std::cout << "in print function!" << std::endl;
+	vector<std::string> str;
+	str.reserve(36);
+
+	str.emplace_back(sample);
+	str.emplace_back(region.gene);
+	str.emplace_back(region.chr);
+	if(variant == NULL){
+		str.emplace_back(std::to_string(position)); // start position
+		str.emplace_back(std::to_string(position)); // end position
+	}
+	else{
+		str.emplace_back(std::to_string(variant->startPosition));
+		str.emplace_back(std::to_string(variant->endPosition));
+		str.emplace_back(variant->refallele);
+		str.emplace_back(variant->varallele);
+
+		str.emplace_back(std::to_string(variant->totalPosCoverage));
+		str.emplace_back(std::to_string(variant->positionCoverage));
+		str.emplace_back(std::to_string(variant->refForwardCoverage));
+		str.emplace_back(std::to_string(variant->refReverseCoverage));
+		str.emplace_back(std::to_string(variant->varsCountOnForward));
+		str.emplace_back(std::to_string(variant->varsCountOnReverse));
+		str.emplace_back(variant->genotype == "" ? "0" : variant->genotype);
+		str.emplace_back(std::to_string(variant->frequency));
+		str.emplace_back(variant->strandBiasFlag);
+		str.emplace_back(std::to_string(variant->meanPosition));
+		str.emplace_back(variant->isAtLeastAt2Positions ? std::to_string(1) :std::to_string(0));//ptsd
+		str.emplace_back(std::to_string(variant->meanQuality)); //qual
+		str.emplace_back(variant->hasAtLeast2DiffQualities ? std::to_string(1) : std::to_string(0)); //qstd
+		str.emplace_back(std::to_string(variant->meanMappingQuality)); //mapq
+		str.emplace_back(std::to_string(variant->highQualityToLowQualityRatio)); //qratio 
+		str.emplace_back(std::to_string(variant->highQualityReadsFrequency)); //higreq
+		str.emplace_back(std::to_string(variant->extraFrequency)); //extrafreq
+		str.emplace_back(std::to_string(variant->shift3)); //shift3
+		str.emplace_back(std::to_string(variant->msi)); //msi
+		str.emplace_back(std::to_string(variant->msint)); //msint
+		str.emplace_back(variant->numberOfMismatches > 0 ? std::to_string(variant->numberOfMismatches) : std::to_string(0)); // nm
+		str.emplace_back(std::to_string(variant->hicnt)); //hicnt
+		str.emplace_back(std::to_string(variant->hicov)); //hicov
+		str.emplace_back(variant->leftseq.empty() ? "0": variant->leftseq); //leftSequence
+		str.emplace_back(variant->rightseq.empty() ? "0": variant->rightseq); //rightSequence
+		str.emplace_back(region.chr + ":" + std::to_string(region.start) + "-" + std::to_string(region.end)); //region
+		str.emplace_back(variant->vartype); //varType
+		str.emplace_back(std::to_string(variant->duprate)); //duprate
+		str.emplace_back(sv == "" ? "0": sv); //sv
+
+		str.emplace_back(std::to_string(variant->crispr));
+
+	}
+
+	//----join print----//
+	for(auto& s: str){
+		std::cout << s << "\t";
+	}
+	std::cout << std::endl;
+}
+
+void output(Scope<AlignedVarsData>* mapScope, Configuration& conf){
+	int lastPosition = 0;
+	std::cout << "alignedvariants size: " << mapScope->data->alignedVariants.size() << std::endl;
+	for (auto& ent : mapScope->data->alignedVariants) {
+		try {
+			int position = ent.first;
+			lastPosition = position;
+			Vars* variantsOnPosition = ent.second;
+
+			//Configuration conf = instance().conf;
+
+			vector<Variant*> vrefs;
+			if (variantsOnPosition->sv.empty()) {
+				if (position < mapScope->region.start || position > mapScope->region.end) {
+					continue;
+				}
+			}
+
+			//if (variantsOnPosition != null && variantsOnPosition->variants.isEmpty()) {
+			if (variantsOnPosition->variants.size() == 0) {
+				if (!conf.doPileup){
+					continue;
+				}
+				Variant *vref = variantsOnPosition->referenceVariant;
+				if (vref == NULL) {
+					//SimpleOutputVariant outputVariant = new SimpleOutputVariant(vref, mapScope->region, variantsOnPosition->sv, position);
+					//variantPrinter.print(outputVariant);
+					print_output_variant_simple(vref, mapScope->region, variantsOnPosition->sv, position, conf.sample);
+					continue;
+				}
+				vref->vartype = "";
+				vrefs.emplace_back(vref);
+			} else {
+				vector<Variant*> &vvar = variantsOnPosition->variants;
+				for (Variant* vref : vvar) {
+					if (vref->refallele.find("N") != std::string::npos) {
+						continue;
+					}
+					vref->vartype = vref->varType();
+					if (!vref->isGoodVar(variantsOnPosition->referenceVariant, vref->vartype, mapScope->splice, conf)) {
+						if (!conf.doPileup) {
+							continue;
+						}
+					}
+					vrefs.emplace_back(vref);
+				}
+			}
+			//std::cout << "vrefs size: " << vrefs.size() << std::endl;
+			for (int vi = 0; vi < vrefs.size(); vi++) {
+				Variant* vref = vrefs[vi];
+				if ("Complex" == vref->vartype) {
+					vref->adjComplex();
+				}
+				if (conf.crisprCuttingSite == 0) {
+					vref->crispr = 0;
+				}
+				//SimpleOutputVariant outputVariant = new SimpleOutputVariant(vref, mapScope->region, variantsOnPosition->sv, position);
+				//variantPrinter.print(outputVariant);
+				print_output_variant_simple(vref, mapScope->region, variantsOnPosition->sv, position, conf.sample);
+			}
+		} catch(...) {
+			cerr << "position" << lastPosition << "error!!" << std::endl;
+			exit(0);
+		}
+	}
 }
 
 void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
@@ -88,13 +214,15 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 		//dscope.region = region;
 		cout << "interest region info: " << region.start << "-" << region.end << endl;
 		dataPool *data_pool = new dataPool(region.end - region.start);
-		one_region_run(region, conf, data_pool, bamReaders);
+		Scope<AlignedVarsData> *avd_p = one_region_run(region, conf, data_pool, bamReaders);
+		output(avd_p, *conf);
 
 		for(Variation* variation: data_pool->_data){
 			delete variation;
 		}	
 		vector<Variation*>(data_pool->_data).swap(data_pool->_data);
 		delete data_pool;
+		delete avd_p;
 
 	}
 	//-------------------use bed file: multithreads------------------------//
@@ -117,17 +245,20 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 	    const int reg_num = mRegs.size();
 		InitItemRepository(reg_num);
 
-		int num_threads;
+		int processor_num = conf->threads;
+		omp_set_num_threads(processor_num);
+		cout << "num threads: " << processor_num << endl;
         #pragma omp parallel
 		{
             #pragma omp single
-			num_threads = omp_get_num_threads();
+			processor_num = omp_get_num_threads();
 		}
-		double * time = new double[num_threads];
-		for(int i = 0; i < num_threads; i++)	time[i] = 0.0;
+		double * time = new double[processor_num];
+		for(int i = 0; i < processor_num; i++)	time[i] = 0.0;
 		vector<dataPool*> data_pools;
-		ThreadResource *trs = new ThreadResource[num_threads];
-		for(int t = 0; t < num_threads; t++){
+		ThreadResource *trs = new ThreadResource[processor_num];
+#pragma omp parallel for schedule(static) //num_threads(processor_num)
+		for(int t = 0; t < processor_num; t++){
 			//----add by haoz: init bamReader------//
 			//vector<bamReader> bamReaders;
 			if(conf->bam.getBam1() != ""){
@@ -158,7 +289,7 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 			reg = mRegs[i];
 			data_pool = trs[thread_id].data_pool;
 			//cout <<"thread: " << omp_get_thread_num() << "region id: " << i <<" processing: " << reg.chr << " - " << reg.start << " - " << reg.end  << endl;
-			AlignedVarsData* avd_p = one_region_run(reg, conf, data_pool, trs[thread_id].bamReaders);
+			Scope<AlignedVarsData> *avd_p = one_region_run(reg, conf, data_pool, trs[thread_id].bamReaders);
 			//add alignedVars to data repo	
 			
 			double end2 = get_time();
@@ -172,9 +303,11 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 				mRepo_pos++;
 			}
 		}
-
+		#pragma omp single
 		for(int i = 0; i < mRepo_pos; i++){
-			std::cout << "vars size: " << i << " -> " << mRepo[i]->alignedVariants.size() << std::endl;
+			std::cout << "vars size: " << i << " -> " << mRepo[i]->data->alignedVariants.size() << std::endl;
+			output(mRepo[i], *conf);
+			std::cout << "----------------------------------------------" << std::endl;
 		}
 		
 
@@ -185,7 +318,7 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 		delete mRepo;
 
 		//------free threadResource------//
-		for(int t = 0; t < num_threads; t++){
+		for(int t = 0; t < processor_num; t++){
 			//-------free mem pool------//
 			dataPool* data_pool = trs[t].data_pool;
 			for(Variation* variation: data_pool->_data){
@@ -202,7 +335,8 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 		}
 		//delete[] trs;
 
-		for(int i = 0; i < num_threads; i++)
+		for(int i = 0; i < processor_num; i++)
 			cerr << "thread: " << i << " time: " << time[i] << endl;
 	}
 }
+

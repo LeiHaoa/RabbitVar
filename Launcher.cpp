@@ -67,8 +67,8 @@ void VarDictLauncher::initResources(Configuration *conf) {
 		printf("3!\n");
         string ampliconBasedCalling = "";
 
-        if (conf->regionOfInterest != "") {
-            builder.buildRegionFromConfiguration(segments);
+		if (conf->regionOfInterest != "") {
+			builder.buildRegionFromConfiguration(segments);
         } else {
 			std::tuple<string, bool, vector<string> > tpl = readBedFile(conf);
             ampliconBasedCalling = std::get<0>(tpl);
@@ -557,6 +557,7 @@ int main_single(int argc, char* argv[]){
 	VarDictLauncher launcher;
 	launcher.start(conf); //launcher 里面有segments变量存的是region信息
 
+	cout << "conf info: " << "1. thread: " << conf->threads << endl<< " 2. fasta: " << conf->fasta << " 3. bed: " << conf->bed << endl; 
 	//if(conf->regionOfInterest || conf->ampliconBasedCalling != null){
 	//	mode = conf->bam.hasBam2() ? new SimpleMode() : new SomaticMode();
 	//}else{

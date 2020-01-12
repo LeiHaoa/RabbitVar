@@ -92,7 +92,7 @@ void ToVarsBuilder::initFromScope(Scope<RealignedVariationData> &scope) {
  * @param scope realigned variation data to process (contains filled insertionVariations and non-insertion variations maps)
  * @return object contains max read lengths and map of positions-Vars
  */
-Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &scope) {
+Scope<AlignedVarsData>* ToVarsBuilder::process(Scope<RealignedVariationData> &scope) {
     initFromScope(scope);
     //Configuration config = instance().conf;
 
@@ -207,18 +207,18 @@ Scope<AlignedVarsData> ToVarsBuilder::process(Scope<RealignedVariationData> &sco
     AlignedVarsData *avdata= new AlignedVarsData(scope.maxReadLength, alignedVariants);
 	//print_result();
 	//-----------print alignedVariants--------------//
-	for(auto& var : alignedVariants){
-		int pos = var.first;
-		for(auto &v : var.second->varDescriptionStringToVariants){
-			string desc = v.first;
-			//printf("%d - %s - %s\n", pos, desc.c_str(), v.second->tostring().c_str());
-			cerr << pos << " - " << desc << " - " << v.second->tostring() << endl;
-			//printf("%d - %s\n", pos, desc.c_str());
-		}
-	}
+	//for(auto& var : alignedVariants){
+	//	int pos = var.first;
+	//	for(auto &v : var.second->varDescriptionStringToVariants){
+	//		string desc = v.first;
+	//		//printf("%d - %s - %s\n", pos, desc.c_str(), v.second->tostring().c_str());
+	//		cerr << pos << " - " << desc << " - " << v.second->tostring() << endl;
+	//		//printf("%d - %s\n", pos, desc.c_str());
+	//	}
+	//}
 	//cerr << "-------------------------------------------------------" << endl;
 
-    return Scope<AlignedVarsData>(scope.bam, scope.region, scope.regionRef, scope.maxReadLength,
+    return new Scope<AlignedVarsData>(scope.bam, scope.region, scope.regionRef, scope.maxReadLength,
 								  scope.splice, scope.bamReaders, avdata);
 }
 
@@ -1108,9 +1108,9 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
             string genotype = genotype1 + "/" + genotype2;
             //remove '&' and '#' symbols from genotype string
             //replace '^' symbol with 'i' in genotype string
-            genotype = regex_replace(genotype, regex("&"), "");
-            genotype = regex_replace(genotype, regex("#"), "");
-            genotype = regex_replace(genotype, regex("^"), "i");
+            genotype = erase_all_char(genotype, '&');
+            genotype = erase_all_char(genotype, '#');
+            genotype = regex_replace(genotype, regex("\\^"), "i");
             //convert extrafreq, freq, hifreq, msi fields to strings
             vref->extraFrequency = roundHalfEven("0.0000", vref->extraFrequency);
             vref->frequency = roundHalfEven("0.0000", vref->frequency);

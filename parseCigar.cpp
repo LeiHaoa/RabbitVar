@@ -653,11 +653,13 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 	int mateAlignmentStart = getMateAlignmentStart(record);
 	//cout << "mateAlignmentstart: " << mateAlignmentStart << endl;
 	//processCigar:
+	bool need_break = true; 
 	for(int ci=0; ci < record->core.n_cigar;++ci){
-		if(skipOverlappingReads(record, position, direction, mateAlignmentStart)){
+		if(need_break && skipOverlappingReads(record, position, direction, mateAlignmentStart)){
 			//printf("skip overlapping reads \n");
 			break;
 		}
+		need_break = false;
 		uint32_t icigar = cigar[ci];
 		//funcinline:getCigarOperator(cigar, ci);
 		int c_operator = bam_cigar_op(icigar);
@@ -692,7 +694,7 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 			//cout << "process deletion" << endl;
 			offset = 0;
 			ci = process_deletion(seq, mapping_quality, ref, query_quality, number_of_mismatches,
-								   direction, read_length_include_matching_and_insertions, ci);
+								  direction, read_length_include_matching_and_insertions, ci);
 			continue;
 		default:
 			break;

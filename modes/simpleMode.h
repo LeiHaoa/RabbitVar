@@ -3,6 +3,7 @@
 
 #include "../Configuration.h"
 #include "../Region.h"
+#include "../scopedata/Scope.h"
 #include "../scopedata/AlignedVarsData.h"
 #include "../data/data_pool.h"
 #include "cyclequeue.h"
@@ -36,7 +37,7 @@ public:
 	void InitItemRepository(const int size);
 	
 private:
-	AlignedVarsData** mRepo;
+	Scope<AlignedVarsData>** mRepo;
 	vector<Region> mRegs;
 	int mRepo_pos;
 };
