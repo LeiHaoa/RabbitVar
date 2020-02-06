@@ -22,20 +22,20 @@ public:
 	//vector<bamReader> bamReaders;
 
 	~InitialData() {
-		for(auto &niv: *nonInsertionVariants){
+		for(auto niv: *nonInsertionVariants){
 			delete niv.second;
 		}
 		delete nonInsertionVariants;
-		for(auto &niv: *insertionVariants){
+		for(auto niv: *insertionVariants){
 			delete niv.second;
 		}
 		delete insertionVariants;
 		delete refCoverage;
-		for(auto &sc : *softClips5End){
+		for(auto sc : *softClips5End){
 			delete sc.second;
 		}
 		delete softClips5End;
-		for(auto &sc : *softClips3End){
+		for(auto sc : *softClips3End){
 			delete sc.second;
 		}
 		delete softClips3End;

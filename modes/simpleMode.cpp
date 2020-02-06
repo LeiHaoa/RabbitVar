@@ -47,19 +47,17 @@ Scope<AlignedVarsData>* one_region_run(Region region, Configuration* conf, dataP
 	//	 << " var realignger Time: " << end2 - start2
 	//	 << " to varBuilder Time: " << end3 - start3
 	//	 << endl;
-	cerr << "region:" << region.chr << ":" << region.start << "-" << region.end << endl; 
-	cerr << "ptime: " << end1 - start1 << "#" << end2 - start2 << "#" << end3 - start3 << endl;
+	//cerr << "region:" << region.chr << ":" << region.start << "-" << region.end << endl; 
+	//cerr << "ptime: " << end1 - start1 << "#" << end2 - start2 << "#" << end3 - start3 << endl;
 
 	//delete avd.data;
 	delete preprocessor;
 	delete init_data;
 
 	return avd;
-
 }
 
 void print_output_variant_simple(const Variant* variant, Region &region, std::string sv, int position, std::string sample){
-	std::cout << "in print function!" << std::endl;
 	vector<std::string> str;
 	str.reserve(36);
 
@@ -217,11 +215,18 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 		Scope<AlignedVarsData> *avd_p = one_region_run(region, conf, data_pool, bamReaders);
 		output(avd_p, *conf);
 
+		for(bamReader br: bamReaders){
+			//free idx;
+			hts_idx_destroy(br.idx);
+			bam_hdr_destroy(br.header);
+			if(br.in) sam_close(br.in);
+		}
 		for(Variation* variation: data_pool->_data){
 			delete variation;
 		}	
 		vector<Variation*>(data_pool->_data).swap(data_pool->_data);
 		delete data_pool;
+		delete avd_p->data;
 		delete avd_p;
 
 	}
@@ -280,7 +285,7 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 			assert(trs[t].bamReaders.size() > 0);
 			//cout << "reader info: " << static_cast<void*>(bamReaders[0].in) << " " << static_cast<void*>(bamReaders[0].header) << " "  <<static_cast<void*>(bamReaders[0].idx) << endl;
 			//----init bamReader end------//
-			trs[t].data_pool = new dataPool(100000);
+			trs[t].data_pool = new dataPool(10000);
 		}
         #pragma omp parallel for default(shared) private(reg, data_pool) schedule(dynamic) 
 		for(int i = 0; i < reg_num; i++){
@@ -313,6 +318,7 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 
 		//-------free mRepo-------//
 		for(int i = 0; i < mRepo_pos; i++){
+			delete mRepo[i]->data;
 			delete mRepo[i];
 		}
 		delete mRepo;

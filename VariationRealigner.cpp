@@ -56,9 +56,23 @@ bool CMP_tmp(SortPositionDescription *o1, SortPositionDescription *o2){
     string s2 = o2->descriptionstring;
     return s1.compare(s2)>0;
 }
+
 VariationRealigner::VariationRealigner(Configuration* conf, dataPool* data_pool){
 	this->conf = conf;
 	this->data_pool = data_pool;
+}
+
+VariationRealigner::~VariationRealigner(){
+	//free softClips5end
+	for(auto& sc5i: *softClips5End){
+		delete sc5i.second;
+	}
+	//delete softClips5End;
+	//free softClips3end
+	for(auto& sc3i: *softClips3End){
+		delete sc3i.second;
+	}
+	//delete softClips3End;
 }
 
 void VariationRealigner::print_result(){
@@ -445,6 +459,7 @@ void VariationRealigner::adjustMNP() {
 
                 }
             }
+			delete tpl;
         } 
         catch(...){// (Exception exception) {
         //    //printExceptionAndContinue(exception, "MNP", string.valueOf(lastPosition), region);
@@ -555,31 +570,34 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, robin_hood::u
             string sanpseq = extra + joinRef(ref, p + dellen + extra.length() - extrains.length(), sanend);
             if (!inv5.empty()) {
                 sanpseq = inv5;
-            }
+           }
             // mismatches, mismatch positions, 5 or 3 ends
             MismatchResult* r3 = findMM3(ref, p, sanpseq);
             MismatchResult* r5 = findMM5(ref, p + dellen + extra.length() - extrains.length() - 1, wupseq);
 
-            vector<Mismatch*> mm3 = r3->getMismatches();
-            vector<int> sc3p = r3->getScp();
-            int nm3 = r3->getNm();
-            int misp3 = r3->getMisp();
-            string misnt3 = r3->getMisnt();
+            vector<Mismatch*> &mm3 = r3->mismatches;
+			const int mm3_size = mm3.size();
+            vector<int> &sc3p = r3->scp;
+            int nm3 = r3->nm;
+            int misp3 = r3->misp;
+            string &misnt3 = r3->misnt;
 
-            vector<Mismatch*> mm5 = r5->getMismatches();
-            vector<int> sc5p = r5->getScp();
-            int nm5 = r5->getNm();
-            int misp5 = r5->getMisp();
-            string misnt5 = r5->getMisnt();
+            vector<Mismatch*> &mm5 = r5->mismatches;
+			const int mm5_size = mm5.size();
+            vector<int> &sc5p = r5->scp;
+            int nm5 = r5->nm;
+            int misp5 = r5->misp;
+            string &misnt5 = r5->misnt;
 
-			delete r3;
-			delete r5;
+			//delete r3;
+			//delete r5;
             //if (conf.y) {
             //    printf("  Mismatches: misp3: %s-%s misp5: %s-%s sclip3: %s sclip5: %s\n",
             //            misp3, misnt3, misp5, misnt5, Utils.tostring(sc3p), Utils.tostring(sc5p));
             //}
 
             vector<Mismatch*> mmm(mm3); //$mmm
+            //vector<Mismatch*>& mmm = mm3; //$mmm
 			//TODO: 上面代码可以优化， r3 r5 没有必要存在， mm3 mm5可以直接用一个vector就可以了。
             mmm.insert(mmm.end(), mm5.begin(), mm5.end());
             for (Mismatch* mismatch : mmm) {
@@ -647,16 +665,16 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, robin_hood::u
                 //}
 				//printf("  Realigndel AdjA: %s %d %d %d %d %d %d %f cov: %d\n",
 				//	mm.c_str(), mp, me, nm3, nm5, p, tv->varsCount, tv->meanQuality, refCoverage[p]);
-				delete mismatch;
+				//delete mismatch;
             }
-			vector<Mismatch*>(mmm).swap(mmm); 
+			//vector<Mismatch*>(mmm).swap(mmm); 
 
-            if (misp3 != 0 && mm3.size() == 1 && nonInsertionVariants->count(misp3)
+            if (misp3 != 0 && mm3_size == 1 && nonInsertionVariants->count(misp3)
 				&& nonInsertionVariants->at(misp3)->variation_map.count(misnt3)
 				&& nonInsertionVariants->at(misp3)->variation_map[misnt3]->varsCount < dcnt) {
                 nonInsertionVariants->at(misp3)->variation_map.erase(misnt3);
             }
-            if (misp5 != 0 && mm5.size() == 1 && nonInsertionVariants->count(misp5)
+            if (misp5 != 0 && mm5_size == 1 && nonInsertionVariants->count(misp5)
 				&& nonInsertionVariants->at(misp5)->variation_map.count(misnt5)
 				&& nonInsertionVariants->at(misp5)->variation_map[misnt5]->varsCount < dcnt) {
                 nonInsertionVariants->at(misp5)->variation_map.erase(misnt5);
@@ -736,8 +754,11 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, robin_hood::u
 					&& vref->varsCount > 2 * h->varsCount * (1 - (pe - p) / (double) maxReadLength)) {
                 adjCnt(vref, h, h);
             }
+			delete r3;
+			delete r5;
         } catch(...){// (Exception exception) {
             //printExceptionAndContinue(exception, "variant", string.valueOf(lastPosition), region);
+			cerr << "realigndel error!!" << endl;
         }
     }
 
@@ -903,22 +924,23 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, robin_hood::u
                 // mismatches, mismatch positions, 5 or 3 ends
                 MismatchResult *findmm5 = findMM5(ref, position + extra.length() + compm.length() + newdel, wupseq);
 
-                vector<Mismatch*> mm3 = findmm3->getMismatches();
-                vector<int> sc3p = findmm3->getScp();
-                int nm3 = findmm3->getNm();
-                int misp3 = findmm3->getMisp();
-                string misnt3 = findmm3->getMisnt();
+                vector<Mismatch*> &mm3 = findmm3->mismatches;
+				const int mm3_size = mm3.size();
+                vector<int> &sc3p = findmm3->scp;
+                int nm3 = findmm3->nm;
+                int misp3 = findmm3->misp;
+                string &misnt3 = findmm3->misnt;
 
-                vector<Mismatch*> mm5 = findmm5->getMismatches();
-                vector<int> sc5p = findmm5->getScp();
-                int nm5 = findmm5->getNm();
-                int misp5 = findmm5->getMisp();
-                string misnt5 = findmm5->getMisnt();
+                vector<Mismatch*> &mm5 = findmm5->mismatches;
+				const int mm5_size = mm5.size();
+                vector<int> &sc5p = findmm5->scp;
+                int nm5 = findmm5->nm;
+                int misp5 = findmm5->misp;
+                string& misnt5 = findmm5->misnt;
 
-				delete findmm3;
-				delete findmm5;
 
                 vector<Mismatch*> mmm = mm3;
+                //vector<Mismatch*>& mmm = mm3;
                 mmm.insert(mmm.end(), mm5.begin(), mm5.end());
 				//printf("mm3 size: %d, mm5 size: %d\n", mm3.size(), mm5.size());
                 Variation* vref = getVariation(data_pool, *insertionVariants, position, vn);
@@ -988,15 +1010,16 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, robin_hood::u
 						//printf("erase2: mismatchPositon: %d\n", mismatchPosition);
                         nonInsertionVariants->erase(mismatchPosition);
                     }
+					//delete mismatch;
                 }
-				vector<Mismatch*>(mmm).swap(mmm);
-                if (misp3 != 0 && mm3.size() == 1 && nonInsertionVariants->count(misp3)
+				//vector<Mismatch*>(mmm).swap(mmm);
+                if (misp3 != 0 && mm3_size == 1 && nonInsertionVariants->count(misp3)
 					&& nonInsertionVariants->at(misp3)->variation_map.count(misnt3)
 					&& nonInsertionVariants->at(misp3)->variation_map.at(misnt3)->varsCount < insertionCount) {
 					//printf("erase3: mismatchPositon: %d, mismatchBases: %s\n", misp3, misnt3.c_str());
                     nonInsertionVariants->at(misp3)->variation_map.erase(misnt3);
                 }
-                if (misp5 != 0 && mm5.size() == 1 && nonInsertionVariants->count(misp5)
+                if (misp5 != 0 && mm5_size == 1 && nonInsertionVariants->count(misp5)
 					&& nonInsertionVariants->at(misp5)->variation_map.count(misnt5)
 					&& nonInsertionVariants->at(misp5)->variation_map.at(misnt5)->varsCount < insertionCount) {
 					//printf("erase4: mismatchPositon: %d, mismatchBases: %s\n", misp5, misnt5.c_str());
@@ -1097,11 +1120,13 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, robin_hood::u
                 }
                 adjRefFactor(vref, -(first3 - first5 - 1) / (double) maxReadLength);
             }
-        } catch(...){// (Exception exception) {
+			delete findmm3;
+			delete findmm5;
+		} catch(...){// (Exception exception) {
             //printExceptionAndContinue(exception, "variant", string.valueOf(lastPosition), region);
 				printf("there is an error in realignins!!\n");
         }
-    }
+	}
 
     for (int i = tmp.size() - 1; i > 0; i--) {
         try {
@@ -1131,10 +1156,11 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, robin_hood::u
                     }
                 }
             }
-        } catch(...) {//(Exception exception) {
-            //printExceptionAndContinue(exception, "variant", string.valueOf(lastPosition), region);
+			delete tpl;
+		} catch(...) {//(Exception exception) {
+			//printExceptionAndContinue(exception, "variant", string.valueOf(lastPosition), region);
         }
-    }
+	}
     return NEWINS;
 }
 
@@ -1573,7 +1599,7 @@ void VariationRealigner::realignlgins30() {
     int lastPosition = 0;
 	int continue_times = 0;
 	//printf("haoz--------------m5 size: %d, m3 size: %d------------\n", tmp5.size(), tmp3.size());
-	for (SortPositionSclip* &t5 : tmp5) {
+	for (SortPositionSclip* t5 : tmp5) {
 		//printf("-----------------split line start----------------\n");
 		try {
 			int p5 = t5->position;
@@ -1588,7 +1614,7 @@ void VariationRealigner::realignlgins30() {
 			if(seq5.length() <= 10){
 				continue;
 			}
-			for (SortPositionSclip* &t3 : tmp3) {
+			for (SortPositionSclip* t3 : tmp3) {
 				try {
 					int p3 = t3->position;
 					lastPosition = p3;
@@ -1807,11 +1833,14 @@ void VariationRealigner::realignlgins30() {
 			//exit(0);
         }
 		//printf("-----------------split line end----------------\n");
-		delete t5;
+		//delete t5;
 		//exit(0);
     }
 	cout << "tmp5 size: " << tmp5.size() << "tmp3 size: " << tmp3.size() << "continue time: " << continue_times << endl;
 	//------delete vector tmp5----------//
+	for(SortPositionSclip* spc5: tmp5){
+		delete spc5;
+	}
 	vector<SortPositionSclip*>(tmp5).swap(tmp5); 
 	//------delete vector tmp3---------//
 	for(SortPositionSclip* spc3: tmp3){
@@ -2818,7 +2847,9 @@ MismatchResult* VariationRealigner::findMM3(robin_hood::unordered_map<int, char>
             }
         }
     }
-    return new MismatchResult(mismatches, sc3p, mn, misp, misnt == '\0' ? "" : string(1,misnt));
+	MismatchResult* msres = new MismatchResult(mismatches, sc3p, mn, misp, misnt == '\0' ? "" : string(1,misnt)); 
+	//vector<Mismatch*>(mismatches).swap(mismatches);
+    return msres;
 }
 
 

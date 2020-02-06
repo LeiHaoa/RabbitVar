@@ -440,7 +440,7 @@ Scope<VariationData> CigarParser::process(Scope<InitialData> scope){
 	double end_time = get_time();
 	//print_result();
 	//printf("totally %d record processed over! and time is %f: \n", count, end_time-start_time);
-	cerr << "record num: " << count  << "map size: " << nonInsertionVariants->size() << endl;
+	cerr << "record num: " << count << endl;  //<< " map size: " << nonInsertionVariants->size() << endl;
 	//-----------------------------------------------------//
 	//cout << "non/Insertionvariants: " << nonInsertionVariants.size() << " - " << insertionVariants.size() << " - " << refCoverage.size() << " - " <<positionToDeletionCount.size() << " - " << positionToInsertionCount.size()<< endl;
 	//for(auto &v: mnp){

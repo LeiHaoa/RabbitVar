@@ -26,14 +26,14 @@ RecordPreprocessor::RecordPreprocessor(Region region, Configuration *conf, vecto
 	//	printf("open file %s error!!\n", infname.c_str());
 	//	exit(0);
 	//}
-	printf("debug info: bamsize: %d\n", bamReaders.size());
+	//printf("debug info: bamsize: %d\n", bamReaders.size());
 	this->in = bamReaders[0].in;
  	string region_string = "";
 	region_string += region.chr + ":"+to_string(region.start) + "-" + to_string(region.end);
 	this->header = bamReaders[0].header;
 	this->idx = bamReaders[0].idx;
 	iter = sam_itr_querys(idx, header, region_string.c_str());
-	printf("in preprocessor: region_string: %s\n", region_string.c_str());
+	//printf("in preprocessor: region_string: %s\n", region_string.c_str());
 	//printf("reader info: %p - %p - %p - %p\n", this->in, this->header, this->idx, this->iter);
 
 	makeReference(conf->fasta);
@@ -51,18 +51,18 @@ void RecordPreprocessor::makeReference(string fa_file_path){
 					 1: region.start - conf->numberNucleotideToExtend - extension;
 	//int len = 248956422;
 	int len = conf->chrLengths[region.chr];
-	cout << "chr: " << region.chr << " length is: " << len << endl;
+	//cout << "chr: " << region.chr << " length is: " << len << endl;
 	int sequenceEnd = region.end + conf->numberNucleotideToExtend + extension > len ?
 				len : region.end + conf->numberNucleotideToExtend + extension;
 
 	int ref_len = 0;
 	int ref_len2 = 0;
-	printf("info: %d - %d\n", sequenceStart, sequenceEnd);
+	//printf("info: %d - %d\n", sequenceStart, sequenceEnd);
 	reference.ref_start = sequenceStart;
 	reference.ref_end = sequenceEnd - CONF_SEED_1;
 	faidx_t * fasta_reference = fai_load(fa_file_path.c_str());
 	//char* seq = faidx_fetch_seq(fasta_reference, "chr1", reference.ref_start, reference.ref_end, &ref_len);
-	printf("info: %d - %d\n", reference.ref_start, reference.ref_end);
+	//printf("info: %d - %d\n", reference.ref_start, reference.ref_end);
 	//*BUG*::-------haoz：faidx_fetch_seq 和 faidx_fetch的表现是不一样的，正好是有一位的偏差--------------//
 	//char* seq = faidx_fetch_seq(fasta_reference, "chr1", reference.ref_start, reference.ref_end, &ref_len);
 	//char* seq = fai_fetch(fasta_reference, "chr7:55,269,101-55,271,548", &ref_len);
@@ -70,9 +70,7 @@ void RecordPreprocessor::makeReference(string fa_file_path){
 	string ref_string = region.chr + ":" + std::to_string(sequenceStart) + "-" + std::to_string(sequenceEnd);
 		//char* seq = fai_fetch(fasta_reference, "chr1:3828490-3919726", &ref_len2);	
 	char* seq = fai_fetch(fasta_reference, ref_string.c_str(), &ref_len2);	
-	printf("ref_len: %d - ref_len2: %d\n", ref_len, ref_len2);
 	//**********char* seq = faidx_fetch_seq(fasta_reference, "chr1", 3828491, 3919709, &ref_len);
-	printf("reference length is: %d\n", ref_len);
 	//for(int i = 0; i < reference.ref_end - reference.ref_start; ++i){//java里面是到了55271531，截断了一块先不管,先造出数据来
 	for(int i = reference.ref_start; i <= reference.ref_end; ++i){
 		reference.referenceSequences[i] = toupper(seq[i - reference.ref_start]);

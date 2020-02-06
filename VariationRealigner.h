@@ -74,14 +74,13 @@ public:
 };
 		
 class MismatchResult {
-private :
+public :
 	vector<Mismatch*> mismatches;
 	vector<int> scp;
 	int nm;
 	int misp;
 	string misnt;
 
-public :
 	MismatchResult(vector<Mismatch*> mismatches, vector<int> scp, int nm, int misp, string misnt){
 		this->mismatches = mismatches;
 		this->scp = scp;
@@ -89,24 +88,12 @@ public :
 		this->misp = misp;
 		this->misnt = misnt;
 	};
-	vector<int> getScp() {
-		return scp;
-	};
-
-	vector<Mismatch*> getMismatches() {
-		return mismatches;
-	};
-
-	int getNm() {
-		return nm;
-	};
-
-	int getMisp() {
-		return misp;
-	};
-
-	string getMisnt() {
-		return misnt;
+	~MismatchResult(){
+		for(Mismatch* m : mismatches){
+			delete m;
+		}
+		vector<Mismatch*>(mismatches).swap(mismatches);
+		vector<int>(scp).swap(scp);
 	};
 };
 class VariationRealigner {
@@ -141,6 +128,7 @@ private:
 public:
 	void print_result(); //only for debug
 	VariationRealigner(Configuration* conf, dataPool* data_pool);
+	~VariationRealigner();
 	Scope<RealignedVariationData> process(Scope<VariationData> &scope);
 	//void process(Scope<VariationData> &scope);
 

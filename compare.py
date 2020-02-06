@@ -153,9 +153,9 @@ def is_same_var_stat(jri, cri):
         same_count += 1
 
     if same_count >= 28:
-        if same_count != 31:
-            print(same_count);
-            print("|".join(jri) ,"\n", "|".join(cri))
+        #if same_count != 31:
+        #    print(same_count);
+        #    print("|".join(jri) ,"\n", "|".join(cri))
         return True
     else:
         return False
