@@ -22,6 +22,7 @@ public:
 	//vector<bamReader> bamReaders;
 
 	~InitialData() {
+		//cerr << "-----------free memory!!!-----------" << endl;
 		for(auto niv: *nonInsertionVariants){
 			delete niv.second;
 		}

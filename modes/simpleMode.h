@@ -35,11 +35,15 @@ public:
 	//ItemRepository mRepo;
 	void process(Configuration* conf, vector<vector<Region> > &segments);
 	void InitItemRepository(const int size);
+	Scope<AlignedVarsData>* one_region_run(Region region, Configuration* conf, dataPool* data_pool, vector<bamReader> bamReaders);
+	void print_output_variant_simple(const Variant* variant, Region &region, std::string sv, int position, std::string sample);
+	void output(Scope<AlignedVarsData>* mapScope, Configuration& conf);
 	
 private:
 	Scope<AlignedVarsData>** mRepo;
 	vector<Region> mRegs;
 	int mRepo_pos;
+	FILE* file_ptr;
 };
 
 #endif

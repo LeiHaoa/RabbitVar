@@ -14,7 +14,7 @@ void SimpleMode::InitItemRepository(const int size){
 	mRepo = new Scope<AlignedVarsData>*[size];
 	mRepo_pos = 0;
 }
-Scope<AlignedVarsData>* one_region_run(Region region, Configuration* conf, dataPool* data_pool, vector<bamReader> bamReaders){
+Scope<AlignedVarsData>* SimpleMode::one_region_run(Region region, Configuration* conf, dataPool* data_pool, vector<bamReader> bamReaders){
 //AlignedVarsData* one_region_run(Region region, Configuration* conf, dataPool* data_pool){
 	
 	cout << "reader info2: " << static_cast<void*>(bamReaders[0].in) << " " << static_cast<void*>(bamReaders[0].header) << " "  <<static_cast<void*>(bamReaders[0].idx) << endl;
@@ -57,7 +57,7 @@ Scope<AlignedVarsData>* one_region_run(Region region, Configuration* conf, dataP
 	return avd;
 }
 
-void print_output_variant_simple(const Variant* variant, Region &region, std::string sv, int position, std::string sample){
+void SimpleMode::print_output_variant_simple(const Variant* variant, Region &region, std::string sv, int position, std::string sample){
 	vector<std::string> str;
 	str.reserve(36);
 
@@ -109,13 +109,17 @@ void print_output_variant_simple(const Variant* variant, Region &region, std::st
 	}
 
 	//----join print----//
+	string result = "";
 	for(auto& s: str){
-		std::cout << s << "\t";
+		//std::cerr << s << "\t";
+		result.append(s).append("\t");
 	}
-	std::cout << std::endl;
+	result += "\n";
+	//std::cerr << std::endl;
+	fwrite(result.c_str(), 1, result.length(), this->file_ptr);
 }
 
-void output(Scope<AlignedVarsData>* mapScope, Configuration& conf){
+void SimpleMode::output(Scope<AlignedVarsData>* mapScope, Configuration& conf){
 	int lastPosition = 0;
 	std::cout << "alignedvariants size: " << mapScope->data->alignedVariants.size() << std::endl;
 	for (auto& ent : mapScope->data->alignedVariants) {
@@ -183,6 +187,7 @@ void output(Scope<AlignedVarsData>* mapScope, Configuration& conf){
 }
 
 void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
+	this->file_ptr = fopen("./tmp.vcf", "wb");
 	//--------------use interest region parameter: singel thread-------------------//
 	if(conf->regionOfInterest != ""){
 		//----add by haoz: init bamReader------//
@@ -305,20 +310,22 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
             #pragma omp critical
 			{
 				mRepo[mRepo_pos] = avd_p;
+				output(avd_p, *conf);
 				mRepo_pos++;
 			}
+			delete avd_p->data;
 		}
-		#pragma omp single
-		for(int i = 0; i < mRepo_pos; i++){
-			std::cout << "vars size: " << i << " -> " << mRepo[i]->data->alignedVariants.size() << std::endl;
-			output(mRepo[i], *conf);
-			std::cout << "----------------------------------------------" << std::endl;
-		}
-		
+		//#pragma omp single
+		//for(int i = 0; i < mRepo_pos; i++){
+		//	std::cout << "vars size: " << i << " -> " << mRepo[i]->data->alignedVariants.size() << std::endl;
+		//	output(mRepo[i], *conf);
+		//	std::cout << "----------------------------------------------" << std::endl;
+		//}
+		//
 
 		//-------free mRepo-------//
 		for(int i = 0; i < mRepo_pos; i++){
-			delete mRepo[i]->data;
+			//	delete mRepo[i]->data;
 			delete mRepo[i];
 		}
 		delete mRepo;
@@ -340,9 +347,9 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 			}
 		}
 		//delete[] trs;
+		fclose(this->file_ptr);
 
 		for(int i = 0; i < processor_num; i++)
 			cerr << "thread: " << i << " time: " << time[i] << endl;
 	}
 }
-
