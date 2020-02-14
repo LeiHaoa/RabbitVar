@@ -338,6 +338,7 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 				delete variation;
 			}	
 			vector<Variation*>(data_pool->_data).swap(data_pool->_data);
+			delete trs[t].data_pool;
 			//------free bamreader-----//
 			for(bamReader br: trs[t].bamReaders){
 				//free idx;
@@ -346,7 +347,8 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 				if(br.in) sam_close(br.in);
 			}
 		}
-		//delete[] trs;
+
+		delete[] trs;
 		fclose(this->file_ptr);
 
 		for(int i = 0; i < processor_num; i++)

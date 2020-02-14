@@ -39,11 +39,12 @@ RecordPreprocessor::RecordPreprocessor(Region region, Configuration *conf, vecto
 	makeReference(conf->fasta);
 }
 
-//RecordPreprocessor::~RecordPreprocessor(){
-//	//bam_hdr_destroy(header);
-//	//if(in) sam_close(in);
-//	//free(reference.referenceSequences);
-//}
+RecordPreprocessor::~RecordPreprocessor(){
+	//bam_hdr_destroy(header);
+	//if(in) sam_close(in);
+	//free(reference.referenceSequences);
+	free(this->iter);
+}
 
 void RecordPreprocessor::makeReference(string fa_file_path){
 	int extension = conf->referenceExtension;

@@ -38,6 +38,8 @@ class Vars {
 			//for(auto& vstv: varDescriptionStringToVariants){
 			//	delete vstv.second;
 			//}
+			//if(referenceVariant)
+			//	delete referenceVariant;
 		}
 };
 

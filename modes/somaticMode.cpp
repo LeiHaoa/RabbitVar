@@ -47,7 +47,9 @@ void one_region_run(Region region, Configuration* conf, dataPool* data_pool){
 	Scope<AlignedVarsData> avd = vars_builder.process(rvd);
 	//cout << avd.data->k
 	
-
+	//TODO: about bam2
+	//1. preprocessor difference step use difference preprocessor
+	//2. use different bamreaders
 	data_pool->reset();
 	Scope<InitialData> initialScope2(conf->bam.getBam2(), region, preprocessor->reference, avd.maxReadLength, set<string>(), bamReaders, init_data);
 	CigarParser cp2(preprocessor, data_pool);
@@ -136,6 +138,13 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 			time[omp_get_thread_num()] += end2 - start2;
 		}
 
+		#pragma omp single
+		for(int i = 0; i < mRepo_pos; i++){
+			std::cout << "vars size: " << i << " -> " << mRepo[i]->data->alignedVariants.size() << std::endl;
+			output(mRepo[i], *conf);
+			std::cout << "----------------------------------------------" << std::endl;
+		}
+
 		//-------free mem pool------//
 		for(dataPool* data_pool: data_pools){
 			for(Variation* variation: data_pool->_data){
@@ -148,3 +157,269 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 			cerr << "thread: " << i << " time: " << time[i] << endl;
 	}
 }
+
+void output(Scope<AlignedVarsData>* scopeFromBam1, Scope<AlignedVarsData>* scopeFromBam2, Configuration& conf){
+	Region region = scopeFromBam1->region;
+	Set<String> splice = scopeFromBam1->splice;
+	robin_hood::unordered_map<int, Vars*> &variationsFromBam1 = scopeFromBam1->data->alignedVariants;
+	robin_hood::unordered_map<int, Vars*> &variationsFromBam2 = scopeFromBam2->data->alignedVariants;
+
+	maxReadLength = Math.max(scopeFromBam1.maxReadLength, scopeFromBam2.maxReadLength);
+
+	Set<Integer> allPositions = new HashSet<>(variationsFromBam1.keySet());
+	allPositions.addAll(variationsFromBam2.keySet());
+	List<Integer> variantPositions = new ArrayList<>(allPositions);
+	Collections.sort(variantPositions);
+	int lastPosition = 0;
+	for (Integer position : variantPositions) {
+		try {
+			lastPosition = position;
+			if (position < region.start || position > region.end) {
+				continue;
+			}
+			//Vars v1 = variationsFromBam1.get(position);
+			//Vars v2 = variationsFromBam2.get(position);
+			//if (v1 == null && v2 == null) { // both samples have no coverage
+			//	continue;
+			//}
+			//if (v1 == null) { // no coverage for sample 1
+			//	callingForOneSample(v2, true, DELETION, region, splice);
+			//} else if (v2 == null) { // no coverage for sample 2
+			//	callingForOneSample(v1, false, SAMPLE_SPECIFIC, region, splice);
+			//} else { // both samples have coverage
+			//	callingForBothSamples(position, v1, v2, region, splice);
+			//}
+
+			robin_hood::unordered_map<int, Vars*>::iterator v1 = variationsFromBam1.find(position);
+			robin_hood::unordered_map<int, Vars*>::iterator v2 = variationsFromBam2.find(position);
+			if(v1 == variationsFromBam1.end()){
+				callingForOneSample(v2->second, true, DELETION, region, splice);
+			}else if(v2 == variationsFromBam2.end()){
+				callingForOneSample(v1->second, false, SAMPLE_SPECIFIC, region, splice);
+			}else{
+				callingForBothSamples(position, v1->second, v2->second, region, splice);
+			}
+		}catch(...) {
+			cerr << "error in output function!!" << endl;
+		}
+	}
+}
+//---------------------------------------------//
+/**
+ * Implements variations analysis from one sample, print out the result.
+ * @param variants variations from one BAM
+ * @param isFirstCover if the first calling
+ * @param varLabel type of variation (LikelyLOH, LikelySomatic, Germline, AFDiff, StrongSomatic)
+ * */
+void callingForOneSample(Vars* variants, boolean isFirstCover, string &varLabel, Region &region, set<string> &splice) {
+	if (variants->variants.empty()) {
+		return;
+	}
+	for (Variant* variant : variants->variants) {
+		SomaticOutputVariant outputVariant;
+		variant->vartype = variant->varType();
+		if (!variant->isGoodVar(variants->referenceVariant, variant->vartype, splice, conf)) {
+			continue;
+		}
+		if (variant->vartype.equals(COMPLEX)) {
+			variant->adjComplex();
+		}
+
+		if (isFirstCover) {
+			outputVariant = new SomaticOutputVariant(variant, variant, NULL, variant, region, "", variants.sv, varLabel);
+			variantPrinter.print(outputVariant);
+		} else {
+			outputVariant = new SomaticOutputVariant(variant, variant, variant, NULL, region, variants.sv, "", varLabel);
+			variantPrinter.print(outputVariant);
+		}
+	}
+}
+
+void callingForBothSamples(Integer position, Vars v1, Vars v2, Region region, Set<String> splice)  {
+	if (v1.variants.isEmpty() && v2.variants.isEmpty()) {
+		return;
+	}
+	if (v1.variants.size() > 0) {
+		printVariationsFromFirstSample(position, v1, v2, region, splice);
+	} else if (v2.variants.size() > 0) { // sample 1 has only reference
+		printVariationsFromSecondSample(position, v1, v2, region, splice);
+	}
+}
+/**
+ * Analyse variations from BAM1 based on variations from BAM2.
+ * @param position position on which analysis is processed
+ * @param v1 variations from BAM1 on target position
+ * @param v2 variations from BAM2 on target position
+ */
+	private void printVariationsFromFirstSample(int position, Vars* v1, Vars* v2, Region region, Set<String> splice){
+		int numberOfProcessedVariation = 0;
+		while (numberOfProcessedVariation < v1->variants.size()
+			   && v1->variants.[numberOfProcessedVariation]->isGoodVar(v1->referenceVariant,
+																	   v1->variants.[numberOfProcessedVariation]->varType(), splice)) {
+			Variant* vref = v1->variants[numberOfProcessedVariation];
+			string& nt = vref->descriptionString;
+			vref.vartype = vref.varType();
+			SomaticOutputVariant outputVariant;
+			if (vref->vartype.equals(COMPLEX)) {
+				vref->adjComplex();
+			}
+			//Variant v2nt = getVarMaybe(v2, varn, nt);
+			Variant* v2nt;
+			robin_hood::unordered_map<string, Variant*>::iterator v2nt_itr = v2->varDescriptionStringToVariants.find(nt);
+			if (v2nt_itr != v2->varDescriptionStringToVariants.end()) {
+				v2nt = v2nt_itr.second;
+				String type = determinateType(v2, vref, v2nt, splice);
+				outputVariant = new SomaticOutputVariant(vref, v2nt, vref, v2nt, region, v1.sv, v2.sv, type);
+				variantPrinter.print(outputVariant);
+			} else { // sample 1 only, should be strong somatic
+				Variant* varForPrint = new Variant();
+				if (!v2->variants.empty()) {
+					//Variant v2r = getVarMaybe(v2, var, 0);
+					Variant* v2r = v2->variants[0];
+					//int tcov = v2r->totalPosCoverage   ;
+					//int rfc  = v2r->refForwardCoverage ;
+					//int rrc  = v2r->refReverseCoverage ;
+					varForPrint->totalPosCoverage   = v2r->totalPosCoverage   ;
+					varForPrint->refForwardCoverage = v2r->refForwardCoverage ;
+					varForPrint->refReverseCoverage = v2r->refReverseCoverage ;
+				} else if (v2->referenceVariant != NULL) {
+					varForPrint = v2->referenceVariant;
+				} else {
+					varForPrint = NULL;
+				}
+
+				String type = STRONG_SOMATIC;
+				//jregex.Matcher mm = MINUS_NUM_NUM.matcher(nt);
+				bool mm = regex_search(nt, conf->patterns->MINUS_NUM_NUM);
+				if (!vref->vartype = SNV && (nt.length() > 10 || mm)) {
+					v2nt = new Variant();
+					v2.varDescriptionStringToVariants.put(nt, v2nt); // Ensure it's initialized before passing to combineAnalysis
+					if (vref.positionCoverage < instance().conf.minr + 3 && !nt.contains("<")) {
+						CombineAnalysisData tpl = combineAnalysis(vref, v2nt, region.chr, position, nt,
+																  splice, maxReadLength);
+						maxReadLength = tpl.maxReadLength;
+						String newtype = tpl.type;
+						if ("FALSE".equals(newtype)) {
+							numberOfProcessedVariation++;
+							continue;
+						}
+						if (newtype.length() > 0) {
+							type = newtype;
+						}
+					}
+				}
+				if (type.equals(STRONG_SOMATIC)) {
+					outputVariant = new SomaticOutputVariant(vref, vref, vref, varForPrint, region, v1.sv, v2.sv, STRONG_SOMATIC);
+					variantPrinter.print(outputVariant);
+				} else {
+					outputVariant = new SomaticOutputVariant(vref, vref, vref, v2nt, region, v1.sv, v2.sv, type);
+					variantPrinter.print(outputVariant);
+				}
+			}
+			numberOfProcessedVariation++;
+		}
+		if (numberOfProcessedVariation == 0) {
+			if (v2.variants.isEmpty()) {
+				return;
+			}
+			for (Variant v2var : v2.variants) {
+				SomaticOutputVariant outputVariant;
+				v2var.vartype = v2var.varType();
+				if (!v2var.isGoodVar(v2.referenceVariant, v2var.vartype, splice)) {
+					continue;
+				}
+				// potential LOH
+				String nt = v2var.descriptionString;
+				Variant v1nt = getVarMaybe(v1, varn, nt);
+				if (v1nt != null) {
+					String type = v1nt.frequency < instance().conf.lofreq ? LIKELY_LOH : GERMLINE;
+					if (COMPLEX.equals(v2var.vartype)) {
+						v1nt.adjComplex();
+					}
+
+					v1nt.vartype = v1nt.varType();
+					outputVariant = new SomaticOutputVariant(v1nt, v2var, v1nt, v2var, region, v1.sv, v2.sv, type);
+					variantPrinter.print(outputVariant);
+				} else {
+					Variant v1var = getVarMaybe(v1, var, 0);
+					int tcov = v1var != null && v1var.totalPosCoverage != 0 ? v1var.totalPosCoverage : 0;
+
+					Variant v1ref = v1.referenceVariant;
+					int fwd = v1ref != null ? v1ref.varsCountOnForward : 0;
+					int rev = v1ref != null ? v1ref.varsCountOnReverse : 0;
+
+					String genotype = v1var != null ? v1var.genotype :
+						(v1ref != null ? v1ref.descriptionString + "/" + v1ref.descriptionString : "N/N");
+
+					if (COMPLEX.equals(v2var.vartype)) {
+						v2var.adjComplex();
+					}
+
+					Variant varForPrint = new Variant();
+					varForPrint.totalPosCoverage = tcov;
+					varForPrint.refForwardCoverage = fwd;
+					varForPrint.refReverseCoverage = rev;
+					varForPrint.genotype = genotype;
+
+					outputVariant = new SomaticOutputVariant(v2var, v2var, varForPrint, v2var, region, "", v2.sv, STRONG_LOH);
+					variantPrinter.print(outputVariant);
+				}
+			}
+		}
+	}
+
+    /**
+     * Analyse variations from BAM2 based on variations from BAM1.
+     * @param position position on which analysis is processed
+     * @param v1 variations from BAM1 on target position
+     * @param v2 variations from BAM2 on target position
+     * */
+    private void printVariationsFromSecondSample(Integer position, Vars v1, Vars v2, Region region, Set<String> splice){
+        for (Variant v2var : v2.variants) {
+            v2var.vartype = v2var.varType();
+            if (!v2var.isGoodVar(v2.referenceVariant, v2var.vartype, splice)) {
+                continue;
+            }
+            // potential LOH
+            String descriptionString = v2var.descriptionString;
+            String type = STRONG_LOH;
+            Variant v1nt = v1.varDescriptionStringToVariants.computeIfAbsent(descriptionString, k -> new Variant());
+            v1nt.positionCoverage = 0;
+            String newType = EMPTY_STRING;
+            jregex.Matcher mm = MINUS_NUM_NUM.matcher(descriptionString);
+            if (v2.varDescriptionStringToVariants.get(descriptionString).positionCoverage < instance().conf.minr + 3
+                    && !descriptionString.contains("<") && (descriptionString.length() > 10 || mm.find())) {
+                CombineAnalysisData tpl = combineAnalysis(
+                        v2.varDescriptionStringToVariants.get(descriptionString),
+                        v1nt,
+                        region.chr,
+                        position,
+                        descriptionString,
+                        splice,
+                        maxReadLength);
+                maxReadLength = tpl.maxReadLength;
+                newType = tpl.type;
+                if (FALSE.equals(newType)) {
+                    continue;
+                }
+            }
+            Variant varForPrint;
+            if (newType.length() > 0) {
+                type = newType;
+                varForPrint = v1nt;
+            } else {
+                Variant v1ref = v1.referenceVariant;
+                if (v1ref != null) {
+                    varForPrint = v1ref;
+                } else {
+                    varForPrint = null;
+                }
+            }
+            if (COMPLEX.equals(v2var.vartype)) {
+                v2var.adjComplex();
+            }
+
+            SomaticOutputVariant outputVariant = new SomaticOutputVariant(v2var, v2var, varForPrint, v2var, region, "", v2.sv, type);
+            variantPrinter.print(outputVariant);
+        }
+    }
