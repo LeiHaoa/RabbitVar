@@ -17,7 +17,7 @@ class Scope{
     public:
 		 string bam;
     	 Region region;
-    	 Reference regionRef;
+    	 Reference *regionRef;
     	// ReferenceResource referenceResource;
     	 int maxReadLength;
     	 set<string> splice;
@@ -25,7 +25,7 @@ class Scope{
     	// VariantPrinter out;
     	 T *data;
 		
-    	Scope(string bam, Region region, Reference regionRef, int maxReadLength,
+    	Scope(string bam, Region region, Reference *regionRef, int maxReadLength,
 			  set<string> splice, vector<bamReader> bamReaders, T* data) {
     	    this->bam = bam;
     	    this->region = region;

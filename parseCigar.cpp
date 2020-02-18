@@ -147,7 +147,7 @@ void CigarParser::makeReference(string fa_file_path, bam_hdr_t* header){
 	//**********char* seq = faidx_fetch_seq(fasta_reference, "chr1", 3828491, 3919709, &ref_len);
 	printf("reference length is: %d\n", ref_len);
 	for(int i = 3828491; i <= 3919709; ++i){//java里面是到了55271531，截断了一块先不管,先造出数据来
-		reference.referenceSequences[i] = toupper(seq[i- 3828491]);
+		reference->referenceSequences[i] = toupper(seq[i- 3828491]);
 		//printf("%d-%c\n", i, seq[i-3828491]);
 	}
 }	
@@ -554,7 +554,7 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 		return;
 	}
 	//printf("------------n_cigar: %d-----------\n",record->core.n_cigar);
-	robin_hood::unordered_map<int, char> &ref = reference.referenceSequences;
+	robin_hood::unordered_map<int, char> &ref = reference->referenceSequences;
 
 	const int insertion_deletion_length = getInsertionDeletionLength(cigar, record->core.n_cigar);
 	int total_number_of_mismatches = 0;
@@ -1556,8 +1556,13 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
 		int insertion_pointion = start - 1;
 		if(regex_match(desc_string_of_insertion_segment, conf->patterns->BEGIN_ATGC_END)){
 			BaseInsertion *tpl = adjInsPos(start - 1, desc_string_of_insertion_segment, ref);
-			insertion_pointion = tpl->baseInsert;
-			desc_string_of_insertion_segment = tpl->insertionSequence;
+			int adjusted_insertion_pointion = tpl->baseInsert;
+			string &adjusted_desc_string_of_insertion_segment = tpl->insertionSequence;
+			// check for the index, if it is negative, there can be deletions, will not be adjusted.
+			if (readPositionIncludingSoftClipped - 1 - (start - 1 - adjusted_insertion_pointion) > 0) {
+				insertion_pointion = adjusted_insertion_pointion;
+				desc_string_of_insertion_segment = adjusted_desc_string_of_insertion_segment;
+			}
 			delete tpl;
 		}
 		//add '+' + s to insertions at inspos
@@ -1710,7 +1715,7 @@ int CigarParser::process_deletion(char* querySequence, uint8_t mappingQuality, r
 		int mLen = bam_cigar_oplen(cigar[ci+1]);
 		int indelLen = bam_cigar_oplen(cigar[ci+2]);
 
-		int begin = readPositionIncludingSoftClipped + cigar_element_length;
+		int begin = readPositionIncludingSoftClipped;
 		appendSegments(querySequence, queryQuality, ci, desc_string_of_deletion_element, quality_segment_sum,
 					   quality_segment_count, mLen, indelLen, begin, false);
 		//add length of next segment to both multoffs and multoffp

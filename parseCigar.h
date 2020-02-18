@@ -118,7 +118,7 @@ private:
 
     Region region;
     set<string> splice;
-    Reference reference;
+    Reference *reference;
     int maxReadLength = 0;
 
     uint32_t* cigar;

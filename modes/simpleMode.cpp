@@ -25,7 +25,7 @@ Scope<AlignedVarsData>* SimpleMode::one_region_run(Region region, Configuration*
 	InitialData *init_data = new InitialData;
 
 	RecordPreprocessor *preprocessor = new RecordPreprocessor(region, conf, bamReaders);
-	Scope<InitialData> initialScope(conf->bam.getBam1(), region, preprocessor->reference, 0, set<string>(), bamReaders, init_data);
+	Scope<InitialData> initialScope(conf->bam.getBam1(), region, &(preprocessor->reference), 0, set<string>(), bamReaders, init_data);
 	double start1 = get_time();
 	CigarParser cp(preprocessor, data_pool);
 	Scope<VariationData> svd =  cp.process(initialScope);
@@ -298,7 +298,7 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 		    double start2 = get_time();
 			reg = mRegs[i];
 			data_pool = trs[thread_id].data_pool;
-			//cout <<"thread: " << omp_get_thread_num() << "region id: " << i <<" processing: " << reg.chr << " - " << reg.start << " - " << reg.end  << endl;
+			//cerr <<"thread: " << omp_get_thread_num() << " region id: " << i <<"  processing: " << reg.chr << " - " << reg.start << " - " << reg.end  << endl;
 			Scope<AlignedVarsData> *avd_p = one_region_run(reg, conf, data_pool, trs[thread_id].bamReaders);
 			//add alignedVars to data repo	
 			

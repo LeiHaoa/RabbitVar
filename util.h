@@ -64,13 +64,18 @@ inline bool ends_with(string& s, string t){
 }
 
 inline vector<string> ssplit(const string& str, const string& delim) {
+//inline vector<string> ssplit(const string& str, const char delim) {
 	vector<string> res;
 	if("" == str) return res;
 	
-	char * strs = new char[str.length() + 1] ; 
+	//char * strs = new char[str.length() + 1] ;
+	const int len = str.length() + 1;
+	const int len2 = delim.length() + 1;
+	char strs[len];
 	strcpy(strs, str.c_str()); 
  
-	char * d = new char[delim.length() + 1];
+	//char * d = new char[delim.length() + 1];
+	char d[len2];
 	strcpy(d, delim.c_str());
  
 	char *p = strtok(strs, d);

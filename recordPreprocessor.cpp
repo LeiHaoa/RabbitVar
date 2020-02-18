@@ -43,7 +43,7 @@ RecordPreprocessor::~RecordPreprocessor(){
 	//bam_hdr_destroy(header);
 	//if(in) sam_close(in);
 	//free(reference.referenceSequences);
-	free(this->iter);
+	hts_itr_destroy(this->iter);
 }
 
 void RecordPreprocessor::makeReference(string fa_file_path){

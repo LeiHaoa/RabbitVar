@@ -73,11 +73,15 @@ void ToVarsBuilder::print_result(){
 	//	}
 	//}
 }
+
 ToVarsBuilder::ToVarsBuilder(Configuration *conf){
 	this->conf = conf;
 }
+
+ToVarsBuilder::~ToVarsBuilder(){
+}
 void ToVarsBuilder::initFromScope(Scope<RealignedVariationData> &scope) {
-    this->ref = scope.regionRef.referenceSequences;
+    this->ref = scope.regionRef->referenceSequences;
     this->region = scope.region;
     this->refCoverage = scope.data->refCoverage;
     this->insertionVariants = scope.data->insertionVariants;

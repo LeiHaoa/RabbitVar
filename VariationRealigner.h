@@ -108,7 +108,7 @@ private:
 	robin_hood::unordered_map<int, Sclip*> *softClips3End;
 
     //ReferenceResource referenceResource;
-    Reference reference;
+    Reference *reference;
     Region region;
     set<string> splice;
     string chr;

@@ -424,7 +424,7 @@ void VariationRealigner::adjustMNP() {
 
                     if (vc_substr(seq, 0, mnt.length()) == mnt) {
                         if (seq.length() == mnt.length()
-                                || ismatchref(seq.substr(mnt.length()), reference.referenceSequences, position+mnt.length(), 1)) {
+                                || ismatchref(seq.substr(mnt.length()), reference->referenceSequences, position+mnt.length(), 1)) {
 
                             //printf("3    AdjMnt sc3v: %d %s Cnt: %d\n", position, vn.c_str(), sc3v->varsCount);
                             adjCnt(nonInsertionVariants->at(position)->variation_map[vn], sc3v);
@@ -447,7 +447,7 @@ void VariationRealigner::adjustMNP() {
                         if (vc_substr(seq,seq.length()-mnt.length(),mnt.length())==mnt) {
 							//printf("step2\n");
                             if (seq.length() == mnt.length()
-                                    || ismatchref(seq.substr(0, seq.length() - mnt.length()), reference.referenceSequences, position - 1, -1)) {
+                                    || ismatchref(seq.substr(0, seq.length() - mnt.length()), reference->referenceSequences, position - 1, -1)) {
 								//printf("4    AdjMnt sc5v: %d %s Cnt: %d\n", position, vn.c_str(), sc5v->varsCount);
 								adjCnt(nonInsertionVariants->at(position)->variation_map[vn], sc5v);
                                 //incCnt(refCoverage, position, sc5v.varsCount);
@@ -508,7 +508,7 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, robin_hood::u
 	//		}
 	//	}
 	//}
-    robin_hood::unordered_map<int, char> &ref = reference.referenceSequences;
+    robin_hood::unordered_map<int, char> &ref = reference->referenceSequences;
     vector<string> *bams;
     if (bamsParameter == NULL || bamsParameter->size() == 0) {
         bams = NULL;
@@ -818,7 +818,7 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, robin_hood::u
      * @return insertion sequence
      */
     string VariationRealigner::realignins(robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > &positionToInsertionCount) {
-        robin_hood::unordered_map<int, char> &ref = reference.referenceSequences;
+        robin_hood::unordered_map<int, char> &ref = reference->referenceSequences;
         vector<SortPositionDescription*> tmp = fillAndSortTmp(positionToInsertionCount);
 		//cout << "tmp size: " << tmp.size() << endl;
 		//for(SortPositionDescription* tpl: tmp){
@@ -1572,7 +1572,7 @@ public void realignlgdel(list<Sclip> svfdel,
  * This will try to realign large insertions (typically larger than 30bp)
  */
 void VariationRealigner::realignlgins30() {
-    robin_hood::unordered_map<int, char> ref = reference.referenceSequences;
+    robin_hood::unordered_map<int, char> ref = reference->referenceSequences;
 
     vector<SortPositionSclip*> tmp5;
     for (auto& ent5 : *softClips5End) {

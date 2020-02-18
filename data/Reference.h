@@ -31,7 +31,6 @@ public:
         //this->seed = new HashMap<>();
     }
 
-
 };
 
 #endif
