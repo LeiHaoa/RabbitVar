@@ -7,9 +7,10 @@
 using namespace std;
 
 //TODO next_reader funtion not implemented: 多个reader的功能并没有实现。
-RecordPreprocessor::RecordPreprocessor(Region region, Configuration *conf, vector<bamReader>& bamReaders){
+RecordPreprocessor::RecordPreprocessor(Region region, Configuration *conf, vector<bamReader> bamReaders){
 	this->region = region;
 	this->conf = conf;
+	this->bamReaders_pre = bamReaders;
 	//string infname;
 	//if( (infname = conf->bam.getBam1()) != ""){
 	//	in = sam_open(infname.c_str(), "r");
@@ -26,12 +27,19 @@ RecordPreprocessor::RecordPreprocessor(Region region, Configuration *conf, vecto
 	//	printf("open file %s error!!\n", infname.c_str());
 	//	exit(0);
 	//}
-	//printf("debug info: bamsize: %d\n", bamReaders.size());
-	this->in = bamReaders[0].in;
+	printf("debug info: bamsize: %d\n", bamReaders_pre.size());
+	bamReader &bam_reader1 = bamReaders_pre.back();
+	this->in = bam_reader1.in;
  	string region_string = "";
 	region_string += region.chr + ":"+to_string(region.start) + "-" + to_string(region.end);
-	this->header = bamReaders[0].header;
-	this->idx = bamReaders[0].idx;
+	this->header = bam_reader1.header;
+	this->idx = bam_reader1.idx;
+	bamReaders_pre.pop_back();
+	if(bamReaders_pre.size() == 0){
+		printf("bamreader size = 0\n");
+		hasAnotherBam = false;
+	}
+
 	iter = sam_itr_querys(idx, header, region_string.c_str());
 	//printf("in preprocessor: region_string: %s\n", region_string.c_str());
 	//printf("reader info: %p - %p - %p - %p\n", this->in, this->header, this->idx, this->iter);
@@ -114,7 +122,22 @@ inline string get_cigar_string(uint32_t* cigar, int n_cigar){
 
 int RecordPreprocessor::next_record(bam1_t *record){
 	int ret = 0;
-	while( (ret = sam_itr_next(in, iter, record)) >= 0 ){
+	while( (ret = sam_itr_next(in, iter, record)) >= -1 ){ //-1 means current bam file read to end
+		if(ret == -1){
+			if(hasAnotherBam){
+				bamReader bam_reader = bamReaders_pre.back();
+				this->in = bam_reader.in;
+				this->header = bam_reader.header;
+				this->idx = bam_reader.idx;
+				bamReaders_pre.pop_back();
+				if(bamReaders_pre.size() == 0){
+					hasAnotherBam = false;
+				}
+				ret = sam_itr_next(in, iter, record);
+			}else{
+				return -1;
+			}
+		}
 		//---haoz: filter the record by samfilter
 		//printf("samfilter: %s, samfilter_int: %d, flag: %d, result: %d\n",conf->samfilter.c_str(), std::stoi(conf->samfilter), record->core.flag, record->core.flag & std::stoi(conf->samfilter));
 		if((record->core.flag & std::stoi(conf->samfilter)) != 0){

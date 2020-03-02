@@ -11,7 +11,7 @@
 
 class RecordPreprocessor{
 public:
-	RecordPreprocessor(Region region, Configuration *conf, vector<bamReader> &bamReaders);
+	RecordPreprocessor(Region region, Configuration *conf, vector<bamReader> bamReaders);
 	~RecordPreprocessor();
 	void makeReference(string fa_file_path);
 	int next_record(bam1_t* record);
@@ -29,7 +29,8 @@ public:
 	unordered_set<string> duplicates;
 	int duplicateReads = 0;
 	int firstMatchingPosition = 0;
-	
+	bool hasAnotherBam = true;
+	vector<bamReader> bamReaders_pre;
 };
 
 #endif
