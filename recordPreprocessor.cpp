@@ -44,7 +44,7 @@ RecordPreprocessor::RecordPreprocessor(Region region, Configuration *conf, vecto
 	//printf("in preprocessor: region_string: %s\n", region_string.c_str());
 	//printf("reader info: %p - %p - %p - %p\n", this->in, this->header, this->idx, this->iter);
 
-	makeReference(conf->fasta);
+	//makeReference(conf->fasta);
 }
 
 RecordPreprocessor::~RecordPreprocessor(){

@@ -37,7 +37,7 @@ public:
 	void InitItemRepository(const int size);
 	Scope<AlignedVarsData>* one_region_run(Region region, Configuration* conf, dataPool* data_pool, vector<bamReader> bamReaders);
 	void print_output_variant_simple(const Variant* variant, Region &region, std::string sv, int position, std::string sample);
-	void output(Scope<AlignedVarsData>* mapScope, Configuration& conf);
+	void output(Scope<AlignedVarsData>* mapScope, Configuration* conf);
 	
 private:
 	Scope<AlignedVarsData>** mRepo;

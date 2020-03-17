@@ -8,6 +8,7 @@
 #include "./patterns.h"
 #include "./cmdline.h"
 #include "modes/simpleMode.h"
+#include "modes/somaticMode.h"
 #include <assert.h>
 
 using namespace std;
@@ -562,13 +563,19 @@ int main_single(int argc, char* argv[]){
 	//	mode = conf->bam.hasBam2() ? new SimpleMode() : new SomaticMode();
 	//}else{
 	//}
-
-    SimpleMode *mode = new SimpleMode();
-	cout << "seg size: " << launcher.segments.size() << " - " << launcher.segments[0].size() << endl;
-	mode->process(conf, launcher.segments);
+	if(!conf->bam.hasBam2()){
+		SimpleMode *mode = new SimpleMode();
+		cout << "seg size: " << launcher.segments.size() << " - " << launcher.segments[0].size() << endl;
+		mode->process(conf, launcher.segments);
+		delete mode;
+	}else{
+		SomaticMode *mode = new SomaticMode();
+		cout << "seg size: " << launcher.segments.size() << " - " << launcher.segments[0].size() << endl;
+		mode->process(conf, launcher.segments);
+		delete mode;
+	}
 
 	delete conf;
-	delete mode;
 }
 
 int main(int argc, char* argv[]){

@@ -59,7 +59,7 @@ class Variant {
         int refForwardCoverage;
         int totalPosCoverage;
         double duprate;
-        string genotype;
+        string genotype = "";
         string varallele = "";
         string refallele = "";
         string vartype = "";
@@ -72,11 +72,11 @@ class Variant {
      * @return Returns true if variance is considered noise if the quality is below <code>goodq</code>
      * and there're no more than 3 reads in coverage
      */
-    bool isNoise(Configuration& conf) {
+    bool isNoise(Configuration* conf) {
         const double qual = this->meanQuality;
         if (((qual < 4.5 || (qual < 12 && !this->hasAtLeast2DiffQualities)) && this->positionCoverage <= 3)
-                || (qual < conf.goodq
-                && this->frequency < 2 * conf.lofreq
+                || (qual < conf->goodq
+                && this->frequency < 2 * conf->lofreq
                 && this->positionCoverage <= 1)) {
 
             this->totalPosCoverage -= this->positionCoverage;
@@ -194,21 +194,21 @@ class Variant {
      * @return true if variant meet specified criteria
      */
     bool isGoodVar(Variant* referenceVar, string &type,
-				   set<string> &splice, Configuration& conf) {
+				   set<string> &splice, const Configuration* conf) {
         if (this->refallele.empty()) {
             return false;
         }
         if (type.empty()) {
             type = varType();
         }
-        if (frequency < conf.freq
-                || hicnt < conf.minr
-                || meanPosition < conf.readPosFilter
-                || meanQuality < conf.goodq) {
+        if (frequency < conf->freq
+                || hicnt < conf->minr
+                || meanPosition < conf->readPosFilter
+                || meanQuality < conf->goodq) {
             return false;
         }
 
-        if (referenceVar != NULL && referenceVar->hicnt > conf.minr && frequency < 0.25d) {
+        if (referenceVar != NULL && referenceVar->hicnt > conf->minr && frequency < 0.25d) {
             //The reference allele has much better mean mapq than var allele, thus likely false positives
             double d = meanMappingQuality + refallele.length() + varallele.length();
             double f = (1 + d) / (referenceVar->meanMappingQuality + 1);
@@ -221,19 +221,19 @@ class Variant {
         if (type == "Deletion" && it != splice.end() ) {
             return false;
         }
-        if (highQualityToLowQualityRatio < conf.qratio) {
+        if (highQualityToLowQualityRatio < conf->qratio) {
             return false;
         }
         if (frequency > 0.30) {
             return true;
         }
-        if (meanMappingQuality < conf.mapq) {
+        if (meanMappingQuality < conf->mapq) {
             return false;
         }
-        if (msi >= 15 && frequency <= conf.monomerMsiFrequency && msint == 1) {
+        if (msi >= 15 && frequency <= conf->monomerMsiFrequency && msint == 1) {
             return false;
         }
-        if (msi >= 12 && frequency <= conf.nonMonomerMsiFrequency && msint > 1) {
+        if (msi >= 12 && frequency <= conf->nonMonomerMsiFrequency && msint > 1) {
             return false;
         }
         if (strandBiasFlag == "2;1" && frequency < 0.20) {

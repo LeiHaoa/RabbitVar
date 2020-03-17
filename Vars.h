@@ -31,7 +31,7 @@ class Vars {
     	string sv = "";
 
 		~Vars(){
-			delete referenceVariant;
+			if(referenceVariant) delete referenceVariant;
 			for(Variant* v: variants){
 				delete v;
 			}

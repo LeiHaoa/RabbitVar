@@ -25,6 +25,7 @@ Scope<AlignedVarsData>* SimpleMode::one_region_run(Region region, Configuration*
 	InitialData *init_data = new InitialData;
 
 	RecordPreprocessor *preprocessor = new RecordPreprocessor(region, conf, bamReaders);
+	preprocessor->makeReference(conf->fasta);
 	Scope<InitialData> initialScope(conf->bam.getBam1(), region, &(preprocessor->reference), 0, set<string>(), bamReaders, init_data);
 	double start1 = get_time();
 	CigarParser cp(preprocessor, data_pool);
@@ -104,7 +105,7 @@ void SimpleMode::print_output_variant_simple(const Variant* variant, Region &reg
 		str.emplace_back(std::to_string(variant->duprate)); //duprate
 		str.emplace_back(sv == "" ? "0": sv); //sv
 
-		str.emplace_back(std::to_string(variant->crispr));
+		//str.emplace_back(std::to_string(variant->crispr));
 
 	}
 
@@ -119,7 +120,7 @@ void SimpleMode::print_output_variant_simple(const Variant* variant, Region &reg
 	fwrite(result.c_str(), 1, result.length(), this->file_ptr);
 }
 
-void SimpleMode::output(Scope<AlignedVarsData>* mapScope, Configuration& conf){
+void SimpleMode::output(Scope<AlignedVarsData>* mapScope, Configuration* conf){
 	int lastPosition = 0;
 	std::cout << "alignedvariants size: " << mapScope->data->alignedVariants.size() << std::endl;
 	for (auto& ent : mapScope->data->alignedVariants) {
@@ -139,14 +140,14 @@ void SimpleMode::output(Scope<AlignedVarsData>* mapScope, Configuration& conf){
 
 			//if (variantsOnPosition != null && variantsOnPosition->variants.isEmpty()) {
 			if (variantsOnPosition->variants.size() == 0) {
-				if (!conf.doPileup){
+				if (!conf->doPileup){
 					continue;
 				}
 				Variant *vref = variantsOnPosition->referenceVariant;
 				if (vref == NULL) {
 					//SimpleOutputVariant outputVariant = new SimpleOutputVariant(vref, mapScope->region, variantsOnPosition->sv, position);
 					//variantPrinter.print(outputVariant);
-					print_output_variant_simple(vref, mapScope->region, variantsOnPosition->sv, position, conf.sample);
+					print_output_variant_simple(vref, mapScope->region, variantsOnPosition->sv, position, conf->sample);
 					continue;
 				}
 				vref->vartype = "";
@@ -159,7 +160,7 @@ void SimpleMode::output(Scope<AlignedVarsData>* mapScope, Configuration& conf){
 					}
 					vref->vartype = vref->varType();
 					if (!vref->isGoodVar(variantsOnPosition->referenceVariant, vref->vartype, mapScope->splice, conf)) {
-						if (!conf.doPileup) {
+						if (!conf->doPileup) {
 							continue;
 						}
 					}
@@ -172,12 +173,12 @@ void SimpleMode::output(Scope<AlignedVarsData>* mapScope, Configuration& conf){
 				if ("Complex" == vref->vartype) {
 					vref->adjComplex();
 				}
-				if (conf.crisprCuttingSite == 0) {
+				if (conf->crisprCuttingSite == 0) {
 					vref->crispr = 0;
 				}
 				//SimpleOutputVariant outputVariant = new SimpleOutputVariant(vref, mapScope->region, variantsOnPosition->sv, position);
 				//variantPrinter.print(outputVariant);
-				print_output_variant_simple(vref, mapScope->region, variantsOnPosition->sv, position, conf.sample);
+				print_output_variant_simple(vref, mapScope->region, variantsOnPosition->sv, position, conf->sample);
 			}
 		} catch(...) {
 			cerr << "position" << lastPosition << "error!!" << std::endl;
@@ -218,7 +219,7 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 		cout << "interest region info: " << region.start << "-" << region.end << endl;
 		dataPool *data_pool = new dataPool(region.end - region.start);
 		Scope<AlignedVarsData> *avd_p = one_region_run(region, conf, data_pool, bamReaders);
-		output(avd_p, *conf);
+		output(avd_p, conf);
 
 		for(bamReader br: bamReaders){
 			//free idx;
@@ -309,11 +310,11 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
             #pragma omp critical
 			{
 				mRepo[mRepo_pos] = avd_p;
-				output(avd_p, *conf);
+				output(avd_p, conf);
 				mRepo_pos++;
 			}
 			delete avd_p->data;
-			delete avd_p;
+			//delete avd_p;
 		}
 		//#pragma omp single
 		//for(int i = 0; i < mRepo_pos; i++){
@@ -349,9 +350,9 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 		}
 
 		delete[] trs;
-		fclose(this->file_ptr);
 
 		for(int i = 0; i < processor_num; i++)
 			cerr << "thread: " << i << " time: " << time[i] << endl;
 	}
+	fclose(this->file_ptr);
 }
