@@ -25,7 +25,7 @@ void SomaticMode::InitItemRepository(const int size){
 	mRepo_pos = 0;
 }
 
-Scope<AlignedVarsData>* one_region_run(Region region, Configuration* conf, dataPool* data_pool, vector<bamReader> &bamReaders){
+static Scope<AlignedVarsData>* one_region_run(Region region, Configuration* conf, dataPool* data_pool, vector<bamReader> &bamReaders, set<string> *splice){
 //AlignedVarsData* one_region_run(Region region, Configuration* conf, dataPool* data_pool){
 	
 	cout << "reader info2: " << static_cast<void*>(bamReaders[0].in) << " " << static_cast<void*>(bamReaders[0].header) << " "  <<static_cast<void*>(bamReaders[0].idx) << endl;
@@ -36,7 +36,7 @@ Scope<AlignedVarsData>* one_region_run(Region region, Configuration* conf, dataP
 	InitialData *init_data = new InitialData;
 
 	RecordPreprocessor *preprocessor = new RecordPreprocessor(region, conf, bamReaders);
-	Scope<InitialData> initialScope(conf->bam.getBam1(), region, &(preprocessor->reference), 0, set<string>(), bamReaders, init_data);
+	Scope<InitialData> initialScope(conf->bam.getBam1(), region, &(preprocessor->reference), 0, splice, bamReaders, init_data);
 	double start1 = get_time();
 	CigarParser cp(preprocessor, data_pool);
 	Scope<VariationData> svd =  cp.process(initialScope);
@@ -68,7 +68,7 @@ Scope<AlignedVarsData>* one_region_run(Region region, Configuration* conf, dataP
 	return avd;
 }
 
-ScopePair one_region_run_somt(Region region, Configuration* conf, SomaticThreadResource &trs){
+static ScopePair one_region_run_somt(Region region, Configuration* conf, SomaticThreadResource &trs, set<string>* splice){
 	//DataScope dscope;
 	//dscope.region = region;
 	dataPool *data_pool = trs.data_pool;
@@ -79,7 +79,7 @@ ScopePair one_region_run_somt(Region region, Configuration* conf, SomaticThreadR
 	preprocessor->makeReference(conf->fasta);
 	Reference *common_ref = &(preprocessor->reference);
 
-	Scope<InitialData> initialScope1(conf->bam.getBam1(), region, common_ref, 0, set<string>(), trs.bamReaders[0], init_data);
+	Scope<InitialData> initialScope1(conf->bam.getBam1(), region, common_ref, 0, splice, trs.bamReaders[0], init_data);
 	CigarParser cp(preprocessor, data_pool);
 	Scope<VariationData> svd =  cp.process(initialScope1);
 
@@ -97,7 +97,7 @@ ScopePair one_region_run_somt(Region region, Configuration* conf, SomaticThreadR
 	//data_pool->reset();
 	InitialData *init_data2 = new InitialData;
 	RecordPreprocessor *preprocessor2 = new RecordPreprocessor(region, conf, trs.bamReaders[1]);
-	Scope<InitialData> initialScope2(conf->bam.getBam2(), region, common_ref, avd->maxReadLength, set<string>(), trs.bamReaders[1], init_data2);
+	Scope<InitialData> initialScope2(conf->bam.getBam2(), region, common_ref, avd->maxReadLength, splice, trs.bamReaders[1], init_data2);
 	CigarParser cp2(preprocessor2, data_pool); //is this instance necessory?
 	Scope<VariationData> svd2 = cp2.process(initialScope2);
 	VariationRealigner var_realinger2(conf, data_pool);
@@ -230,7 +230,7 @@ string SomaticMode::print_output_variant_simple(Variant* beginVariant, Variant* 
 string SomaticMode::output(Scope<AlignedVarsData>* scopeFromBam1, Scope<AlignedVarsData>* scopeFromBam2, SomaticThreadResource &trs){
 	string output_string;
 	Region region = scopeFromBam1->region;
-	set<string>& splice = scopeFromBam1->splice;
+	set<string>* splice = scopeFromBam1->splice;
 	robin_hood::unordered_map<int, Vars*> &variationsFromBam1 = scopeFromBam1->data->alignedVariants;
 	robin_hood::unordered_map<int, Vars*> &variationsFromBam2 = scopeFromBam2->data->alignedVariants;
 
@@ -286,7 +286,7 @@ string SomaticMode::output(Scope<AlignedVarsData>* scopeFromBam1, Scope<AlignedV
  * @param isFirstCover if the first calling
  * @param varLabel type of variation (LikelyLOH, LikelySomatic, Germline, AFDiff, StrongSomatic)
  * */
-string SomaticMode::callingForOneSample(Vars* variants, bool isFirstCover, string &varLabel, Region &region, set<string> &splice) {
+string SomaticMode::callingForOneSample(Vars* variants, bool isFirstCover, string &varLabel, Region &region, set<string> *splice) {
 	if (variants->variants.empty()) {
 		return "";
 	}
@@ -314,7 +314,7 @@ string SomaticMode::callingForOneSample(Vars* variants, bool isFirstCover, strin
 	return one_sample_string;
 }
 
-string SomaticMode::callingForBothSamples(int position, Vars* v1, Vars* v2, Region& region, set<string>& splice, int& maxReadLength, SomaticThreadResource &trs)  {
+string SomaticMode::callingForBothSamples(int position, Vars* v1, Vars* v2, Region& region, set<string>* splice, int& maxReadLength, SomaticThreadResource &trs)  {
 	if (v1->variants.empty() && v2->variants.empty()) {
 		return "";
 	}
@@ -332,7 +332,7 @@ string SomaticMode::callingForBothSamples(int position, Vars* v1, Vars* v2, Regi
  * @param v1 variations from BAM1 on target position
  * @param v2 variations from BAM2 on target position
  */
-string SomaticMode::printVariationsFromFirstSample(int position, Vars* v1, Vars* v2, Region& region, set<string>& splice, int& maxReadLength, SomaticThreadResource &trs){
+string SomaticMode::printVariationsFromFirstSample(int position, Vars* v1, Vars* v2, Region& region, set<string>* splice, int& maxReadLength, SomaticThreadResource &trs){
 	string first_sample_string;
 	int numberOfProcessedVariation = 0;
 	while (numberOfProcessedVariation < v1->variants.size()
@@ -464,7 +464,7 @@ string SomaticMode::printVariationsFromFirstSample(int position, Vars* v1, Vars*
  * @param v1 variations from BAM1 on target position
  * @param v2 variations from BAM2 on target position
  * */
-string SomaticMode::printVariationsFromSecondSample(int position, Vars* v1, Vars* v2, Region region, set<string> &splice, int& maxReadLength, SomaticThreadResource &trs){
+string SomaticMode::printVariationsFromSecondSample(int position, Vars* v1, Vars* v2, Region region, set<string> *splice, int& maxReadLength, SomaticThreadResource &trs){
 	string second_sample_string;
     for (Variant *v2var : v2->variants) {
         v2var->vartype = v2var->varType();
@@ -537,7 +537,7 @@ string SomaticMode::printVariationsFromSecondSample(int position, Vars* v1, Vars
  * @param variantToCompare a variation to be compared
  * @return type of variation (LikelyLOH, LikelySomatic, Germline, AFDiff, StrongSomatic)
  * */
-string SomaticMode::determinateType(Vars* variants, Variant* standardVariant, Variant* variantToCompare, set<string> &splice) {
+string SomaticMode::determinateType(Vars* variants, Variant* standardVariant, Variant* variantToCompare, set<string> *splice) {
 	string type;
 	if (variantToCompare->isGoodVar(variants->referenceVariant, standardVariant->vartype, splice, conf)) {
         if (standardVariant->frequency > (1 - conf->lofreq) && variantToCompare->frequency < 0.8d && variantToCompare->frequency > 0.2d) {
@@ -580,7 +580,7 @@ string SomaticMode::determinateType(Vars* variants, Variant* standardVariant, Va
  */
 CombineAnalysisData SomaticMode::combineAnalysis(Variant* variant1, Variant* variant2,
 									string& chrName, int position,
-									string& descriptionString, set<string>& splice,
+									string& descriptionString, set<string>* splice,
 												 int maxReadLength, SomaticThreadResource &trs){
 	cout << "Start Conbine Analysis!!" << endl;
 	//Configuration config = instance().conf;
@@ -601,7 +601,7 @@ CombineAnalysisData SomaticMode::combineAnalysis(Variant* variant1, Variant* var
 		merged_bamReaders.insert(merged_bamReaders.end(), bami.begin(), bami.end());
 	}
 	//---我觉得传thread resource这个数据结构比价好。---------
-	AlignedVarsData *tpl = one_region_run(region, conf, trs.data_pool, merged_bamReaders)->data;
+	AlignedVarsData *tpl = one_region_run(region, conf, trs.data_pool, merged_bamReaders, splice)->data;
 
     maxReadLength = tpl->maxReadLength;
 	robin_hood::unordered_map<int, Vars*> &vars = tpl->alignedVariants;
@@ -725,7 +725,8 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 		region = segments[0][0];
 		//dscope.region = region;
 		cout << "interest region info: " << region.start << "-" << region.end << endl;
-		ScopePair pair = one_region_run_somt(region, conf, trs);
+		set<string> splice;
+		ScopePair pair = one_region_run_somt(region, conf, trs, &splice);
 		cout << output(pair.normal_scope, pair.tumor_scope, trs) << endl;
 
 		for(Variation* variation: trs.data_pool->_data){
@@ -815,7 +816,8 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 			reg = mRegs[i];
 			data_pool = trs[thread_id].data_pool;
 			cout <<"thread: " << omp_get_thread_num() << "region id: " << i <<" processing: " << reg.chr << " - " << reg.start << " - " << reg.end  << endl;
-			ScopePair pair = one_region_run_somt(reg, conf, trs[thread_id]);
+			set<string> splice;
+			ScopePair pair = one_region_run_somt(reg, conf, trs[thread_id], &splice);
 			double end2 = get_time();
 			//cerr << " omp time: " << end2 - start2 << endl;
 			time[omp_get_thread_num()] += end2 - start2;

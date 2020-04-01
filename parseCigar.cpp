@@ -473,7 +473,7 @@ Scope<VariationData> CigarParser::process(Scope<InitialData> scope){
 	//	printf("%d - %d\n", pos, sc->varsCount);
 	//}
 	//------------------------------------
-	VariationData *vardata = new VariationData(nonInsertionVariants, insertionVariants, &positionToInsertionCount, &positionToDeletionCount, refCoverage, softClips5End, softClips3End, &splice, &mnp, &spliceCount, 0);
+	VariationData *vardata = new VariationData(nonInsertionVariants, insertionVariants, &positionToInsertionCount, &positionToDeletionCount, refCoverage, softClips5End, softClips3End, splice, &mnp, &spliceCount, 0);
 	//Scope<VariationData> toData(conf->bam.getBamRaw(), this->region, this->reference, this->maxReadLength, this->splice, vardata);
 	Scope<VariationData> toData(scope.bam, scope.region, scope.regionRef, maxReadLength, scope.splice, scope.bamReaders, vardata);
 	//------------------------------------
@@ -1885,7 +1885,7 @@ void CigarParser::processNotMatched() {
 	//stringstream ss;
 	//ss << start - 1 << "-" << start + cigar_element_length - 1;
     string key = std::to_string(start - 1) + "-" + std::to_string(start + cigar_element_length - 1);
-    splice.insert(key); //it samely no use 
+    splice->insert(key); //it samely no use 
 
 	if(spliceCount.find(key) == spliceCount.end()){
 		spliceCount[key] = vector<int>();

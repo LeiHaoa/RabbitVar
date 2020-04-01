@@ -14,8 +14,7 @@ void SimpleMode::InitItemRepository(const int size){
 	mRepo = new Scope<AlignedVarsData>*[size];
 	mRepo_pos = 0;
 }
-Scope<AlignedVarsData>* SimpleMode::one_region_run(Region region, Configuration* conf, dataPool* data_pool, vector<bamReader> bamReaders){
-//AlignedVarsData* one_region_run(Region region, Configuration* conf, dataPool* data_pool){
+Scope<AlignedVarsData>* SimpleMode::one_region_run(Region region, Configuration* conf, dataPool* data_pool, vector<bamReader> bamReaders, set<string>* splice){
 	
 	cout << "reader info2: " << static_cast<void*>(bamReaders[0].in) << " " << static_cast<void*>(bamReaders[0].header) << " "  <<static_cast<void*>(bamReaders[0].idx) << endl;
 	//DataScope dscope;
@@ -26,7 +25,7 @@ Scope<AlignedVarsData>* SimpleMode::one_region_run(Region region, Configuration*
 
 	RecordPreprocessor *preprocessor = new RecordPreprocessor(region, conf, bamReaders);
 	preprocessor->makeReference(conf->fasta);
-	Scope<InitialData> initialScope(conf->bam.getBam1(), region, &(preprocessor->reference), 0, set<string>(), bamReaders, init_data);
+	Scope<InitialData> initialScope(conf->bam.getBam1(), region, &(preprocessor->reference), 0, splice, bamReaders, init_data);
 	double start1 = get_time();
 	CigarParser cp(preprocessor, data_pool);
 	Scope<VariationData> svd =  cp.process(initialScope);
@@ -111,10 +110,13 @@ void SimpleMode::print_output_variant_simple(const Variant* variant, Region &reg
 
 	//----join print----//
 	string result = "";
-	for(auto& s: str){
+	//for(auto& s: str){
+	int str_len = str.size();
+	for(int i = 0; i < str_len - 1; i++){
 		//std::cerr << s << "\t";
-		result.append(s).append("\t");
+		result.append(str[i]).append("\t");
 	}
+	result.append(str[str_len - 1]);
 	result += "\n";
 	//std::cerr << std::endl;
 	fwrite(result.c_str(), 1, result.length(), this->file_ptr);
@@ -218,7 +220,8 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 		//dscope.region = region;
 		cout << "interest region info: " << region.start << "-" << region.end << endl;
 		dataPool *data_pool = new dataPool(region.end - region.start);
-		Scope<AlignedVarsData> *avd_p = one_region_run(region, conf, data_pool, bamReaders);
+		set<string> splice;
+		Scope<AlignedVarsData> *avd_p = one_region_run(region, conf, data_pool, bamReaders, &splice);
 		output(avd_p, conf);
 
 		for(bamReader br: bamReaders){
@@ -299,7 +302,8 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 			reg = mRegs[i];
 			data_pool = trs[thread_id].data_pool;
 			//cerr <<"thread: " << omp_get_thread_num() << " region id: " << i <<"  processing: " << reg.chr << " - " << reg.start << " - " << reg.end  << endl;
-			Scope<AlignedVarsData> *avd_p = one_region_run(reg, conf, data_pool, trs[thread_id].bamReaders);
+			set<string> splice;
+			Scope<AlignedVarsData> *avd_p = one_region_run(reg, conf, data_pool, trs[thread_id].bamReaders, &splice);
 			//add alignedVars to data repo	
 			
 			double end2 = get_time();

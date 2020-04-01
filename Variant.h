@@ -193,8 +193,8 @@ class Variant {
      * @param splice set of strings representing introns in splice
      * @return true if variant meet specified criteria
      */
-    bool isGoodVar(Variant* referenceVar, string &type,
-				   set<string> &splice, const Configuration* conf) {
+    bool isGoodVar(Variant* referenceVar, string type,
+				   set<string> *splice, const Configuration* conf) {
         if (this->refallele.empty()) {
             return false;
         }
@@ -217,8 +217,8 @@ class Variant {
                 return false;
             }
         }
-		set<std::string>::iterator it = find(splice.begin(), splice.end(), startPosition + "-" + endPosition);
-        if (type == "Deletion" && it != splice.end() ) {
+		set<std::string>::iterator it = find(splice->begin(), splice->end(), startPosition + "-" + endPosition);
+        if (type == "Deletion" && it != splice->end() ) {
             return false;
         }
         if (highQualityToLowQualityRatio < conf->qratio) {

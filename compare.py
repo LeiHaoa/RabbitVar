@@ -163,15 +163,19 @@ def is_same_var_stat(jri, cri):
 def compare(cpp_result, java_resutl):
     cr = list()
     jr = list()
+    #cr_len = list()
+    #jr_len = list()
     with open(cpp_result, 'r') as f:
         for var in f:
             items = var.split('\t')
+            #cr_len.append(len(items))
             if(len(items) > 35):
                 cr.append(items)
         
     with open(java_resutl, 'r') as f:
         for var in f:
             items = var.split('\t')
+            #jr_len.append(len(items))
             if(len(items) > 35):
                 jr.append(items)
 
@@ -185,7 +189,7 @@ def compare(cpp_result, java_resutl):
             #if is_same_var(jr_i, cr_i):
                 result += 1
                 break
-
+    #print("len info: \n", cr_len, jr_len)
     print("accurcy: ", cpp_len, java_len, result, result/float(cpp_len))
 
 

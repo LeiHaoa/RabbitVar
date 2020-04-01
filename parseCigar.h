@@ -117,7 +117,7 @@ private:
     //SVStructures svStructures;
 
     Region region;
-    set<string> splice;
+    set<string> *splice;
     Reference *reference;
     int maxReadLength = 0;
 

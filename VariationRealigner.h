@@ -110,7 +110,7 @@ private:
     //ReferenceResource referenceResource;
     Reference *reference;
     Region region;
-    set<string> splice;
+    //set<string> *splice;
     string chr;
     int maxReadLength;
     double duprate;

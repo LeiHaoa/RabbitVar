@@ -21,7 +21,7 @@ using namespace std;
 
 bool COMP2(SortPositionSclip *o1, SortPositionSclip *o2) {
     if(o1->softClip->varsCount != o2->softClip->varsCount)
-        return o1->softClip->varsCount > o1->softClip->varsCount;
+        return o1->softClip->varsCount > o2->softClip->varsCount;
     else 
 		return o1->position < o2->position;
 }
@@ -175,7 +175,7 @@ void VariationRealigner::initFromScope(Scope<VariationData> scope) {
         this->bams = ssplit(scope.bam, ":") ;
     this->bam = scope.bam;
     this->mnp = scope.data->mnp;
-    this->splice = scope.splice;
+    //this->splice = scope.splice;
     //this->svStructures = scope.data->svStructures;
     this->duprate = scope.data->duprate;
     //this->variantPrinter = scope.out;
