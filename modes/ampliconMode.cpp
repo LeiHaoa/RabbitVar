@@ -299,7 +299,7 @@ void AmpliconMode::multi_regions_from_bed(vector<vector<Region> > &segments){
 
 
 void AmpliconMode::process(vector<vector<Region> > &segments){
-	this->file_ptr = fopen("./tmp.vcf", "wb");
+	this->file_ptr = fopen(conf->outFileName.c_str(), "wb");
 	/* use interest region parameter: single thread*/
 	if(conf->regionOfInterest != ""){
 		interest_region_from_cmd(segments);

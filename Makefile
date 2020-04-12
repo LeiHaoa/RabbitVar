@@ -12,7 +12,7 @@ FLAGS= -std=c++11 -lhts -O3 -g -qopenmp -ffast-math
 
 #$(CC) parseCigar.o $(FLAGS) -I$(INCLUDE) -L$(LIBS)   -o parseCigar 
 
-OBJS= Launcher.o RegionBuilder.o parseCigar.o recordPreprocessor.o VariationRealigner.o ToVarsBuilder.o  simpleMode.o somaticMode.o ampliconMode.o
+OBJS= Launcher.o RegionBuilder.o cigarModifier.o parseCigar.o recordPreprocessor.o VariationRealigner.o ToVarsBuilder.o  simpleMode.o somaticMode.o ampliconMode.o
 
 launcher: $(OBJS)
 	$(CC) -o launcher $(OBJS) $(FLAGS) -I$(INCLUDE) -L$(LIBS) 
@@ -20,11 +20,11 @@ launcher: $(OBJS)
 recordPreprocessor.o:recordPreprocessor.cpp
 	$(CC) -c recordPreprocessor.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
 
+cigarModifier.o:cigarModifier.cpp
+	$(CC) -c cigarModifier.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
+
 parseCigar.o:parseCigar.cpp
 	$(CC) -c parseCigar.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
-
-##launcher:Launcher.o RegionBuilder.o
-##	$(CC) -o launcher Launcher.o RegionBuilder.o  $(FLAGS) -I$(INCLUDE) -L$(LIBS) 
 
 RegionBuilder.o: RegionBuilder.cpp
 	$(CC) -c RegionBuilder.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)

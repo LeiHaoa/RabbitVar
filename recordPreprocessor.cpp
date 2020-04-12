@@ -11,23 +11,7 @@ RecordPreprocessor::RecordPreprocessor(Region region, Configuration *conf, vecto
 	this->region = region;
 	this->conf = conf;
 	this->bamReaders_pre = bamReaders;
-	//string infname;
-	//if( (infname = conf->bam.getBam1()) != ""){
-	//	in = sam_open(infname.c_str(), "r");
-	//}else{
-	//	cerr << "no vailde bam file!" << endl;
-	//}
-	//if(in){
-	//	header = sam_hdr_read(in);
-	//	idx = sam_index_load(in, infname.c_str());
-	//	assert(idx != NULL);
-	//	iter = sam_itr_querys(idx, header, region_string.c_str());
-	//	printf("in preprocessor: region_string: %s\n", region_string.c_str());
-	//}else{
-	//	printf("open file %s error!!\n", infname.c_str());
-	//	exit(0);
-	//}
-	printf("debug info: bamsize: %d\n", bamReaders_pre.size());
+
 	bamReader &bam_reader1 = bamReaders_pre.back();
 	this->in = bam_reader1.in;
  	string region_string = "";
@@ -36,7 +20,7 @@ RecordPreprocessor::RecordPreprocessor(Region region, Configuration *conf, vecto
 	this->idx = bam_reader1.idx;
 	bamReaders_pre.pop_back();
 	if(bamReaders_pre.size() == 0){
-		printf("bamreader size = 0\n");
+		//printf("bamreader size = 0\n");
 		hasAnotherBam = false;
 	}
 
@@ -104,21 +88,14 @@ string getMateReferenceName(bam_hdr_t* header, bam1_t* record) {
 	return string(header->target_name[record->core.mtid]);
 }
 
-//inline int getMateAlignmentStart(bam1_t* record){
-//	return record->core.mpos + 1;
+//inline string get_cigar_string(uint32_t* cigar, int n_cigar){
+//	string ss;
+//	for(int i = 0; i < n_cigar; i++){
+//		ss += to_string(bam_cigar_oplen(cigar[i])) + bam_cigar_opchr(cigar[i]);
+//	}
+//	//printf("counter is : --> %d, cigar: %s\n", count, ss.c_str());
+//	return ss;
 //}
-//inline int getAlignmentStart(bam1_t* record){
-//	return record->core.pos+1;
-//}
-
-inline string get_cigar_string(uint32_t* cigar, int n_cigar){
-	string ss;
-	for(int i = 0; i < n_cigar; i++){
-		ss += to_string(bam_cigar_oplen(cigar[i])) + bam_cigar_opchr(cigar[i]);
-	}
-	//printf("counter is : --> %d, cigar: %s\n", count, ss.c_str());
-	return ss;
-}
 
 int RecordPreprocessor::next_record(bam1_t *record){
 	int ret = 0;

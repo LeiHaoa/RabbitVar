@@ -28,10 +28,9 @@ void SomaticMode::InitItemRepository(const int size){
 static Scope<AlignedVarsData>* one_region_run(Region region, Configuration* conf, dataPool* data_pool, vector<bamReader> &bamReaders, set<string> *splice){
 //AlignedVarsData* one_region_run(Region region, Configuration* conf, dataPool* data_pool){
 	
-	cout << "reader info2: " << static_cast<void*>(bamReaders[0].in) << " " << static_cast<void*>(bamReaders[0].header) << " "  <<static_cast<void*>(bamReaders[0].idx) << endl;
+	//cout << "reader info2: " << static_cast<void*>(bamReaders[0].in) << " " << static_cast<void*>(bamReaders[0].header) << " "  <<static_cast<void*>(bamReaders[0].idx) << endl;
 	//DataScope dscope;
 	//dscope.region = region;
-	cout << "bam reader size: " << bamReaders.size() << endl;
 	data_pool->reset();
 	InitialData *init_data = new InitialData;
 
@@ -85,11 +84,10 @@ static ScopePair one_region_run_somt(Region region, Configuration* conf, Somatic
 
 	VariationRealigner var_realinger(conf, data_pool);
 	Scope<RealignedVariationData> rvd = var_realinger.process(svd);
-	cout << "valide count : " << var_realinger.debug_valide_count << endl;
+	//cout << "valide count : " << var_realinger.debug_valide_count << endl;
 
 	ToVarsBuilder vars_builder(conf);
 	Scope<AlignedVarsData> *avd = vars_builder.process(rvd);
-	cout << "------------------------bam1 end!-------------------------------"<<endl;
 	
 	//TODO: about bam2
 	//1. preprocessor difference step use difference preprocessor
@@ -582,8 +580,7 @@ CombineAnalysisData SomaticMode::combineAnalysis(Variant* variant1, Variant* var
 									string& chrName, int position,
 									string& descriptionString, set<string>* splice,
 												 int maxReadLength, SomaticThreadResource &trs){
-	cout << "Start Conbine Analysis!!" << endl;
-	//Configuration config = instance().conf;
+	//cout << "Start Conbine Analysis!!" << endl;
     // Don't do it for structural variants
     if (variant1->endPosition - variant1->startPosition > conf->SVMINLEN) {
         return CombineAnalysisData(maxReadLength, EMPTY_STRING);
@@ -680,7 +677,7 @@ CombineAnalysisData SomaticMode::combineAnalysis(Variant* variant1, Variant* var
 void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments){
 	
 	this->conf = conf;
-	this->file_ptr = fopen("./tmp.vcf", "wb");
+	this->file_ptr = fopen(conf->outFileName.c_str(), "wb");
 	//--------------use interest region parameter: singel thread-------------------//
 	if(conf->regionOfInterest != ""){
 		//DataScope dscope;
@@ -724,7 +721,6 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 		Region region;
 		region = segments[0][0];
 		//dscope.region = region;
-		cout << "interest region info: " << region.start << "-" << region.end << endl;
 		set<string> splice;
 		ScopePair pair = one_region_run_somt(region, conf, trs, &splice);
 		cout << output(pair.normal_scope, pair.tumor_scope, trs) << endl;
@@ -739,7 +735,7 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 	//-------------------use bed file: multithreads------------------------//
 	else 
 	{
-		cout << "bed file name: " << conf->bed << " and regions is: " << endl;
+		cout << "[info] bed file name: " << conf->bed << endl;
 		Region reg;
 		//vector<Region> regs;
 		dataPool* data_pool;
@@ -758,7 +754,7 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 		
 		int processor_num = conf->threads;
 		omp_set_num_threads(processor_num);
-		cout << "num threads: " << processor_num << endl;
+		cout << "[info] num threads: " << processor_num << endl;
         #pragma omp parallel
 		{
             #pragma omp single
@@ -782,7 +778,7 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 						idx = sam_index_load(in, bamname.c_str());
 						assert(idx != NULL);
 					}else{
-						printf("read bamFile: %s error!", bamname.c_str());
+						cerr << "read bamFile: " << bamname <<  " error!" << endl;
 						exit(1);
 					}
 					trs[t].bamReaders[0].emplace_back(bamReader(in, header, idx));
@@ -798,7 +794,7 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 						idx = sam_index_load(in, bamname.c_str());
 						assert(idx != NULL);
 					}else{
-						printf("read bamFile: %s error!", bamname.c_str());
+						cerr << "read bamFile: " << bamname <<  " error!" << endl;
 						exit(1);
 					}
 					trs[t].bamReaders[1].emplace_back(bamReader(in, header, idx));
@@ -815,7 +811,7 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 			int thread_id = omp_get_thread_num();
 			reg = mRegs[i];
 			data_pool = trs[thread_id].data_pool;
-			cout <<"thread: " << omp_get_thread_num() << "region id: " << i <<" processing: " << reg.chr << " - " << reg.start << " - " << reg.end  << endl;
+			//cout <<"thread: " << omp_get_thread_num() << "region id: " << i <<" processing: " << reg.chr << " - " << reg.start << " - " << reg.end  << endl;
 			set<string> splice;
 			ScopePair pair = one_region_run_somt(reg, conf, trs[thread_id], &splice);
 			double end2 = get_time();

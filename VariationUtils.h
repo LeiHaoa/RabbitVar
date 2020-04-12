@@ -463,11 +463,9 @@ inline string findconseq(Sclip *softClip, int dir) {
         bool mm2 = regex_search(SEQ, regex("^.TTTTTTT"));
 		//printf("SEQ3: %s\n", SEQ.c_str());
         if (mm1 || mm2) {
-			printf("used set to true 1\n");
             softClip->used = true;
         }
         if (islowcomplexseq(SEQ)) {
-			printf("used set to true 2: %s\n", SEQ.c_str());
             softClip->used = true;
         }
     }
@@ -487,10 +485,6 @@ inline string findconseq(Sclip *softClip, int dir) {
     */
     softClip->sequence = SEQ;
 
-	//if(SEQ == "TACCGATCGGA"){
-	//	printf("i found it!\n");
-	//}
-	//printf("consequence: %s\n", SEQ.c_str());
     return SEQ;
 }
 
@@ -544,5 +538,72 @@ inline int getAlignedLength(uint32_t* cigar, int n_cigar){
 	}
 	return length;
 }
-//-----------------about htslib operation----------------------
+//-----------------about cigar operation----------------------
+
+inline string get_cigar_string(uint32_t* cigar, int n_cigar){
+	string ss;
+	for(int i = 0; i < n_cigar; i++){
+		ss += to_string(bam_cigar_oplen(cigar[i])) + bam_cigar_opchr(cigar[i]);
+	}
+	//printf("counter is : --> %d, cigar: %s\n", count, ss.c_str());
+	return ss;
+}
+inline int cigar_chr2op(char chr){
+    int op = 0;
+    switch(chr){
+    case 'M':
+        op = BAM_CMATCH;
+        break;
+    case 'I':
+        op = BAM_CINS;
+        break;
+    case 'D':
+        op = BAM_CDEL;
+        break;
+    case 'N':
+        op = BAM_CREF_SKIP;
+        break;
+    case 'S':
+        op = BAM_CSOFT_CLIP;
+        break;
+    case 'H':
+        op = BAM_CHARD_CLIP;
+        break;
+    case 'P':
+        op = BAM_CPAD;
+        break;
+    case '=':
+        op = BAM_CEQUAL;
+        break;
+    case 'X':
+        op = BAM_CDIFF;
+        break;
+    case 'B':
+        op = BAM_CBACK;
+        break;
+    }
+    return op;
+}
+inline bool cigarstr_2cigar(string &cigstr, uint32_t* cigar, int &n_cigar){
+    n_cigar = 0;
+    size_t po = 0;
+    int num;
+    int op;
+    uint32_t cigar_elem;
+    while(!cigstr.empty()){
+        num = stoi(cigstr, &po);
+		if(num < 0) {
+			cout << "neg number: " << num << endl;
+			return false;
+		}
+        cigar_elem = num << BAM_CIGAR_SHIFT;
+        op = cigar_chr2op(cigstr[po]);
+        cigar_elem = cigar_elem | op;
+        //cout << "pos: " << po << " num: " << num  << " op: " << op << endl;
+        cigstr = cigstr.substr(++po);
+        cigar[n_cigar] = cigar_elem;
+        n_cigar++;
+    }
+	return true;
+}
 #endif

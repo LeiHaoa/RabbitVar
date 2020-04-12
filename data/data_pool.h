@@ -10,7 +10,6 @@ public:
 	int _size;
 
 	dataPool(int init_size){
-		cout << "init a variation with size: " << init_size << endl;
 		//_data.resize(init_size);
 		_data.reserve(init_size);
 		_size = init_size;

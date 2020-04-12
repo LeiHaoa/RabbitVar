@@ -4,12 +4,13 @@
 #include <string>
 //#include <unordered_map>
 #include "../robin_hood.h"
-#include <list>
+//#include <list>
+#include <vector>
 /**
  * Class to store already loaded region in reference to avoid excess operations on it
  */
 struct LoadedRegion {
-	string chr;
+	std::string chr;
 	int sequenceStart;
 	int sequenceEnd;
 };
@@ -19,9 +20,9 @@ struct LoadedRegion {
  */
 class Reference {
 public:
-    list<LoadedRegion*> loadedRegions;
+	std::vector<LoadedRegion*> loadedRegions;
     robin_hood::unordered_map<int, char> referenceSequences;
-    robin_hood::unordered_map<string, list<int>> seed;
+    robin_hood::unordered_map<std::string, std::vector<int>> seed;
 	int ref_start;
 	int ref_end;
 

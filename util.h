@@ -158,4 +158,20 @@ inline double roundHalfEven(string bit, double value) {
 		return value;
 }
 
+inline int globalFindAndSum(regex &pattern, string& str){
+	int result = 0;
+	smatch sm;
+	//while(regex_search(str, sm, pattern)){
+	//	result += std::stoi(sm.str(1));
+	//}
+	string::const_iterator searchStart( str.cbegin() );
+	while ( regex_search( searchStart, str.cend(), sm, pattern) )
+    {
+        result += std::stoi(sm.str(1));
+        searchStart = sm.suffix().first;
+    }
+	return result;
+}
+
+
 #endif

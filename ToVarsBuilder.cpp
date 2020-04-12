@@ -201,7 +201,8 @@ Scope<AlignedVarsData>* ToVarsBuilder::process(Scope<RealignedVariationData> &sc
 			//---------pirnt vars over------------//
 		 } catch(...){// (Exception exception) {
 			 //printExceptionAndContinue(exception, "position", string.valueOf(lastPosition), region);
-			 printf("in ToVarsBuilder, error!!\n");
+			 cerr << "in ToVarsBuilder, error!!\n" << endl;
+			 exit(0);
 		 }
 	}
 

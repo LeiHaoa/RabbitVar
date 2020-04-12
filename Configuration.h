@@ -369,6 +369,11 @@ public:
      //PrinterType printerType = PrinterType.OUT;
 
     /**
+     * output file name
+     */
+	string outFileName = "./out.vcf";
+
+    /**
      * Exception counter
      * */
      //AtomicInteger exceptionCounter = new AtomicInteger(0);

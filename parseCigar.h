@@ -123,6 +123,8 @@ private:
 
     uint32_t* cigar;
 	bam1_t* record;
+	int n_cigar;
+
     int start;
     int totalReads;
     int duplicateReads;

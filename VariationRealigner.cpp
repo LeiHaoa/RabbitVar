@@ -143,9 +143,7 @@ Scope<RealignedVariationData> VariationRealigner::process(Scope<VariationData> &
     adjustMNP();
 	//print_result();
     if (conf->performLocalRealignment) {
-		cout << "--------------realignIndels!!------------" << endl;
         realignIndels();
-		cout << "--------------realignIndels over!!------------" << endl;
 	}
 	//print_result();
 	//exit(0);
@@ -470,26 +468,21 @@ void VariationRealigner::adjustMNP() {
 void VariationRealigner::realignIndels()  {
     //if (conf.y) printf("Start Realigndel");
     
-	//print_result();
     realigndel(&bams, *positionToDeletionCount);
-	printf("---------------------after realigdel--------------------------\n");
 
 	//print_result();
 	//if (conf.y) printf("Start Realignins");
 
     realignins(*positionToInsertionCount);
     
-	//print_result();
 	//if (conf.y) printf("Start Realignlgdel");
 
-    //TODO SV相关没写完
+    //TODO SV
     //realignlgdel(svStructures.svfdel, svStructures.svrdel);
     
 	//if (conf.y) printf("Start Realignlgins30");
 
-	printf("------------------------------start 30--------------------------------------------\n");
     realignlgins30();
-	printf("------------------------------end 30--------------------------------------------\n");
 	//print_result();
   	//if (conf.y) printf("Start Realignlgins");
     //realignlgins(svStructures.svfdup, svStructures.svrdup);
@@ -792,7 +785,8 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, robin_hood::u
             }
         } catch(...){// (Exception exception) {
             //printExceptionAndContinue(exception, "variant", string.valueOf(lastPosition), region);
-			printf("an exception casued!!");
+			cerr << "an exception casued!!" << endl;
+			exit(0);
         }
     }
 
@@ -958,30 +952,24 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, robin_hood::u
                     }
 
                     if (!nonInsertionVariants->count(mismatchPosition)) {
-						//printf("continue 1\n");
                         continue;
                     }
 
                     
                     if (!nonInsertionVariants->at(mismatchPosition)->variation_map.count(mismatchBases)) {
-						//printf("continue 2\n");
                         continue;
                     }
                     Variation* variation = nonInsertionVariants->at(mismatchPosition)->variation_map[mismatchBases];
                     if (variation->varsCount == 0) {
-						//printf("continue 3\n");
                         continue;
                     }
                     if (variation->meanQuality / variation->varsCount < conf->goodq) {
-						//printf("continue 4\n");
                         continue;
                     }
                     if (variation->meanPosition / variation->varsCount > (mismatchEnd == 3 ? nm3 + 4 : nm5 + 4)) { // opt_k;
-						//printf("continue 5: meap: %f, varc: %d, msimatchedEnd: %d, nm3: %d, nm5: %d\n", variation->meanPosition, variation->varsCount, mismatchEnd, nm3, nm5);
                         continue;
                     }
                     if (variation->varsCount >= insertionCount + insert1.length() || variation->varsCount / insertionCount >= 8) {
-						//printf("continue 6\n");
                         continue;
                     }
                     //if (conf.y) {
@@ -1124,7 +1112,8 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, robin_hood::u
 			delete findmm5;
 		} catch(...){// (Exception exception) {
             //printExceptionAndContinue(exception, "variant", string.valueOf(lastPosition), region);
-				printf("there is an error in realignins!!\n");
+			cerr << "there is an error in realignins!!\n" << endl;
+			exit(0);
         }
 	}
 
@@ -1784,10 +1773,10 @@ void VariationRealigner::realignlgins30() {
                     vref->pstd = true;
                     vref->qstd = true;
                     (*refCoverage)[bi]+= sc5v->varsCount;
-                    //if (conf.y) {
-                    //    System.err.printf(" lgins30 Found: '%s' %s %s %s\n", ins, bi, bp3, bp5);
-                    //}
-					printf("lgins30 found: %s\n", ins.c_str());
+                    if (conf->y) {
+                        //System.err.printf(" lgins30 Found: '%s' %s %s %s\n", ins, bi, bp3, bp5);
+						printf("lgins30 found: %s\n", ins.c_str());
+                    }
 
                     if (ins[0] == '+') {
                         Variation *mvref = getVariationMaybe(*nonInsertionVariants, bi, ref[bi]);
@@ -1799,7 +1788,7 @@ void VariationRealigner::realignlgins30() {
                                 && mvref != NULL && mvref->varsCount != 0
                                 && vref->varsCount > 2 * mvref->varsCount
 							    && noPassingReads(chr, p5, p3, bams)) {
-							printf("adj once\n");
+							//printf("adj once\n");
 							adjCnt(vref, mvref, mvref);
                         }
                         robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > tins;
@@ -1828,15 +1817,14 @@ void VariationRealigner::realignlgins30() {
                 }
             }
         } catch(...){// (Exception exception) {
-            //printExceptionAndContinue(exception, "variant", string.valueOf(lastPosition), region);
 			printf("there an expect in realignlgins30\n");
-			//exit(0);
+			exit(0);
         }
 		//printf("-----------------split line end----------------\n");
 		//delete t5;
 		//exit(0);
     }
-	cout << "tmp5 size: " << tmp5.size() << "tmp3 size: " << tmp3.size() << "continue time: " << continue_times << endl;
+	//cout << "tmp5 size: " << tmp5.size() << "tmp3 size: " << tmp3.size() << "continue time: " << continue_times << endl;
 	//------delete vector tmp5----------//
 	for(SortPositionSclip* spc5: tmp5){
 		delete spc5;
@@ -2364,10 +2352,9 @@ bool VariationRealigner::noPassingReads(string& chr, int start, int end, vector<
 	//if(in) sam_close(in);
 	bam_destroy1(record);
 	hts_itr_destroy(iter);
-    //if (conf.y) {
-    //    System.err.printf("    Passing Read CNT: %s %s %s %s %s\n", cnt, chr, start, end, midcnt);
-    //}
-	printf("    Passing Read CNT: %d %s %d %d %d\n", cnt, chr.c_str(), start, end, midcnt);
+    if (conf->y) {
+		printf("    Passing Read CNT: %d %s %d %d %d\n", cnt, chr.c_str(), start, end, midcnt);
+    }
 	return cnt <= 0 && midcnt + 1 > 0;
 }
 

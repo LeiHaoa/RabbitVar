@@ -9,6 +9,7 @@
 #include "./cmdline.h"
 #include "modes/simpleMode.h"
 #include "modes/somaticMode.h"
+#include "modes/ampliconMode.h"
 #include <assert.h>
 
 using namespace std;
@@ -51,10 +52,9 @@ void VarDictLauncher::start(Configuration *config) {
  */
 void VarDictLauncher::initResources(Configuration *conf) {
 	//try {
-		printf("init!\n");
         //unordered_map<std::string, int> chrLengths;
         robin_hood::unordered_map<std::string, int> chrLengths;
-		printf("bamx: %s\n",conf->bam.getBamX().c_str());
+		cout << "[info] bamx: " << conf->bam.getBamX() << endl;
 		readChr(conf->bam.getBamX(), chrLengths);
 		std::tuple<string, string> samples;
         if ((conf->regionOfInterest != "") && (conf->bam.hasBam2())) {
@@ -63,9 +63,7 @@ void VarDictLauncher::initResources(Configuration *conf) {
             samples = getSampleNames(conf);
         }
 
-		printf("2!\n");
         RegionBuilder builder(chrLengths, conf);
-		printf("3!\n");
         string ampliconBasedCalling = "";
 
 		if (conf->regionOfInterest != "") {
@@ -120,7 +118,6 @@ void VarDictLauncher::initResources(Configuration *conf) {
 		//	cerr << "initResources function error!!" << endl;
 		//}
 		//exit(0);
-		printf("end\n");
 }
 
 /**
@@ -237,10 +234,8 @@ std::tuple<string, string> VarDictLauncher::getSampleNames(Configuration *conf) 
             sample = sm.str(1);
         }
     }
-	cout << "in getSampleName functoin, sample after process: " << sample << endl; 
     return tuple<string, string>(sample, samplem);
-}
-
+} 
 /**
  * Fills the sample name for somatic modes.
  * If sample name wasn't set with command line parameter -N, it will be set to pattern contains name of BAM file.
@@ -280,32 +275,11 @@ std::tuple<string, string> VarDictLauncher::getSampleNamesSomatic(Configuration 
 }
 
 
-void init_conf(Configuration* conf){
-	conf->bam = BamNames("/home/haoz/workspace/data/NA12878/NA12878_S1.bam");
-	conf->sampleName = "sample_name";
-	//conf.regionOfInterest = "chr1:3,828,491-3,919,709";
-	conf->regionOfInterest = "chr1:3,829,690-3,918,526";
-	//conf.bed = "/home/haoz/workspace/data/NA12878/NA12878_S1.ROH.bed";
-	conf->delimiter = "\t";
-	conf->bedRowFormat = BedRowFormat(0,1,2,3,1,2);
-	conf->chimeric = false;
-	conf->patterns = new Patterns();
-	cout << "after assign info: " << conf->bedRowFormat.chrColumn << "-" << conf->bedRowFormat.startColumn << "-" << conf->bedRowFormat.endColumn << endl;
-}
-//int main(){
-//	Configuration conf;
-//	init_conf(conf);
-//	VarDictLauncher launcher;
-//	launcher.start(conf);
-//	cout << "conf info: chrlengths: " << conf.chrLengths.size() << " " << conf.samplem << endl;
-//	cout << "conf info: chr1 length: " << conf.chrLengths["chr1"]<< endl;
-//	return 0;
-//}
 string setFastaFile(cmdline::parser& cmd) {
         string fasta = cmd.get<string>('G');
         if(!cmd.exist('G') || fasta == ""){ 
         //if (fasta == null) {
-            printf("Reference file path wasn't set (option -G). Will be used the default fasta path.");
+            printf("Reference file path wasn't set (option -G). Will be used the default fasta path.\n");
             fasta = CONF_HG19;
         } else {
            fasta = fasta=="hg19" ? "19" : (fasta=="hg38" ? "38" : (fasta=="mm10"?"10":fasta));   
@@ -329,6 +303,7 @@ string setFastaFile(cmdline::parser& cmd) {
 Configuration* cmdParse(int argc, char* argv[]){
     // display version info if no argument is given
     cmdline::parser cmd;
+
     // input/output
     cmd.add("help", 'H', "Print this help page");
     cmd.add("header", 'h', "Print a header row describing columns");
@@ -344,30 +319,22 @@ Configuration* cmdParse(int argc, char* argv[]){
     cmd.add("UN", 0, "Indicate unique mode, which when mate pairs overlap, the overlapping part will be counted only once \n\t\t\t      using first read only.");
     cmd.add("chimeric", 0, "Indicate to turn off chimeric reads filtering.");
     cmd.add("deldupvar", 0, "Turn on deleting of duplicate variants. Variants in this mode are considered and outputted only if \n\t\t\t      start position of variant is inside the region interest.");
-    cmd.add("nosv", 'U', "Turn off structural variant calling.");    
+    //cmd.add("nosv", 'U', "Turn off structural variant calling.");    
     cmd.add("verbose", 'y',"");
     cmd.add<string>("Filter", 'F', "The hexical to filter reads using samtools. Default: 0x504 (filter 2nd alignments, unmapped reads \n\t\t\t      and duplicates).  Use -F 0 to turn it off.", false, "1284");
     cmd.add("zero_based", 'z', "Indicate whether coordinates are zero-based, as IGV uses.  Default: 1 for BED file or amplicon BED \n\t\t\t      file.Use 0 to turn it off. When using the -R option, it's set to 0");
     cmd.add<int>("local_realig", 'k', "Indicate whether to perform local realignment.  Default: 1.  Set to 0 to disable it.  For Ion or \n\t\t\t      PacBio, 0 is recommended.", false, 1);
     //cmd.add<string>("amplicon", 'a', "Indicate it's amplicon based calling. Reads that don't map to the amplicon will be skipped. A read\n\t\t\t      pair is considered belonging to the amplicon if the edges are less than int bp to the amplicon, \n\t\t\t      and overlap fraction is at least float.  Default: 10:0.95", false, "10:0.95" );
     cmd.add<string>("amplicon", 'a', "Indicate it's amplicon based calling. Reads that don't map to the amplicon will be skipped. A read\n\t\t\t      pair is considered belonging to the amplicon if the edges are less than int bp to the amplicon, \n\t\t\t      and overlap fraction is at least float.  Default: 10:0.95", false, "" );
-    /**
-     *  int c_col = -1 + cmd.get<int>("c", );
-        int S_col = -1 + cmd.get<int>("S", );
-        int E_col = -1 + cmd.get<int>("E", );
-        int s_col = -1 + cmd.get<int>("s", );
-        int e_col = -1 + cmd.get<int>("e", DEFAULT_BED_ROW_FORMAT.thickEndColumn);
-        int g_col = -1 + cmd.get<int>("g", );
-     */ 
     
     cmd.add<int>("column", 'c', "The column for chromosome", false, DEFAULT_BED_ROW_FORMAT.chrColumn);
-    cmd.add<string>("Genome_fasta", 'G', "The reference fasta. Should be indexed (.fai).\n\t\t\t      Defaults to: /ngs/reference_data/genomes/Hsapiens/hg19/seq/hg19.fa. \n\t\t\t      Also short commands can be used to set path to: \n\t\t\t      hg19 - /ngs/reference_data/genomes/Hsapiens/hg19/seq/hg19.fa\n\t\t\t      hg38 - /ngs/reference_data/genomes/Hsapiens/hg38/seq/hg38.fa\n\t\t\t      mm10 - /ngs/reference_data/genomes/Mmusculus/mm10/seq/mm10.fa", false, "");
+    cmd.add<string>("Genome_fasta", 'G', "The reference fasta. Should be indexed (.fai).\n\t\t\t      Defaults to: /ngs/reference_data/genomes/Hsapiens/hg19/seq/hg19.fa. \n\t\t\t      Also short commands can be used to set path to: \n\t\t\t      hg19 - /ngs/reference_data/genomes/Hsapiens/hg19/seq/hg19.fa\n\t\t\t      hg38 - /ngs/reference_data/genomes/Hsapiens/hg38/seq/hg38.fa\n\t\t\t      mm10 - /ngs/reference_data/genomes/Mmusculus/mm10/seq/mm10.fa", true, "");
     cmd.add<string>("Region", 'R', "The region of interest. In the format of chr:start-end. If end is omitted, then a single position.  \n\t\t\t      No BED is needed.", false, "");
     cmd.add<string>("delemiter", 'd',"The delimiter for split region_info, default to tab \"\\t\"",false,"\t");
     cmd.add<string>("regular_expression", 'n', "The regular expression to extract sample name from BAM filenames.  \n\t\t\t      Default to: /([^\\/\\._]+?)_[^\\/]*.bam/",false,"/([^\\/\\._]+?)_[^\\/]*.bam/");
     cmd.add<string>("Name", 'N', "The sample name to be used directly.  Will overwrite -n option",false,"");
     //------------"b",require??--java
-    cmd.add<string>("ind_bam", 'b', "The indexed BAM file",false,"");
+    cmd.add<string>("in_bam", 'b', "The indexed BAM file", true, "");
     cmd.add<int>("region_start", 'S',"The column for region start, e.g. gene start", false, DEFAULT_BED_ROW_FORMAT.startColumn);
     cmd.add<int>("region_end", 'E', "The column for region end, e.g. gene end",false, DEFAULT_BED_ROW_FORMAT.endColumn);
     cmd.add<int>("seg_start", 's', "The column for segment starts in the region, e.g. exon starts", false, DEFAULT_BED_ROW_FORMAT.thickStartColumn);
@@ -383,7 +350,7 @@ Configuration* cmdParse(int argc, char* argv[]){
     cmd.add<int>("Position", 'P', "The read position filter.  If the mean variants position is less that specified, it's considered \n\t\t\t      false positive.  Default: 5", false, 5);
     
     cmd.add<int>("Indel_size", 'I', "The indel size.  Default: 50bp", false, 50);
-    cmd.add<int>("th", 0, "Threads count.", false, 0);
+    cmd.add<int>("th", 0, "Threads count.", true, 0);
     cmd.add<int>("Min_macth", 'M', "The minimum matches for a read to be considered. If, after soft-clipping, the matched bp is less \n\t\t\t      than INT, then the read is discarded. It's meant for PCR based targeted sequencing where there's no \n\t\t\t      insert and the matching is only the primers. Default: 0, or no filtering", false, 0);
     cmd.add<int>("STD", 'A', "The number of STD. A pair will be considered for DEL if INSERT > INSERT_SIZE + INSERT_STD_AMT * \n\t\t\t      INSERT_STD.  Default: 4", false, 4);
     cmd.add<int>("insert-std", 'W', "The insert size STD.  Used for SV calling.  Default: 100", false, 100);
@@ -399,16 +366,18 @@ Configuration* cmdParse(int argc, char* argv[]){
     cmd.add<double>("allele_fre", 'f', "The threshold for allele frequency, default: 0.01 or 1%", false, 0.01);
     cmd.add<double>("downsample", 'Z', "For downsampling fraction.  e.g. 0.7 means roughly 70% downsampling.  Default: No downsampling. \n\t\t\t      Use with caution.  The downsampling will be random and non-reproducible.", false, 0);
     cmd.add<string>("VS", 0, "How strict to be when reading a SAM or BAM. \n\t\t\t      STRICT\t- throw an exception if something looks wrong.\n\t\t\t      LENIENT\t- Emit warnings but keep going if possible. \n\t\t\t      SILENT\t- Like LENIENT, only don't emit warning messages. \n\t\t\t      Default: LENIENT", false, "LENIENT");
-    cmd.add<string>("DP", 0, "The printer type used for different outputs. Default: OUT (i.e. System.out).", false, "OUT");    
     cmd.add<string>("adaptor", 0, "Filter adaptor sequences so that they aren't used in realignment. Multiple adaptors can be supplied \n\t\t\t      by setting them with comma, like: --adaptor ACGTTGCTC,ACGGGGTCTC,ACGCGGCTAG .", false, "");
     cmd.add<int>("crispr", 'J', "The genomic position that CRISPR/Cas9 suppose to cut, typically 3bp from the PAM NGG site and  \n\t\t\t      within the guide.  For CRISPR mode only.  It will adjust the variants (mostly In-Del) start and end \n\t\t\t      sites to as close to this location as possible,if there are alternatives. The option should only be \n\t\t\t      used for CRISPR mode.", false, 0);
 	cmd.add<int>("CRISPR_fbp", 'j', "In CRISPR mode, the minimum amount in bp that a read needs to overlap with cutting site.  If a read does not meet the criteria,\n\t\t\t      it will not be used for variant calling, since it is likely just a partially amplified PCR.  Default: not set, or no filtering", false, 0);
     cmd.add<double>("mfreq", 0, "The variant frequency threshold to determine variant as good in case of monomer MSI. \n\t\t\t      Default: 0.25", false, 0.25);
     cmd.add<double>("nmfreq", 0, "The variant frequency threshold to determine variant as good in case of non-monomer MSI. \n\t\t\t      Default: 0.1", false, 0.1);
 
+	cmd.add<string>("out", 0, "The out put file path \n\t\t\t\t Default: ./out.vcf", false, "./out.vcf");
+    //cmd.add<string>("DP", 0, "The printer type used for different outputs. Default: OUT (i.e. System.out).", false, "OUT");    
+
     //================================================================================
     cmd.parse_check(argc, argv);
-    
+	
     //------------------- config assignment -------------
     Configuration *config = new Configuration();
 	    config->patterns = new Patterns();
@@ -441,6 +410,7 @@ Configuration* cmdParse(int argc, char* argv[]){
                 regexp = regexp.substr(0, regexp.length() - 1);
             config->sampleNameRegexp = regexp;
         }
+		if(cmd.exist('b'))
         config->bam = BamNames(cmd.get<string>('b'));
 		
 
@@ -513,7 +483,7 @@ Configuration* cmdParse(int argc, char* argv[]){
 
         config->includeNInTotalDepth = cmd.exist('K');
         config->chimeric = cmd.exist("chimeric");
-        config->disableSV = cmd.exist('U');
+        //config->disableSV = cmd.exist('U');
         config->uniqueModeSecondInPairEnabled = cmd.exist("UN");
         config->uniqueModeAlignmentEnabled = cmd.exist('u');
         config->deleteDuplicateVariants = cmd.exist("deldupvar");
@@ -531,7 +501,9 @@ Configuration* cmdParse(int argc, char* argv[]){
             config->adaptor.insert(config->adaptor.end(), vc.begin(), vc.end());
         }
 
-        if (cmd.exist("DP")) {
+        //if (cmd.exist("DP")) {
+        if (cmd.exist("out")) {
+			config->outFileName = cmd.get<string>("out");
            // string defaultPrinter = cmd.get<string>("DP");
            // if(defaultPrinter== "ERR") {
            //     config->printerType = "PrinterType.ERR";
@@ -563,16 +535,22 @@ int main_single(int argc, char* argv[]){
 	//	mode = conf->bam.hasBam2() ? new SimpleMode() : new SomaticMode();
 	//}else{
 	//}
-	if(!conf->bam.hasBam2()){
-		SimpleMode *mode = new SimpleMode();
-		cout << "seg size: " << launcher.segments.size() << " - " << launcher.segments[0].size() << endl;
-		mode->process(conf, launcher.segments);
-		delete mode;
+	//exit(0);
+	if(conf->regionOfInterest != "" || conf->ampliconBasedCalling == ""){
+		if(!conf->bam.hasBam2()){
+			SimpleMode *mode = new SimpleMode();
+			cout << "[info] seg size: " << launcher.segments.size() << " - " << launcher.segments[0].size() << endl;
+			mode->process(conf, launcher.segments);
+			delete mode;
+		}else{
+			SomaticMode *mode = new SomaticMode();
+			cout << "[info] seg size: " << launcher.segments.size() << " - " << launcher.segments[0].size() << endl;
+			mode->process(conf, launcher.segments);
+			delete mode;
+		}
 	}else{
-		SomaticMode *mode = new SomaticMode();
-		cout << "seg size: " << launcher.segments.size() << " - " << launcher.segments[0].size() << endl;
-		mode->process(conf, launcher.segments);
-		delete mode;
+		AmpliconMode *mode = new AmpliconMode(conf);
+		mode->process(launcher.segments);
 	}
 
 	delete conf;

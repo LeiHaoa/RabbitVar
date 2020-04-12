@@ -94,8 +94,15 @@ def is_same_var_stat(jri, cri):
         return False
     if jri[5] == cri[5] : #refallele      
         same_count += 1 
+    else:
+        return False        
     if jri[6] == cri[6] : #varallele      
         same_count += 1 
+    else:
+        return False        
+
+    return True
+
     if int(jri[7]) == int(cri[7]) : #totalposcoverage
         same_count += 1 
     if int(jri[8]) == int(cri[8]) : #positioncoverage
@@ -152,6 +159,8 @@ def is_same_var_stat(jri, cri):
     if jri[33] == cri[33]:
         same_count += 1
 
+    if same_count > 15:
+        print(same_count)
     if same_count >= 28:
         #if same_count != 31:
         #    print(same_count);
@@ -192,10 +201,19 @@ def compare(cpp_result, java_resutl):
     #print("len info: \n", cr_len, jr_len)
     print("accurcy: ", cpp_len, java_len, result, result/float(cpp_len))
 
-
+import sys
 if __name__ == "__main__":
-    cpp_result = "./tmp.vcf"
-    java_result = "../VarDictJava/tmp.vcf"
+    #cpp_result = "./out.vcf"
+    #cpp_result = "/home/old_home/haoz/workspace/VarDictJava/tmp.vcf"
+    #java_result = "/home/old_home/haoz/workspace/VarDictJava/tmp_perml.vcf"
+    #java_result = "../VarDictJava/tmp.vcf"
+    #java_result = "/home/old_home/haoz/git/VarDictJava/tmp.vcf"
+    if len(sys.argv) < 3:
+        print("need path info? well...\n", "/home/old_home/haoz/workspace/VarDictJava/tmp.vcf\n", "/home/old_home/haoz/git/VarDictJava/tmp.vcf\n", "/home/old_home/haoz/workspace/VardictC/out.vcf\n")
+        exit(0)
+    cpp_result = sys.argv[1]
+    java_result = sys.argv[2]
+    print("cpp file:", cpp_result, "java file:", java_result)
     compare(cpp_result, java_result)
     
     #500 region result:

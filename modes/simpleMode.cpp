@@ -16,10 +16,8 @@ void SimpleMode::InitItemRepository(const int size){
 }
 Scope<AlignedVarsData>* SimpleMode::one_region_run(Region region, Configuration* conf, dataPool* data_pool, vector<bamReader> bamReaders, set<string>* splice){
 	
-	cout << "reader info2: " << static_cast<void*>(bamReaders[0].in) << " " << static_cast<void*>(bamReaders[0].header) << " "  <<static_cast<void*>(bamReaders[0].idx) << endl;
 	//DataScope dscope;
 	//dscope.region = region;
-	cout << "bam reader size: " << bamReaders.size() << endl;
 	data_pool->reset();
 	InitialData *init_data = new InitialData;
 
@@ -34,7 +32,7 @@ Scope<AlignedVarsData>* SimpleMode::one_region_run(Region region, Configuration*
 	double start2 = get_time();
 	VariationRealigner var_realinger(conf, data_pool);
 	Scope<RealignedVariationData> rvd = var_realinger.process(svd);
-	cout << "valide count : " << var_realinger.debug_valide_count << endl;
+	//cout << "valide count : " << var_realinger.debug_valide_count << endl;
 	double end2 = get_time();
 
 	double start3 = get_time();
@@ -124,7 +122,6 @@ void SimpleMode::print_output_variant_simple(const Variant* variant, Region &reg
 
 void SimpleMode::output(Scope<AlignedVarsData>* mapScope, Configuration* conf){
 	int lastPosition = 0;
-	std::cout << "alignedvariants size: " << mapScope->data->alignedVariants.size() << std::endl;
 	for (auto& ent : mapScope->data->alignedVariants) {
 		try {
 			int position = ent.first;
@@ -190,7 +187,7 @@ void SimpleMode::output(Scope<AlignedVarsData>* mapScope, Configuration* conf){
 }
 
 void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
-	this->file_ptr = fopen("./tmp.vcf", "wb");
+	this->file_ptr = fopen(conf->outFileName.c_str(), "wb");
 	//--------------use interest region parameter: singel thread-------------------//
 	if(conf->regionOfInterest != ""){
 		//----add by haoz: init bamReader------//
@@ -212,13 +209,12 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 			}
 		}
 		assert(bamReaders.size() > 0);
-		cout << "reader info: " << static_cast<void*>(bamReaders[0].in) << " " << static_cast<void*>(bamReaders[0].header) << " "  <<static_cast<void*>(bamReaders[0].idx) << endl;
+		//cout << "reader info: " << static_cast<void*>(bamReaders[0].in) << " " << static_cast<void*>(bamReaders[0].header) << " "  <<static_cast<void*>(bamReaders[0].idx) << endl;
 		//----init bamReader end------//
 		//DataScope dscope;
 		Region region;
 		region = segments[0][0];
 		//dscope.region = region;
-		cout << "interest region info: " << region.start << "-" << region.end << endl;
 		dataPool *data_pool = new dataPool(region.end - region.start);
 		set<string> splice;
 		Scope<AlignedVarsData> *avd_p = one_region_run(region, conf, data_pool, bamReaders, &splice);
@@ -242,7 +238,7 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 	//-------------------use bed file: multithreads------------------------//
 	else
 	{
-		cout << "bed file name: " << endl;
+		cout << "[info] bed file name: " << endl;
 		Region reg;
 		//vector<Region> regs;
 		dataPool* data_pool;
@@ -261,7 +257,7 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 
 		int processor_num = conf->threads;
 		omp_set_num_threads(processor_num);
-		cout << "num threads: " << processor_num << endl;
+		cout << "[info] num threads: " << processor_num << endl;
         #pragma omp parallel
 		{
             #pragma omp single
@@ -301,7 +297,10 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 		    double start2 = get_time();
 			reg = mRegs[i];
 			data_pool = trs[thread_id].data_pool;
-			//cerr <<"thread: " << omp_get_thread_num() << " region id: " << i <<"  processing: " << reg.chr << " - " << reg.start << " - " << reg.end  << endl;
+            //#pragma omp critical
+			//{
+			//cerr <<"[info: ] thread: " << omp_get_thread_num() << " region id: " << i <<"  processing: " << reg.chr << " - " << reg.start << " - " << reg.end  << endl;
+			//}
 			set<string> splice;
 			Scope<AlignedVarsData> *avd_p = one_region_run(reg, conf, data_pool, trs[thread_id].bamReaders, &splice);
 			//add alignedVars to data repo	
@@ -356,7 +355,7 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 		delete[] trs;
 
 		for(int i = 0; i < processor_num; i++)
-			cerr << "thread: " << i << " time: " << time[i] << endl;
+			cout << "thread: " << i << " time: " << time[i] << endl;
 	}
 	fclose(this->file_ptr);
 }

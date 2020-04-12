@@ -421,11 +421,13 @@ public:
   }
 
   bool parse(int argc, const char * const argv[]){
-    errors.clear();
+	  std::cout << "====0===== " << argc << " -> " << argv[0] << std::endl;
+	errors.clear();
     others.clear();
 
     if (argc<1){
       errors.push_back("argument number must be longer than 0");
+	  std::cout << "====argument number must be longer than 0=====" << std::endl;
       return false;
     }
     if (prog_name=="")
@@ -590,6 +592,7 @@ private:
     }
 
     if (!ok){
+		std::cerr << "not ok!" << std::endl;
       std::cerr<<error()<<std::endl<<usage();
       exit(1);
     }
