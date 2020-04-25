@@ -44,7 +44,7 @@ static Scope<AlignedVarsData>* one_region_run(Region region, Configuration* conf
 	double start2 = get_time();
 	VariationRealigner var_realinger(conf, data_pool);
 	Scope<RealignedVariationData> rvd = var_realinger.process(svd);
-	cout << "valide count : " << var_realinger.debug_valide_count << endl;
+	//cout << "valide count : " << var_realinger.debug_valide_count << endl;
 	double end2 = get_time();
 
 	double start3 = get_time();

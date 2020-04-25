@@ -143,7 +143,9 @@ Scope<RealignedVariationData> VariationRealigner::process(Scope<VariationData> &
     adjustMNP();
 	//print_result();
     if (conf->performLocalRealignment) {
+		//cout << "start realignIndels..." << endl;
         realignIndels();
+		//cout << "realignIndels end..." << endl;
 	}
 	//print_result();
 	//exit(0);
@@ -466,25 +468,19 @@ void VariationRealigner::adjustMNP() {
 }
 
 void VariationRealigner::realignIndels()  {
-    //if (conf.y) printf("Start Realigndel");
-    
+	//cout << "Start Realigndel" << endl;
     realigndel(&bams, *positionToDeletionCount);
 
 	//print_result();
-	//if (conf.y) printf("Start Realignins");
-
+	//cout << "Start Realignins" << endl;
     realignins(*positionToInsertionCount);
     
-	//if (conf.y) printf("Start Realignlgdel");
-
     //TODO SV
     //realignlgdel(svStructures.svfdel, svStructures.svrdel);
     
-	//if (conf.y) printf("Start Realignlgins30");
-
+	//cout << "Start Realignlgins30" << endl;
     realignlgins30();
 	//print_result();
-  	//if (conf.y) printf("Start Realignlgins");
     //realignlgins(svStructures.svfdup, svStructures.svrdup);
 }
 
@@ -743,8 +739,8 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, robin_hood::u
                     && pe - p >= 5
                     && pe - p < maxReadLength - 10
                     && h != NULL && h->varsCount != 0
-				    && noPassingReads(chr, p, pe, *bams)
-					&& vref->varsCount > 2 * h->varsCount * (1 - (pe - p) / (double) maxReadLength)) {
+				    && vref->varsCount > 2 * h->varsCount * (1 - (pe - p) / (double) maxReadLength)
+					&& noPassingReads(chr, p, pe, *bams)) {
                 adjCnt(vref, h, h);
             }
 			delete r3;
@@ -2300,7 +2296,7 @@ bool VariationRealigner::noPassingReads(string& chr, int start, int end, vector<
 		iter = sam_itr_querys(idx, header, region_string.c_str());
 		int ret = 0;
 		uint32_t* cigar;
-		//printf("bam: %s, region: %s\n", bam.c_str(), region_string.c_str());
+		//printf("bam: %s, region: %s\n", bams[0].c_str(), region_string.c_str());
 		while( (ret = sam_itr_next(in, iter, record)) >= 0){
 			//if (record.getCigarstring().count(dlenqr))
 			cigar = bam_get_cigar(record);
@@ -2317,6 +2313,7 @@ bool VariationRealigner::noPassingReads(string& chr, int start, int end, vector<
 				midcnt++;
 			}
 		}
+		//printf("while end\n");
 		//try{
 		//	samFile* in = sam_open(bam.c_str(), "r");
 		//	if(in){

@@ -13,13 +13,14 @@ CigarModifier::CigarModifier(int align_start, uint32_t* cigar, int n_cigar,
 							 int maxReadLength, Patterns* pats){
 	this->position = align_start;
 	this->cigar = cigar;
-	this->cigarStr = get_cigar_string(cigar, n_cigar);
-	this->originalCigar = cigarStr;
+	this->n_cigar = n_cigar;
+	//this->cigarStr = get_cigar_string(cigar, n_cigar);
+	this->originalCigar = get_cigar_string(cigar, n_cigar);
+	//this->originalCigar = cigarStr;
 	this->querySequence = seq;
 	this->queryQuality = query_quality;
 	this->lseq = lseq;
 	this->ref = ref;
-	//this->reference = ref->referenceSequences; //TODO
 	this->indel = insertionDeletionLength;
 	this->maxReadLength = maxReadLength;
 	this->pats = pats;
@@ -224,6 +225,7 @@ bool CigarModifier::modifyCigar(ModifiedCigar &mc, string& err_info) {
 	bool flag = true;
 	try {
 		// if CIGAR starts with deletion cut it off
+		/*
 		mm = regex_search(cigarStr, sm, pats->BEGIN_NUMBER_D);
 		if (mm) {
 			position += std::stoi(sm[1].str());
@@ -240,6 +242,22 @@ bool CigarModifier::modifyCigar(ModifiedCigar &mc, string& err_info) {
 		if (mm) {
 			cigarStr = regex_replace(cigarStr, pats->END_NUMBER_I, sm[1].str() + "S");
 		}
+		*/
+		/*-- add an member uint32_t* cigar */
+		// if CIGAR starts with deletion cut it off
+		if(bam_cigar_op(cigar[0]) == BAM_CDEL) {
+			position += bam_cigar_oplen(cigar[0]);
+			cigar++;
+		}
+		if(cigar[n_cigar - 1] == BAM_CDEL) n_cigar--;
+		// replace insertion at the beginning and end with soft clipping
+		if(bam_cigar_op(cigar[0]) == BAM_CINS) {
+			cigar[0] = (cigar[0] & (~BAM_CIGAR_MASK)) | BAM_CDEL;
+		}
+		if(cigar[n_cigar - 1] == BAM_CINS){
+			cigar[n_cigar - 1] = (cigar[n_cigar - 1] & (~BAM_CIGAR_MASK)) | BAM_CDEL;
+		}
+		this->cigarStr = get_cigar_string(cigar, n_cigar);
 
 		while (flag && indel > 0) {
 			flag = false;
@@ -395,7 +413,7 @@ void CigarModifier::combineBeginDigM(smatch &matcher) {
 	int rn = 0;
 	int rrn = 0;
 	int rmch = 0;
-	robin_hood::unordered_map<int, char> &reference = ref->referenceSequences;
+	const REFTYPE &reference = ref->referenceSequences;
 	while (rrn < mch && rn < mch) {
 		if (!reference.count(position + rrn)) {
 			break;
@@ -431,7 +449,7 @@ void CigarModifier::combineDigSDigM(smatch &matcher) {
 	//number of bases before matched sequence that match in reference and read sequences
 	int rn = 0;
 	set<char> RN;
-	robin_hood::unordered_map<int, char> &reference = ref->referenceSequences;
+	const REFTYPE &reference = ref->referenceSequences;
 	while (rn < soft && isHasAndEquals(reference, position - rn - 1, querySequence, soft - rn - 1)
 		   && queryQuality[soft - rn - 1] > CONF_LOWQUAL) {
 		rn++;
@@ -506,11 +524,13 @@ void CigarModifier::combineDigSDigM(smatch &matcher) {
 	 * @param matcher Regexp find the matched sequence only
 	 */
 void CigarModifier::captureMisSoftly3Mismatches(smatch &matcher) {
-	robin_hood::unordered_map<int, char> &reference = ref->referenceSequences;
+	const REFTYPE &reference = ref->referenceSequences;
 	string ov5 = matcher.str(1);
 	int mch = std::stoi(matcher.str(2));
-	int refoff = position + std::stoi(matcher.str(2));
-	int rdoff = std::stoi(matcher.str(2));
+	//int refoff = position + std::stoi(matcher.str(2));
+	int refoff = position + mch;
+	//int rdoff = std::stoi(matcher.str(2));
+	int rdoff = mch;
 	if (!ov5.empty()) { //If prefix is present
 		//Add all matched and deletion lengths to reference position
 		refoff += globalFindAndSum(pats->ALIGNED_LENGTH_MND, ov5); // reference position
@@ -524,10 +544,10 @@ void CigarModifier::captureMisSoftly3Mismatches(smatch &matcher) {
 		if (!reference.count(refoff - rrn - 1)) {
 			break;
 		}
-		if (rrn < rdoff && isHasAndNotEquals(reference, refoff - rrn - 1, querySequence, rdoff - rrn - 1)) {
+		if (rrn < rdoff && reference.at(refoff - rrn - 1) != querySequence[rdoff - rrn - 1]) {
 			rn = rrn + 1;
 			rmch = 0;
-		} else if (rrn < rdoff && isHasAndEquals(reference, refoff - rrn - 1, querySequence, rdoff - rrn - 1)) {
+		} else if (rrn < rdoff && reference.at(refoff - rrn - 1) == querySequence[rdoff - rrn - 1]) {
 			rmch++;
 		}
 		rrn++;
@@ -549,7 +569,7 @@ void CigarModifier::captureMisSoftly3Mismatches(smatch &matcher) {
 	 * @param matcher Regexp finds number-M-number-S at end of CIGAR string ^(.*?) captures everything before M-S complex
 	 */
 void CigarModifier::captureMisSoftlyMS(smatch& matcher) {
-	robin_hood::unordered_map<int, char> &reference = ref->referenceSequences;
+	const REFTYPE &reference = ref->referenceSequences;
 	//prefix of CIGAR string before last matched sequence
 	string ov5 = matcher.str(1);
 	//length of matched sequence
@@ -557,9 +577,11 @@ void CigarModifier::captureMisSoftlyMS(smatch& matcher) {
 	//length of soft-clipping
 	int soft = std::stoi(matcher.str(3));
 	//offset of soft-clipped sequence in the reference string (position + length of matched)
-	int refoff = position + std::stoi(matcher.str(2));
+	//int refoff = position + std::stoi(matcher.str(2));
+	int refoff = position + mch;
 	//offset of soft-clipped sequence in the read
-	int rdoff = std::stoi(matcher.str(2));
+	//int rdoff = std::stoi(matcher.str(2));
+	int rdoff = mch;
 	if (!ov5.empty()) { //If prefix is present
 		//Add all matched and deletion lengths to reference position
 		refoff += globalFindAndSum(pats->ALIGNED_LENGTH_MND, ov5); // reference position
@@ -617,10 +639,10 @@ void CigarModifier::captureMisSoftlyMS(smatch& matcher) {
 				if (!reference.count(refoff - rrn - 1)) {
 					break;
 				}
-				if (rrn < rdoff && isHasAndNotEquals(reference, refoff - rrn - 1, querySequence, rdoff - rrn - 1)) {
+				if (rrn < rdoff && reference.at(refoff - rrn - 1) != querySequence[rdoff - rrn - 1]) {
 					rn = rrn + 1;
 					rmch = 0;
-				} else if (rrn < rdoff && isHasAndEquals(reference, refoff - rrn - 1, querySequence, rdoff - rrn - 1)) {
+				} else if (rrn < rdoff && reference.at(refoff - rrn - 1) == querySequence[rdoff - rrn - 1]) {
 					rmch++;
 				}
 				rrn++;
@@ -724,12 +746,9 @@ bool CigarModifier::combineToCloseToCorrect(smatch &matcher, bool flag) {
  * @return true if length of internal matched sequences is no more than 15
  */
 bool CigarModifier::threeIndels(smatch& matcher, bool flag) {
-	//for(int i = 0; i < matcher.size(); i++){
-	//	cout << "tids info: " << i << " " << matcher.str(i) << endl;
-	//}
-		
-	robin_hood::unordered_map<int, char> &reference = ref->referenceSequences;
-	int tslen = std::stoi(matcher.str(5)) + std::stoi(matcher.str(8));
+	const REFTYPE &reference = ref->referenceSequences;
+	int mid = std::stoi(matcher.str(5)) + std::stoi(matcher.str(8));
+	int tslen = mid;
 	if ("I" == matcher.str(4)) {
 		tslen += std::stoi(matcher.str(3));
 	}
@@ -740,7 +759,7 @@ bool CigarModifier::threeIndels(smatch& matcher, bool flag) {
 		tslen += std::stoi(matcher.str(9));
 	}
 
-	int dlen = std::stoi(matcher.str(5)) + std::stoi(matcher.str(8));
+	int dlen = mid;
 	if ("D" == matcher.str(4)) {
 		dlen += std::stoi(matcher.str(3));
 	}
@@ -751,7 +770,6 @@ bool CigarModifier::threeIndels(smatch& matcher, bool flag) {
 		dlen += std::stoi(matcher.str(9));
 	}
 
-	int mid = std::stoi(matcher.str(5)) + std::stoi(matcher.str(8));
 	string ov5 = matcher.str(1);
 
 	int refoff = position + std::stoi(matcher.str(2));
@@ -830,7 +848,7 @@ bool CigarModifier::threeIndels(smatch& matcher, bool flag) {
  */
 bool CigarModifier::threeDeletions(smatch& matcher, bool flag) {
 
-	robin_hood::unordered_map<int, char> &reference = ref->referenceSequences;
+	const REFTYPE &reference = ref->referenceSequences;
 	//length of both matched sequences and insertion
 	int tslen = std::stoi(matcher.str(4)) + std::stoi(matcher.str(6));
 	//length of deletions and internal matched sequences
@@ -893,7 +911,7 @@ bool CigarModifier::threeDeletions(smatch& matcher, bool flag) {
  * @return true if length of internal matched sequences is no more than 15
  */
 bool CigarModifier::twoDeletionsInsertionToComplex(smatch& matcher, bool flag) {
-	robin_hood::unordered_map<int, char> &reference = ref->referenceSequences;
+	const REFTYPE &reference = ref->referenceSequences;
 	//length of both matched sequences and insertion
 	int tslen = std::stoi(matcher.str(4)) + std::stoi(matcher.str(5)) + std::stoi(matcher.str(6));
 
@@ -906,14 +924,15 @@ bool CigarModifier::twoDeletionsInsertionToComplex(smatch& matcher, bool flag) {
 	//prefix of CIGAR string before the M-D-M-I-M-D complex
 	string ov5 = matcher.str(1);
 
+	int mch = std::stoi(matcher.str(2));
 	//offset of first deletion in the reference sequence
-	int refoff = position + std::stoi(matcher.str(2));
+	int refoff = position + mch; 
 
 	//offset of first deletion in the read
-	int rdoff = std::stoi(matcher.str(2));
+	int rdoff = mch;
 
 	//offset of first deletion in the read corrected by possibly matching bases
-	int RDOFF = std::stoi(matcher.str(2));
+	int RDOFF = mch;
 
 	int rm = std::stoi(matcher.str(8));
 
@@ -956,7 +975,7 @@ bool CigarModifier::twoDeletionsInsertionToComplex(smatch& matcher, bool flag) {
  * @return true (cigar was processed)
  */
 bool CigarModifier::beginDigitMNumberIorDNumberM(smatch& matcher) {
-	robin_hood::unordered_map<int, char> &reference = ref->referenceSequences;
+	const REFTYPE &reference = ref->referenceSequences;
 	int tmid = std::stoi(matcher.str(1));
 	int mlen = std::stoi(matcher.str(4));
 	int tn = 0;

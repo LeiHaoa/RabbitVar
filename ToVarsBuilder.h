@@ -41,7 +41,8 @@ class ToVarsBuilder {
     	robin_hood::unordered_map<int, int> *refCoverage;
     	robin_hood::unordered_map<int, VariationMap* > *insertionVariants;
     	robin_hood::unordered_map<int, VariationMap* > *nonInsertionVariants;
-    	robin_hood::unordered_map<int, char> ref;
+	    //robin_hood::unordered_map<int, char> ref;
+		Reference* reference;
 		Configuration *conf;
     	double duprate;
 		robin_hood::unordered_map<string, string> IUPAC_AMBIGUITY_CODES ={

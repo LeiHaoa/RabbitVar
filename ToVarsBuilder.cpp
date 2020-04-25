@@ -81,7 +81,8 @@ ToVarsBuilder::ToVarsBuilder(Configuration *conf){
 ToVarsBuilder::~ToVarsBuilder(){
 }
 void ToVarsBuilder::initFromScope(Scope<RealignedVariationData> &scope) {
-    this->ref = scope.regionRef->referenceSequences;
+    //this->ref = scope.regionRef->referenceSequences;
+	this->reference = scope.regionRef;
     this->region = scope.region;
     this->refCoverage = scope.data->refCoverage;
     this->insertionVariants = scope.data->insertionVariants;
@@ -133,18 +134,16 @@ Scope<AlignedVarsData>* ToVarsBuilder::process(Scope<RealignedVariationData> &sc
             //if (varsAtCurPosition->sv == NULL && !refCoverage.count(position)) {
             //    continue;
             //}
+            if (!refCoverage->count(position) || refCoverage->at(position) == 0) { // ignore when there's no coverage
+				//printf("tovar: continue for 3\n");
+                continue;
+            }
 
             if (isTheSameVariationOnRef(position, varsAtCurPosition->variation_map)) {
 				//printf("tovar: continue for 2\n");
                 continue;
             }
 
-            if (!refCoverage->count(position) || (*refCoverage)[position] == 0) { // ignore when there's no coverage
-                //System.err.printf("Error tcov: %s %d %d %d %s\n",
-                //        region.chr, position, region.start, region.end, varsAtCurPosition.sv.type);
-				//printf("tovar: continue for 3\n");
-                continue;
-            }
 
             //total position coverage
             int totalPosCoverage = (*refCoverage)[position];
@@ -234,6 +233,8 @@ Scope<AlignedVarsData>* ToVarsBuilder::process(Scope<RealignedVariationData> &sc
  * @return true if no pileup/amplicon mode/somatic mode enabled and only reference variant is on position
  */
 bool ToVarsBuilder::isTheSameVariationOnRef(int position, robin_hood::unordered_map<string, Variation*> &varsAtCurPosition) {
+	const REFTYPE &ref = reference->referenceSequences;
+	/*
     unordered_set<string> vk;
     for(auto& key_v:varsAtCurPosition){
         vk.insert(key_v.first);
@@ -241,8 +242,10 @@ bool ToVarsBuilder::isTheSameVariationOnRef(int position, robin_hood::unordered_
     if (insertionVariants->count(position)) {
         vk.insert("I");
     }
+	*/
     //if (vk.size() == 1 && ref.count(position) && vk.count(to_string(ref[position]))) {
-    if (vk.size() == 1 && ref.count(position) && vk.count(string(1, ref[position]))) {
+    if (varsAtCurPosition.size() == 1 && !insertionVariants->count(position) &&
+		ref.count(position) && varsAtCurPosition.count(string(1, ref.at(position)))) {
         // ignore if only reference were seen and no pileup to avoid computation
         if (!conf->doPileup && !conf->bam.hasBam2() && conf->ampliconBasedCalling == "") {
             return true;
@@ -259,7 +262,8 @@ bool ToVarsBuilder::isTheSameVariationOnRef(int position, robin_hood::unordered_
  * @return MSI object.
  */
 MSI* ToVarsBuilder::proceedVrefIsDeletion(int position, int dellen) {
-    //left 70 bases in reference sequence
+	const REFTYPE &ref = reference->referenceSequences;
+	//left 70 bases in reference sequence
     string leftseq = joinRef(ref, (position - 70 > 1 ? position - 70 : 1), position - 1); // left 10 nt
     //int chr0 = getOrElse(instance().chrLengths, region.chr, 0);
     //conf->chrLengths.count(region.chr)? 1 : conf->chrLengths[region.chr] = 0;
@@ -299,6 +303,7 @@ MSI* ToVarsBuilder::proceedVrefIsDeletion(int position, int dellen) {
  * @return tuple of msi, shift3 and msint.
  */
 MSI* ToVarsBuilder::proceedVrefIsInsertion(int position, string vn){
+	const REFTYPE &ref = reference->referenceSequences;
     //variant description string without first symbol '+'
     string tseq1 = vn.substr(1);
     //left 50 bases in reference sequence
@@ -342,11 +347,12 @@ MSI* ToVarsBuilder::proceedVrefIsInsertion(int position, string vn){
  * @return maxfreq on position
  */
 double ToVarsBuilder::collectVarsAtPosition(robin_hood::unordered_map<int, Vars*> &alignedVariants, int position, vector<Variant*> &var) {
+	const REFTYPE &ref = reference->referenceSequences;
     double maxfreq = 0;
     for (Variant* tvar : var) {
         //If variant description string is 1-char base and it matches reference base at this position
         //if (ref.count(position) && tvar->descriptionString == to_string(ref[position])) {
-        if (ref.count(position) && tvar->descriptionString == string(1, ref[position])) {
+        if (ref.count(position) && tvar->descriptionString == string(1, ref.at(position))) {
             //this is a reference variant
             getOrPutVars(alignedVariants, position)->referenceVariant = tvar;
         } else {
@@ -374,6 +380,7 @@ double ToVarsBuilder::collectVarsAtPosition(robin_hood::unordered_map<int, Vars*
 int ToVarsBuilder::createInsertion(double duprate, int position, int totalPosCoverage,
                     vector<Variant* > &var, vector<string> &debugLines, int hicov) {
     //Handle insertions separately
+	const REFTYPE &ref = reference->referenceSequences;
     if(insertionVariants->count(position)!=0){
 		
 		robin_hood::unordered_map<string, Variation*> insertionVariations = insertionVariants->at(position)->variation_map;      
@@ -417,10 +424,12 @@ int ToVarsBuilder::createInsertion(double duprate, int position, int totalPosCov
 
             if (ttcov < cnt->varsCount) {
                 ttcov = cnt->varsCount;
-                if (refCoverage->count(position + 1) && ttcov < refCoverage->at(position + 1) - cnt->varsCount) {
+                if (refCoverage->count(position + 1)
+					&& ref.count(position+1)
+					&& ttcov < refCoverage->at(position + 1) - cnt->varsCount) {
                     ttcov = refCoverage->at(position + 1);
                     // Adjust the reference
-                    Variation* variantNextPosition = getVariationMaybe(*nonInsertionVariants, position + 1, ref[position + 1]);
+                    Variation* variantNextPosition = getVariationMaybe(*nonInsertionVariants, position + 1, ref.at(position + 1));
                     if (variantNextPosition != NULL) {
                         variantNextPosition->varsCountOnForward -= fwd;
                         variantNextPosition->varsCountOnReverse -= rev;
@@ -554,8 +563,7 @@ void ToVarsBuilder::createVariant(double duprate, robin_hood::unordered_map<int,
  * @param vref variant to adjust
  */
 void ToVarsBuilder::adjustVariantCounts(int p, Variant* vref) {
-    string message = "column in variant on position: " + to_string(p) + " " + vref->refallele + "->" +
-            vref->varallele + " was negative, adjusted to zero.";
+    //string message = "column in variant on position: " + to_string(p) + " " + vref->refallele + "->" + vref->varallele + " was negative, adjusted to zero.";
 
     if (vref->refForwardCoverage < 0 ) {
         vref->refForwardCoverage = 0;
@@ -765,6 +773,7 @@ MSI* ToVarsBuilder::findMSI(const string& tseq1, const string& tseq2, const stri
  * @param debugLines list of debug lines to fill DEBUG field in variant
  */
 void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage, Vars* variationsAtPos, vector<string> &debugLines) {
+	const REFTYPE &ref = reference->referenceSequences;
     int referenceForwardCoverage = 0; // $rfc
     int referenceReverseCoverage = 0; // $rrc
     //description string for reference or best non-reference variant
@@ -797,10 +806,10 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
     string genotype2;
 
     if (totalPosCoverage > (*refCoverage)[position] && nonInsertionVariants->count(position + 1)
-            && ref.count(position + 1)
-		&& nonInsertionVariants->at(position + 1)->variation_map.count(string(1, ref[position + 1]))) {
+		&& ref.count(position + 1)
+		&& nonInsertionVariants->at(position + 1)->variation_map.count(string(1, ref.at(position + 1)))) {
 		//Variation* tpref = getVariationMaybe(*nonInsertionVariants, position + 1, ref[position + 1]);
-		Variation* tpref = nonInsertionVariants->at(position+1)->variation_map.at(string(1, ref[position+1]));
+		Variation* tpref = nonInsertionVariants->at(position+1)->variation_map.at(string(1, ref.at(position+1)));
         referenceForwardCoverage = tpref->varsCountOnForward;
         referenceReverseCoverage = tpref->varsCountOnReverse;
     }
@@ -861,7 +870,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                     endPosition += shift3;
                 }
                 //reference allele is 1 base
-                refallele = ref.count(position) ? string(1, ref[position]) : "";
+                refallele = ref.count(position) ? string(1, ref.at(position)) : "";
                 //variant allele is reference base concatenated with insertion
                 varallele = refallele + descriptionString.substr(1);
                 if (varallele.length() > conf->SVMINLEN) {
@@ -913,15 +922,15 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                     }
                     //variant allele is 1 base from reference string preceding p
                     if (varallele!="<DEL>") {
-                        varallele = ref.count(position - 1) ? string(1, ref[position - 1]) : "";
+                        varallele = ref.count(position - 1) ? string(1, ref.at(position - 1)) : "";
                     }
                     //prepend same base to reference allele
-                    refallele = ref.count(position - 1) ? string(1, ref[position - 1]) : "";
+                    refallele = ref.count(position - 1) ? string(1, ref.at(position - 1)) : "";
                     startPosition--;
                 }
                 //Matcher mm = SOME_SV_NUMBERS.matcher(descriptionString);
                 if (regex_search(descriptionString,conf->patterns->SOME_SV_NUMBERS)) {
-                    refallele = ref.count(position) ? string(1, ref[position]) : "";
+                    refallele = ref.count(position) ? string(1, ref.at(position)) : "";
                 }
                 else if (deletionLength < conf->SVMINLEN) {
                     //append dellen bases from reference string to reference allele
@@ -941,7 +950,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                 shift3 = msiData->shift3;
                 msint = msiData->msint;
                 //reference allele is 1 base from reference sequence
-                refallele = ref.count(position) ? string(1, ref[position]) : "";
+                refallele = ref.count(position) ? string(1, ref.at(position)) : "";
                 //variant allele is same as description string
                 varallele = descriptionString;
 				//printf("%d-3 tseq1: %s, tseq2: %s, msint: %s\n", position, tseq1.c_str(), tseq2.c_str(), msint.c_str());
@@ -981,7 +990,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                 }
 
                 if (varallele=="<DEL>" && refallele.length() >= 1) {
-                    refallele = ref.count(startPosition) ? string(1, ref[startPosition]) : "";
+                    refallele = ref.count(startPosition) ? string(1, ref.at(startPosition)) : "";
                     if (refCoverage->count(startPosition - 1)) {
                         totalPosCoverage = refCoverage->at(startPosition - 1);
                     }
@@ -1083,7 +1092,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                         endPosition += n;
                         refallele = "";
                         for (int i = startPosition; i <= endPosition; i++) {
-                            refallele += ref[i];
+                            refallele += ref.at(i);
                         }
                         string tva = "";
                         if (refallele.length() < varallele.length()) { // Insertion
@@ -1095,7 +1104,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
                                 }
                             }
                         }
-                        varallele = ref[startPosition] + tva;
+                        varallele = ref.at(startPosition) + tva;
                     }
                     vref->crispr = n;
                 }
@@ -1179,7 +1188,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
         vref->startPosition = position;
         vref->endPosition = position;
         vref->highQualityReadsFrequency = roundHalfEven("0.0000", vref->highQualityReadsFrequency);
-        string referenceBase = ref.count(position) ? string(1, ref[position]) : ""; // $r
+        string referenceBase = ref.count(position) ? string(1, ref.at(position)) : ""; // $r
         //both refallele and varallele are 1 base from reference string
         vref->refallele = validateRefallele(referenceBase);
         vref->varallele = validateRefallele(referenceBase);
@@ -1211,7 +1220,8 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
  * first alphabetically.
  */
 string ToVarsBuilder::validateRefallele(string& refallele) {
-    for (int i = 0; i < refallele.length(); i++) {
+	int refallel_len = refallele.length();
+    for (int i = 0; i < refallel_len; i++) {
         string refBase = vc_substr(refallele, i, 1);
         if (IUPAC_AMBIGUITY_CODES.count(refBase)) {
             replaceFirst(refallele,refBase, IUPAC_AMBIGUITY_CODES[refBase]);

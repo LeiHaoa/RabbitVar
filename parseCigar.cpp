@@ -472,6 +472,7 @@ Scope<VariationData> CigarParser::process(Scope<InitialData> scope){
 	//}
 	//------------------------------------
 	VariationData *vardata = new VariationData(nonInsertionVariants, insertionVariants, &positionToInsertionCount, &positionToDeletionCount, refCoverage, softClips5End, softClips3End, splice, &mnp, &spliceCount, 0);
+	//cout << "non: " << nonInsertionVariants->size() << " in: " << insertionVariants->size() << endl;
 	//Scope<VariationData> toData(conf->bam.getBamRaw(), this->region, this->reference, this->maxReadLength, this->splice, vardata);
 	Scope<VariationData> toData(scope.bam, scope.region, scope.regionRef, maxReadLength, scope.splice, scope.bamReaders, vardata);
 	//------------------------------------
@@ -903,13 +904,13 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 				}
 				//if is next after num matched
 				if(isNextAfterNumMatched(ci, 1)){
-					Offset tpl = findOffset(start + ddlen + 1, readPositionIncludingSoftClipped+1, bam_cigar_oplen(cigar[ci + 1]), seq, query_quality, ref, (*refCoverage));
+					const Offset &tpl = findOffset(start + ddlen + 1, readPositionIncludingSoftClipped+1, bam_cigar_oplen(cigar[ci + 1]), seq, query_quality, ref, (*refCoverage));
 					int toffset = tpl.offset;
 					if(toffset != 0){
 						moffset = toffset;
 						nmoff += tpl.offsetNumberOfMismatches;
 						s += "&" + tpl.sequence;
-						string tq = tpl.qualitySequence;
+						const string &tq = tpl.qualitySequence;
 						for(int qi = 0; qi < tq.length(); qi++){
 							q += tq[qi] ;
 							qibases++;
@@ -1059,7 +1060,7 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
             // Skip read if it is overlap
             if (skipOverlappingReads(record, position, direction, mateAlignmentStart)) {
                 //break processCigar;
-				//printf("skip ! for overlaping read\n");
+				printf("skip ! for overlaping read\n");
 				//return;
             }
 		}
@@ -1251,7 +1252,7 @@ void CigarParser::process_softclip(string chrName, bam1_t* record, char* querySe
 					  bool direction, int position, int totalLengthIncludingSoftClipped, int ci){
 	if(ci == 0){ //5' soft clipped
 		//ignore large soft clip due to chimeric reads in libraty construction
-		//if(!conf.chimeric){
+		//if(!conf->chimeric){
 		if(false){
 			//string saTagString( bam_aux2Z(bam_aux_get(record, "SA")) );
 			char* saTagString = bam_aux2Z(bam_aux_get(record, "SA"));
@@ -1266,29 +1267,27 @@ void CigarParser::process_softclip(string chrName, bam1_t* record, char* querySe
 					return;
 				}
 			}
-			////trying to detect chimeric reads even when there's no supplementary
-			//// alignment from aligner
-			//else if (cigar_element_length >= Configuration.SEED_1) {
-			//	Map<String, List<Integer>> referenceSeedMap = reference.seed;
-			//	String sequence = getReverseComplementedSequence(record, 0, cigarElementLength);
-			//	String reverseComplementedSeed = sequence.substring(0, Configuration.SEED_1);
-			//
-			//	if (referenceSeedMap.containsKey(reverseComplementedSeed)) {
-			//		List<Integer> positions = referenceSeedMap.get(reverseComplementedSeed);
-			//		if (positions.size() == 1 &&
-			//			abs(start - positions.get(0)) <  2 * maxReadLength) {
-			//			readPositionIncludingSoftClipped += cigarElementLength;
-			//			offset = 0;
-			//			// Had to reset the start due to softclipping adjustment
-			//			start = position;
-			//			if (instance().conf.y) {
-			//				System.err.println(sequence + " at 5' is a chimeric at "
-			//								   + start + " by SEED " + Configuration.SEED_1);
-			//			}
-			//			return;
-			//		}
-			//	}
-			//}
+			/*
+			//trying to detect chimeric reads even when there's no supplementary
+			// alignment from aligner
+			else if (cigar_element_length >= CONF_SEED_1) {
+				robin_hood::unordered_map<string, vector<int>> &referenceSeedMap  = reference.seed;
+				string sequence = getReverseComplementedSequence(record, 0, cigarElementLength);
+				string reverseComplementedSeed = sequence.substr(0, CONF_SEED_1);
+			
+				if (referenceSeedMap.count(reverseComplementedSeed)) {
+					List<Integer> positions = referenceSeedMap.get(reverseComplementedSeed);
+					if (positions.size() == 1 &&
+						abs(start - positions[0]) <  2 * maxReadLength) {
+						readPositionIncludingSoftClipped += cigarElementLength;
+						offset = 0;
+						// Had to reset the start due to softclipping adjustment
+						start = position;
+						return;
+					}
+				}
+			}
+			*/
 		}
 		// Align softclipped but matched sequences due to mis-softclipping
 		/*
@@ -1506,7 +1505,7 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
 
 		int ci6 = n_cigar > ci + 3 ? bam_cigar_oplen(cigar[ci+3]) : 0;
 		if(ci6 != 0 && bam_cigar_op(cigar[ci+3]) == 0){
-			Offset tpl = findOffset(start + multoffs,
+			const Offset& tpl = findOffset(start + multoffs,
 									readPositionIncludingSoftClipped + cigar_element_length + multoffp,
 									ci6, querySequence, queryQuality, ref, (*refCoverage));
 			offset = tpl.offset;
@@ -2029,7 +2028,6 @@ bool CigarParser::skipSitesOutRegionOfInterest() {
 }
 
 
-//TODO: fix it with c API, but i do't know now
 void CigarParser::cleanupCigar(uint32_t* cigar, int n_cigar){
 	if(n_cigar > 0){
 		//first leading elements
@@ -2037,7 +2035,8 @@ void CigarParser::cleanupCigar(uint32_t* cigar, int n_cigar){
 		for(int c_i = 0; c_i < n_cigar && noMatchesYet; c_i++){
 			if(bam_cigar_op(cigar[c_i]) == BAM_CINS){
 				//(length,insertion)->(length,soft_clip)
-				cigar[c_i] = (cigar[c_i] | 0x00000004) & 0xfffffff4;
+				//cigar[c_i] = (cigar[c_i] | 0x00000004) & 0xfffffff4;
+				cigar[c_i] = (cigar[c_i] & (~BAM_CIGAR_MASK)) | BAM_CSOFT_CLIP;
 			}
 			else if(bam_cigar_op(cigar[c_i]) == BAM_CHARD_CLIP){
 				//hard clip how to dealing with??
@@ -2052,7 +2051,8 @@ void CigarParser::cleanupCigar(uint32_t* cigar, int n_cigar){
 		for(int c_i = n_cigar-1; c_i >= 0 && noMatchesYet; c_i--){
 			if(bam_cigar_op(cigar[c_i]) == BAM_CINS){
 				//(length,insertion)->(length,soft_clip)
-				cigar[c_i] = (cigar[c_i] | 0x00000004) & 0xfffffff4;
+				//cigar[c_i] = (cigar[c_i] | 0x00000004) & 0xfffffff4;
+				cigar[c_i] = (cigar[c_i] & (~BAM_CIGAR_MASK)) | BAM_CSOFT_CLIP;
 			}
 			else if(bam_cigar_op(cigar[c_i]) == BAM_CHARD_CLIP){
 				

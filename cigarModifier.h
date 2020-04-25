@@ -48,6 +48,7 @@ public:
 private:
 	int position;
 	uint32_t* cigar;
+	int n_cigar;
 	std::string cigarStr;
 	std::string originalCigar;
 	char* querySequence;

@@ -13,13 +13,14 @@
 #include <regex>
 #include <map>
 
-using namespace std;
+//using namespace std;
 //inline bool isEquals(uint8_t ch1, uint8_t ch2){
 //	return ch1 == ch2;
 //}
 //inline bool isNotEquals(uint8_t ch1, uint8_t ch2){
 //	return !(ch1 == ch2);
 //}
+typedef robin_hood::unordered_map<int, char> REFTYPE;
 
 inline bool isEquals(char ch1, char ch2){
 	return ch1 == ch2;
@@ -28,46 +29,54 @@ inline bool isNotEquals(char ch1, char ch2){
 	return !(ch1 == ch2);
 }
 
-inline bool isHasAndEquals(char ch1, robin_hood::unordered_map<int, char> &ref, int index) {
-	if(ref.find(index) == ref.end()){
-		return false;
+inline bool isHasAndEquals(char ch1, const REFTYPE &ref, int index) {
+	REFTYPE::const_iterator ri;
+	if( (ri = ref.find(index) ) != ref.end()){
+		return ri->second == ch1;
     }else{
-		return ref[index] == ch1;
-	}
-}
-
-inline bool isHasAndEquals(int index, robin_hood::unordered_map<int, char> &ref, int index2) {
-	if((ref.find(index) == ref.end()) || (ref.find(index2) == ref.end())){
 		return false;
 	}
-	return ref[index] == ref[index2];
 }
 
-inline bool isHasAndEquals(robin_hood::unordered_map<int, char> &ref, int index1, string str, int index2) {
-	if(ref.find(index1) == ref.end()){
-        return false;
+inline bool isHasAndEquals(int index, const REFTYPE &ref, int index2) {
+	REFTYPE::const_iterator ri1;
+	REFTYPE::const_iterator ri2;
+	if( (ri1 = ref.find(index)) != ref.end() && ((ri2 = ref.find(index2)) != ref.end()))
+	{
+		return ri1->second == ri2->second;
+	}
+		return false;
+}
+
+inline bool isHasAndEquals(const REFTYPE &ref, int index1, string str, int index2) {
+	REFTYPE::const_iterator ri;
+	if( (ri = ref.find(index1)) != ref.end()){
+		return ri->second == str[index2];
 	}
     //if (index2 < 0) index2 = index2 + str.length();
     //return refc.equals(str.charAt(index2));
-	return ref[index1] == str[index2];
+	return false;
 }
 
-inline bool isHasAndNotEquals(char ch1, robin_hood::unordered_map<int, char> &ref, int index) {
-	if(ref.find(index) == ref.end())
-        return false;
-	return !(ref[index] == ch1);
+inline bool isHasAndNotEquals(char ch1, const REFTYPE &ref, int index) {
+	REFTYPE::const_iterator ri;
+	if( (ri = ref.find(index)) != ref.end() )
+		return !(ri->second == ch1);
+	return false;
 }
 
-inline bool isHasAndNotEquals(robin_hood::unordered_map<int, char> &ref, int index1, string &str, int index2) {
-	if(ref.find(index1) == ref.end())
-		return false;
-	return !(ref[index1] == str[index2]);
+inline bool isHasAndNotEquals(const REFTYPE &ref, int index1, string &str, int index2) {
+	REFTYPE::const_iterator ri;
+	if( (ri = ref.find(index1)) != ref.end())
+		return ri->second != str[index2];
+	return false;
 }
 
-inline bool isHasAndNotEquals(robin_hood::unordered_map<int, char> &ref, int index1, char* str, int index2) {
-	if(ref.find(index1) == ref.end())
-		return false;
-	return !(ref[index1] == str[index2]);
+inline bool isHasAndNotEquals(const REFTYPE &ref, int index1, char* str, int index2) {
+	REFTYPE::const_iterator ri;
+	if( (ri = ref.find(index1)) != ref.end())
+		return ri->second != str[index2];
+	return false;
 }
 
 
@@ -78,7 +87,7 @@ inline bool isHasAndNotEquals(robin_hood::unordered_map<int, char> &ref, int ind
  * @param ref map of reference bases
  * @return Tuple of (int bi, String ins, int bi)
  */
-inline BaseInsertion* adjInsPos(int bi, string &ins, robin_hood::unordered_map<int, char> &ref) {
+inline BaseInsertion* adjInsPos(int bi, string &ins, REFTYPE &ref) {
     int n = 1;
     int len = ins.length();
     while(ref[bi] == ins[len - n]) {
@@ -315,17 +324,17 @@ inline void adjCnt(Variation *varToAdd, Variation *variant) {
 
 
 
-inline string joinRef(robin_hood::unordered_map<int, char> &baseToPosition, int from, int to){
+inline string joinRef(const REFTYPE &baseToPosition, int from, int to){
     string res="";
     for(int i=from; i <= to; i++){
-        res+=baseToPosition[i];
+        res+=baseToPosition.at(i);
     }
     return res;
 }
-inline string joinRef_double(robin_hood::unordered_map<int, char> &baseToPosition, int from, double to){
+inline string joinRef_double(const REFTYPE &baseToPosition, int from, double to){
     string res="";
     for(int i=from; i < to; i++){
-        res+=baseToPosition[i];
+        res+=baseToPosition.at(i);
     }
     return res;
 }
@@ -337,7 +346,8 @@ inline string joinRef_double(robin_hood::unordered_map<int, char> &baseToPositio
  */
 inline int count(string &str, char chr) {
     int cnt = 0;
-    for (int i = 0; i < str.length(); i++) {
+	const int strlen = str.length();
+    for (int i = 0; i < strlen; i++) {
         if (str[i] == chr) {
             cnt++;
         }

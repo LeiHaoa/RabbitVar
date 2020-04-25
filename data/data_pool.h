@@ -21,20 +21,6 @@ public:
 		_pointer = 0;
 		for(Variation* v: _data){
 			memset(v, 0, sizeof(Variation));
-			//v->varsCount = 0;
-			//v->varsCountOnForward = 0;
-			//v->varsCountOnReverse = 0;
-			//v->meanPosition = 0.0;
-			//v->meanQuality = 0.0;
-			//v->meanMappingQuality = 0.0;
-			//v->numberOfMismatches = 0.0;
-			//v->lowQualityReadsCount = 0;
-			//v->highQualityReadsCount = 0;
-			//v->pstd = false;
-			//v->qstd = false;
-			//v->pp = 0;
-			//v->pq = 0.0;
-			//v->extracnt = 0;
 		}
 	}
 	Variation* get_variation(){

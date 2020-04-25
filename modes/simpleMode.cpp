@@ -24,22 +24,29 @@ Scope<AlignedVarsData>* SimpleMode::one_region_run(Region region, Configuration*
 	RecordPreprocessor *preprocessor = new RecordPreprocessor(region, conf, bamReaders);
 	preprocessor->makeReference(conf->fasta);
 	Scope<InitialData> initialScope(conf->bam.getBam1(), region, &(preprocessor->reference), 0, splice, bamReaders, init_data);
+	//cout << "------preprocessor step-------" << endl;
 	double start1 = get_time();
 	CigarParser cp(preprocessor, data_pool);
-	Scope<VariationData> svd =  cp.process(initialScope);
+	Scope<VariationData> svd = cp.process(initialScope);
 	double end1 = get_time();
+	//cout << "------cigarparser step-------" << endl;
+	
+	//cout << "nonInsersition size: " << svd.data->nonInsertionVariants.size() 
+	//	 << "Insersition size: " << svd.data->insertionVariants.size() << endl;
 
 	double start2 = get_time();
 	VariationRealigner var_realinger(conf, data_pool);
 	Scope<RealignedVariationData> rvd = var_realinger.process(svd);
 	//cout << "valide count : " << var_realinger.debug_valide_count << endl;
 	double end2 = get_time();
+	//cout << "------realignger step-------" << endl;
 
 	double start3 = get_time();
 	ToVarsBuilder vars_builder(conf);
 	Scope<AlignedVarsData> *avd = vars_builder.process(rvd);
 	//cout << avd.data->k
 	double end3 = get_time();
+	//cout << "------tovarsbuilder step-------" << endl;
 	
 	//cout << "parseCigar Time: " << end1 - start1
 	//	 << " var realignger Time: " << end2 - start2

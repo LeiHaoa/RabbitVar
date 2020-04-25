@@ -191,13 +191,16 @@ def compare(cpp_result, java_resutl):
     cpp_len = len(cr)
     java_len = len(jr)
     result = 0
-    for jr_i in jr:
-        for cr_i in cr:
-            #print("comparing: ", "|".join(jr_i), "|".join(cr_i))
+    for cr_i in cr:
+        find_same = False;
+        for jr_i in jr:
             if is_same_var_stat(jr_i, cr_i):
             #if is_same_var(jr_i, cr_i):
+                find_same = True
                 result += 1
                 break
+        if(not find_same):
+            print("\t".join(cr_i))
     #print("len info: \n", cr_len, jr_len)
     print("accurcy: ", cpp_len, java_len, result, result/float(cpp_len))
 

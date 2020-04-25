@@ -54,7 +54,7 @@ void VarDictLauncher::initResources(Configuration *conf) {
 	//try {
         //unordered_map<std::string, int> chrLengths;
         robin_hood::unordered_map<std::string, int> chrLengths;
-		cout << "[info] bamx: " << conf->bam.getBamX() << endl;
+		cout << "[info] bam raw: " << conf->bam.getBamRaw() << endl;
 		readChr(conf->bam.getBamX(), chrLengths);
 		std::tuple<string, string> samples;
         if ((conf->regionOfInterest != "") && (conf->bam.hasBam2())) {
