@@ -169,27 +169,9 @@ def is_same_var_stat(jri, cri):
     else:
         return False
     
-def compare(cpp_result, java_resutl):
-    cr = list()
-    jr = list()
+def compare(cr, jr, queue):
     #cr_len = list()
     #jr_len = list()
-    with open(cpp_result, 'r') as f:
-        for var in f:
-            items = var.split('\t')
-            #cr_len.append(len(items))
-            if(len(items) > 35):
-                cr.append(items)
-        
-    with open(java_resutl, 'r') as f:
-        for var in f:
-            items = var.split('\t')
-            #jr_len.append(len(items))
-            if(len(items) > 35):
-                jr.append(items)
-
-    cpp_len = len(cr)
-    java_len = len(jr)
     result = 0
     for cr_i in cr:
         find_same = False;
@@ -201,24 +183,78 @@ def compare(cpp_result, java_resutl):
                 break
         if(not find_same):
             print("\t".join(cr_i))
+    queue.put(result)
     #print("len info: \n", cr_len, jr_len)
-    print("accurcy: ", cpp_len, java_len, result, result/float(cpp_len))
+    #print("accurcy: ", cpp_len, java_len, result, result/float(cpp_len))
 
 import sys
+from multiprocessing import Process, Queue
+
 if __name__ == "__main__":
-    #cpp_result = "./out.vcf"
-    #cpp_result = "/home/old_home/haoz/workspace/VarDictJava/tmp.vcf"
-    #java_result = "/home/old_home/haoz/workspace/VarDictJava/tmp_perml.vcf"
-    #java_result = "../VarDictJava/tmp.vcf"
-    #java_result = "/home/old_home/haoz/git/VarDictJava/tmp.vcf"
     if len(sys.argv) < 3:
-        print("need path info? well...\n", "/home/old_home/haoz/workspace/VarDictJava/tmp.vcf\n", "/home/old_home/haoz/git/VarDictJava/tmp.vcf\n", "/home/old_home/haoz/workspace/VardictC/out.vcf\n")
+        print("need path info? well...\n",
+              "/home/old_home/haoz/workspace/VarDictJava/tmp.vcf\n",
+              "/home/old_home/haoz/git/VarDictJava/tmp.vcf\n",
+              "/home/old_home/haoz/workspace/VardictC/out.vcf\n")
         exit(0)
-    cpp_result = sys.argv[1]
-    java_result = sys.argv[2]
-    print("cpp file:", cpp_result, "java file:", java_result)
-    compare(cpp_result, java_result)
-    
+
+    fastvc_file = sys.argv[1]
+    vardict_file = sys.argv[2]
+    print("cpp file:", fastvc_file, "java file:", vardict_file)
+
+    cr = dict()
+    jr = dict()
+    chrs = ["chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10","chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chr20","chr21","chr22","chrX","chrY"]
+    for chr in chrs:
+        cr[chr] = list()
+        jr[chr] = list()
+
+    #--- process vcf file ---#
+    with open(fastvc_file, 'r') as f:
+        for var in f:
+            items = var.split('\t')
+            #cr_len.append(len(items))
+            if(len(items) > 35):
+                cr[items[1]].append(items)
+        
+    with open(vardict_file, 'r') as f:
+        for var in f:
+            items = var.split('\t')
+            #jr_len.append(len(items))
+            if(len(items) > 35):
+                jr[items[1]].append(items)
+
+    #--- multi processing ---#                
+    thread_num = len(cr)
+    keys = cr.keys()
+    processes = list()
+    queue = Queue()
+    #-- statictic result --#
+    total_consistent = 0
+    cpp_len = 0
+    java_len = 0
+    for key in keys:
+        if key not in chrs:
+            print("error!, not find: ", key)
+            exit(0)
+        if len(cr[key]) == 0 or len(jr[key]) == 0:
+            continue
+        print("processing", key, "....")
+        cpp_len += len(cr[key])
+        java_len += len(jr[key])
+        pro = Process(target=compare, args=(cr[key], jr[key], queue,))
+        processes.append(pro)
+        pro.start()
+
+    for i in range(len(processes)):
+        processes[i].join()
+
+    #get total result
+    for i in range(len(processes)):
+        total_consistent += queue.get()
+        
+    print("accurcy: ", cpp_len, java_len, total_consistent, total_consistent/float(cpp_len))
+
     #500 region result:
     #('accurcy: ', 131793, 131800, 131661, 0.9989984293551251)
     #real    24m11.519s
