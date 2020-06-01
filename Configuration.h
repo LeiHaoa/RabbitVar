@@ -407,39 +407,40 @@ public:
     double nonMonomerMsiFrequency = 0.1d;  // -nmfreq
 
 
-	 bool isColumnForChromosomeSet() {
-		 return columnForChromosome >= 0;
-	 }
+	bool isColumnForChromosomeSet() {
+		return columnForChromosome >= 0;
+	}
 
-	 //bool isDownsampling() {
-	 //	 return downsampling != "";
-	 //}
+	//bool isDownsampling() {
+	//	 return downsampling != "";
+	//}
 
-	 bool hasMappingQuality() {
-		 return mappingQuality != -1;  //default to -1
-	 }
+	bool hasMappingQuality() {
+		return mappingQuality != -1;  //default to -1
+	}
 
-	 //bool isZeroBasedDefined() {
-	 //	 return zeroBased != null;
-	 //}
+	//bool isZeroBasedDefined() {
+	//	 return zeroBased != null;
+	//}
 
-	 /**
-	  *	some variable that used to store in instance
+	/**
+	 *	some variable that used to store in instance
 	 */
-	 robin_hood::unordered_map<string, int> chrLengths;
-	 string sample;
-	 string samplem;
-	 //PrinterType printerTypeOut;
-	 robin_hood::unordered_map<string, int> adaptorForward;
-	 robin_hood::unordered_map<string, int> adaptorReverse;
-	 Patterns* patterns;
-	 /**
-	  * added for optimizition
-	  */
-	 //vector<bamReader> bamReaders;
-	 ~Configuration(){
-		 delete patterns;
-	 }
+	robin_hood::unordered_map<string, int> chrLengths;
+	string sample;
+	string samplem;
+	//PrinterType printerTypeOut;
+	robin_hood::unordered_map<string, int> adaptorForward;
+	robin_hood::unordered_map<string, int> adaptorReverse;
+	Patterns* patterns;
+	int mempool_size = 100000;
+	/**
+	 * added for optimizition
+	 */
+	//vector<bamReader> bamReaders;
+	~Configuration(){
+		delete patterns;
+	}
 
 };
 

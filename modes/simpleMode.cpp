@@ -287,7 +287,7 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 						idx = sam_index_load(in, bamname.c_str());
 						assert(idx != NULL);
 					}else{
-						printf("read bamFile: %s error!", bamname.c_str());
+						cerr << "read bamFile: %s error! " << bamname << endl;
 						exit(1);
 					}
 					trs[t].bamReaders.emplace_back(bamReader(in, header, idx));
@@ -296,7 +296,7 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 			assert(trs[t].bamReaders.size() > 0);
 			//cout << "reader info: " << static_cast<void*>(bamReaders[0].in) << " " << static_cast<void*>(bamReaders[0].header) << " "  <<static_cast<void*>(bamReaders[0].idx) << endl;
 			//----init bamReader end------//
-			trs[t].data_pool = new dataPool(10000);
+			trs[t].data_pool = new dataPool(conf->mempool_size);
 		}
         #pragma omp parallel for default(shared) private(reg, data_pool) schedule(dynamic) 
 		for(int i = 0; i < reg_num; i++){

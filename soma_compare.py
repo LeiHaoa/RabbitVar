@@ -94,8 +94,14 @@ def is_same_var_stat(jri, cri):
         return False
     if jri[5] == cri[5] : #refallele      
         same_count += 1 
+    else:
+        return False
     if jri[6] == cri[6] : #varallele      
         same_count += 1 
+    else:
+        return False
+
+    return True
     if int(jri[7]) == int(cri[7]) : #var1totalposcoverage
         same_count += 1 
     if int(jri[8]) == int(cri[8]) : #var1positioncoverage
@@ -200,8 +206,8 @@ def is_same_var_stat(jri, cri):
     #     return True
     # else:
     #     return False
-    return same_count
-    
+    #return same_count
+'''    
 def compare(cpp_result, java_resutl):
     cr = list()
     jr = list()
@@ -235,13 +241,130 @@ def compare(cpp_result, java_resutl):
     for i in range(46):
         print(i, "->", result_dict[i])
     print("accurcy: ", cpp_len, java_len, result, result/float(cpp_len))
+'''
+def compare(cr, jr, queue):
+    #cr_len = list()
+    #jr_len = list()
+    result = 0
+    for cr_i in cr:
+        find_same = False;
+        for jr_i in jr:
+            if is_same_var_stat(jr_i, cr_i):
+            #if is_same_var(jr_i, cr_i):
+                find_same = True
+                result += 1
+                break
+        if(not find_same):
+            print("\t".join(cr_i))
+    queue.put(result)
 
+def split_chrom(jr, cr, chrname):
+    jrl = jr[chrname]
+    crl = cr[chrname]
+    crl_spos = int(len(crl)/2) #split pos
+    crl_half_rstart = jrl[crl_spos][3]
+    while crl[crl_spos-1][3] == crl_half_rstart:
+        crl_spos -= 1
+    append_name = chrname+"*"
+    #while (append_name in cr.keys()):
+    #    append_name += "*"
+    #jrl_spos = jrl.index(crl_half_rstart)
+    jrl_spos = 0
+    for i in range(len(jrl)):
+        if jrl[i][3] == crl_half_rstart:
+            jrl_spos = i
+    if jrl_spos == 0:
+        print("not find: ", crl_half_rstart, "in jrl!")
+        exit(0)
+    jr[chrname+"*"] = jrl[jrl_spos:]
+    jr[chrname] = jrl[:jrl_spos]
+    cr[chrname+"*"] = crl[crl_spos:]
+    cr[chrname] = crl[:crl_spos]
+import sys
+from multiprocessing import Process, Queue
 
 if __name__ == "__main__":
-    cpp_result = "./tmp.vcf"
-    java_result = "../VarDictJava/tmp.vcf"
-    compare(cpp_result, java_result)
+    if len(sys.argv) < 3:
+        print("need path info? well...\n",
+              "/home/old_home/haoz/workspace/VarDictJava/tmp.vcf\n",
+              "/home/old_home/haoz/git/VarDictJava/tmp.vcf\n",
+              "/home/old_home/haoz/workspace/VardictC/out.vcf\n")
+        exit(0)
+
+    fastvc_file = sys.argv[1]
+    vardict_file = sys.argv[2]
+    print("cpp file:", fastvc_file, "java file:", vardict_file)
+
+    cr = dict()
+    jr = dict()
+    chrs = ["chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10","chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chr20","chr21","chr22","chrX","chrY"]
+    for chr in chrs:
+        cr[chr] = list()
+        jr[chr] = list()
+    #--- process vcf file ---#
+    with open(fastvc_file, 'r') as f:
+        for var in f:
+            items = var.split('\t')
+            #cr_len.append(len(items))
+            if(len(items) > 35):
+                cr[items[1]].append(items)
+        
+    with open(vardict_file, 'r') as f:
+        for var in f:
+            items = var.split('\t')
+            #jr_len.append(len(items))
+            if(len(items) > 35):
+                jr[items[1]].append(items)
+
+    keys = cr.keys()
+    #--- sort all list in cr and jr ---#
+    for key in keys:
+       cr[key].sort()
+       jr[key].sort()
+    #--- split chr1 into two chrome: ---#
+    split_chrom(jr, cr, "chr1")
+    #split_chrom(jr, cr, "chr1")
+    #split_chrom(jr, cr, "chr1*")
+    #split_chrom(jr, cr, "chr2")
+    #split_chrom(jr, cr, "chr4")
     
+    #--- print size of variants in every chrome ---#
+    print("chrome\tcr_len\tjr_len")
+    for key in keys:
+        print("%s\t%d\t%d"%(key, len(cr[key]), len(jr[key])))
+    #exit(0)
+
+    #--- multi processing ---#                
+    thread_num = len(cr)
+    keys = cr.keys()
+    processes = list()
+    queue = Queue()
+    #-- statictic result --#
+    total_consistent = 0
+    cpp_len = 0
+    java_len = 0
+    for key in keys:
+        if key not in chrs:
+            print("not find: ", key)
+            #exit(0)
+        if len(cr[key]) == 0 or len(jr[key]) == 0:
+            continue
+        print("processing", key, "....")
+        cpp_len += len(cr[key])
+        java_len += len(jr[key])
+        pro = Process(target=compare, args=(cr[key], jr[key], queue,))
+        processes.append(pro)
+        pro.start()
+
+    for i in range(len(processes)):
+        processes[i].join()
+
+    #get total result
+    for i in range(len(processes)):
+        total_consistent += queue.get()
+        
+    print("accurcy: ", cpp_len, java_len, total_consistent, total_consistent/float(cpp_len))
+
     #500 region result:
     #('accurcy: ', 131793, 131800, 131661, 0.9989984293551251)
     #real    24m11.519s

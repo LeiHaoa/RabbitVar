@@ -803,7 +803,7 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 			assert(trs[t].bamReaders[0].size() > 0);
 			//cout << "reader info: " << static_cast<void*>(bamReaders[0].in) << " " << static_cast<void*>(bamReaders[0].header) << " "  <<static_cast<void*>(bamReaders[0].idx) << endl;
 			//----init bamReader end------//
-			trs[t].data_pool = new dataPool(10000);
+			trs[t].data_pool = new dataPool(conf->mempool_size);
 		}
 #pragma omp parallel for default(shared) private(reg, data_pool) schedule(dynamic) //num_threads(2)
 		for(int i = 0; i < reg_num; i++){

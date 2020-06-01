@@ -531,10 +531,18 @@ int main_single(int argc, char* argv[]){
 	launcher.start(conf); //launcher 里面有segments变量存的是region信息
 
 	//cout << "conf info: " << "1. thread: " << conf->threads << endl<< " 2. fasta: " << conf->fasta << " 3. bed: " << conf->bed << endl; 
-	//if(conf->regionOfInterest || conf->ampliconBasedCalling != null){
-	//	mode = conf->bam.hasBam2() ? new SimpleMode() : new SomaticMode();
-	//}else{
-	//}
+	/* decide the memo pool size*/
+	long total_size = 0;
+	int total_regions = 0;
+	for(vector<Region>& vr: launcher.segments){
+		for(Region & vr: vr){
+			total_size += (vr.end - vr.start);
+			total_regions++;
+		}
+	}
+	const int mempool_size = (total_size / total_regions) * 1.2;
+	conf->mempool_size = mempool_size;
+	cout << "[info] mempool size: " << conf->mempool_size << endl;
 	//exit(0);
 	if(conf->regionOfInterest != "" || conf->ampliconBasedCalling == ""){
 		if(!conf->bam.hasBam2()){

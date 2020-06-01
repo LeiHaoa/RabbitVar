@@ -1,0 +1,46 @@
+START: threads:40
+++ ./somatic_omp_run.sh 40
+thread: 0 time: 37.4679
+thread: 1 time: 40.4392
+thread: 2 time: 41.0226
+thread: 3 time: 41.0183
+thread: 4 time: 41.3944
+thread: 5 time: 39.5069
+thread: 6 time: 41.3512
+thread: 7 time: 40.8985
+thread: 8 time: 40.9121
+thread: 9 time: 40.3261
+thread: 10 time: 41.3234
+thread: 11 time: 41.2781
+thread: 12 time: 41.3761
+thread: 13 time: 41.0469
+thread: 14 time: 41.471
+thread: 15 time: 40.5082
+thread: 16 time: 39.5771
+thread: 17 time: 41.1858
+thread: 18 time: 41.2097
+thread: 19 time: 40.5674
+thread: 20 time: 41.7279
+thread: 21 time: 40.8917
+thread: 22 time: 39.4782
+thread: 23 time: 40.5552
+thread: 24 time: 41.165
+thread: 25 time: 41.3185
+thread: 26 time: 39.6893
+thread: 27 time: 41.355
+thread: 28 time: 40.9621
+thread: 29 time: 39.4371
+thread: 30 time: 42.1436
+thread: 31 time: 40.0606
+thread: 32 time: 39.5595
+thread: 33 time: 40.0952
+thread: 34 time: 39.93
+thread: 35 time: 39.6034
+thread: 36 time: 41.3222
+thread: 37 time: 41.0995
+thread: 38 time: 40.9824
+thread: 39 time: 40.8262
+
+real	0m46.730s
+user	21m20.831s
+sys	0m52.518s

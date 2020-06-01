@@ -231,7 +231,7 @@ void AmpliconMode::multi_regions_from_bed(vector<vector<Region> > &segments){
 		}
 		assert(trs[t].bamReaders.size() > 0);
 		//----init bamReader end------//
-		trs[t].data_pool = new dataPool(10000);
+		trs[t].data_pool = new dataPool(conf->mempool_size);
 	}
 
 	for(int i = 0; i < segments.size(); i++){

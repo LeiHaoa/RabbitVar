@@ -10,7 +10,7 @@ public:
 	int _size;
 
 	dataPool(int init_size){
-		//_data.resize(init_size);
+		//_data.resize(init_size, new Variation());
 		_data.reserve(init_size);
 		_size = init_size;
 		for(int i = 0; i < init_size; i++){

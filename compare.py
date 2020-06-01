@@ -224,9 +224,14 @@ if __name__ == "__main__":
             if(len(items) > 35):
                 jr[items[1]].append(items)
 
+    #--- print size of variants in every chrome ---#
+    keys = cr.keys()
+    print("chrome\tcr_len\tjr_len")
+    for key in keys:
+        print("%s\t%d\t%d"%(key, len(cr[key]), len(jr[key])))
+    exit(0)
     #--- multi processing ---#                
     thread_num = len(cr)
-    keys = cr.keys()
     processes = list()
     queue = Queue()
     #-- statictic result --#

@@ -14,8 +14,8 @@ FLAGS= -std=c++11 -lhts -O3 -g -qopenmp -ffast-math
 
 OBJS= Launcher.o RegionBuilder.o cigarModifier.o parseCigar.o recordPreprocessor.o VariationRealigner.o ToVarsBuilder.o  simpleMode.o somaticMode.o ampliconMode.o
 
-launcher: $(OBJS)
-	$(CC) -o launcher $(OBJS) $(FLAGS) -I$(INCLUDE) -L$(LIBS) 
+FastVC: $(OBJS)
+	$(CC) -o FastVC $(OBJS) $(FLAGS) -I$(INCLUDE) -L$(LIBS) 
 
 recordPreprocessor.o:recordPreprocessor.cpp
 	$(CC) -c recordPreprocessor.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
