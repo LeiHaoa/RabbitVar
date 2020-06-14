@@ -1,8 +1,11 @@
 # FastVC
+FastVC is a high-performance and versatile mutation detection tool, which  distinguishes between somatic and germline sequencing applications and simultaneously calls single nucleotide variants (SNVs), multiple-nucleotide variants (MNVs), insertions,and deletions(InDels) and complex variants.
+the goal of FastVC A high-performance mutation detection tool that supports a variety of scenarios is.
 
 ## Dependency
-- htslib
-- robin_hood_hashing(no need to download yourself)
+- [htslib](https://github.com/samtools/htslib)
+- [robin_hood_hashing](https://github.com/martinus/robin-hood-hashing)(no need to download yourself)
+
 ## Installation
 FastVC is written in c++ for Linux platforms, you can download the source code and FastVC use some features supported by std-c++-11.
 So, c++ 11 or higher version is required.
@@ -153,3 +156,7 @@ options:
       --out                   The out put file path
 				 Default: ./out.vcf (string [=./out.vcf])
 ```
+
+
+## License
+Licensed under the xx License. See the [LICENSE]() file for details.
