@@ -27,22 +27,7 @@ void VarDictLauncher::start(Configuration *config) {
     initResources(config);
 
     //Configuration conf = instance().conf;
-    //AbstractMode mode;
 
-    //if (instance().conf.outputSplicing) {
-    //    mode = new SplicingMode(segments, referenceResource);
-    //} else if (conf.regionOfInterest != null || instance().ampliconBasedCalling == null) {
-    //    mode = conf.bam.hasBam2() ?
-    //            new SomaticMode(segments, referenceResource) :
-    //            new SimpleMode(segments, referenceResource);
-    //} else {
-    //    mode = new AmpliconMode(segments, referenceResource);
-    //}
-    //setMode(mode);
-    //if (instance().conf.threads == 1)
-    //    mode.notParallel();
-    //else
-    //    mode.parallel();
 }
 
 /**
@@ -112,12 +97,6 @@ void VarDictLauncher::initResources(Configuration *conf) {
 		conf->samplem = std::get<1>(samples);
 		conf->ampliconBasedCalling = ampliconBasedCalling;
 		conf->chrLengths = chrLengths;
-        //GlobalReadOnlyScope.init(conf, chrLengths, samples._1, samples._2, ampliconBasedCalling,
-		//       adaptorForward, adaptorReverse);
-		//} catch(...) {
-		//	cerr << "initResources function error!!" << endl;
-		//}
-		//exit(0);
 }
 
 /**
@@ -350,11 +329,11 @@ Configuration* cmdParse(int argc, char* argv[]){
     cmd.add<int>("Position", 'P', "The read position filter.  If the mean variants position is less that specified, it's considered \n\t\t\t      false positive.  Default: 5", false, 5);
     
     cmd.add<int>("Indel_size", 'I', "The indel size.  Default: 50bp", false, 50);
-    cmd.add<int>("th", 0, "Threads count.", true, 0);
+    cmd.add<int>("th", 0, "Threads count.", false, 0);
     cmd.add<int>("Min_macth", 'M', "The minimum matches for a read to be considered. If, after soft-clipping, the matched bp is less \n\t\t\t      than INT, then the read is discarded. It's meant for PCR based targeted sequencing where there's no \n\t\t\t      insert and the matching is only the primers. Default: 0, or no filtering", false, 0);
     cmd.add<int>("STD", 'A', "The number of STD. A pair will be considered for DEL if INSERT > INSERT_SIZE + INSERT_STD_AMT * \n\t\t\t      INSERT_STD.  Default: 4", false, 4);
-    cmd.add<int>("insert-std", 'W', "The insert size STD.  Used for SV calling.  Default: 100", false, 100);
-    cmd.add<int>("insert-size", 'w', "The insert size.  Used for SV calling.  Default: 300", false, 300);
+    //cmd.add<int>("insert-std", 'W', "The insert size STD.  Used for SV calling.  Default: 100", false, 100);
+    //cmd.add<int>("insert-size", 'w', "The insert size.  Used for SV calling.  Default: 300", false, 300);
     cmd.add<int>("minlen_sv", 'L', "The minimum structural variant length to be presented using <DEL> <DUP> <INV> <INS>, etc. \n\t\t\t      Default: 1000. Any indel, complex variants less than this will be spelled out with exact \n\t\t\t      nucleotides.", false, 1000);
     cmd.add<int>("ref-extension", 'Y', "Extension of bp of reference to build lookup table. Default to 1200 bp. Increase the number will \n\t\t\t      slowdown the program. The main purpose is to call large indels with 1000 bit that can be missed by \n\t\t\t      discordant mate pairs.", false, 1200);
     //cmd.add<int>("P", 0, "The read position filter.  If the mean variants position is less that specified, it's considered false positive.  Default: 5", false, 5);
@@ -488,8 +467,8 @@ Configuration* cmdParse(int argc, char* argv[]){
         config->uniqueModeAlignmentEnabled = cmd.exist('u');
         config->deleteDuplicateVariants = cmd.exist("deldupvar");
 
-        config->INSSIZE = cmd.get<int>('w');
-        config->INSSTD = cmd.get<int>('W');
+        //config->INSSIZE = cmd.get<int>('w');
+        //config->INSSTD = cmd.get<int>('W');
         config->INSSTDAMT = cmd.get<int>('A');
         config->SVMINLEN = cmd.get<int>('L');
 
@@ -573,5 +552,3 @@ int main(int argc, char* argv[]){
 	printf("total time: %f s \n", (end_time - start_time));
 	return 0;
 }
-
-//xintai bengle ;

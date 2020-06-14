@@ -421,7 +421,7 @@ public:
   }
 
   bool parse(int argc, const char * const argv[]){
-	  std::cout << "====0===== " << argc << " -> " << argv[0] << std::endl;
+	  //std::cout << "====0===== " << argc << " -> " << argv[0] << std::endl;
 	errors.clear();
     others.clear();
 

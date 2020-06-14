@@ -2,7 +2,7 @@
 #./launcher /home/haoz/workspace/data/NA12878/ConfidentRegions.bed -G /home/haoz/workspace/data/NA12878/hg38.fa -f 0.001 -N sample_name -b /home/haoz/workspace/data/NA12878/NA12878_S1.bam -c 1 -S 2 -E 3 -g 4 -th 1
 
 #----------------NA12878 germline
-../FastVC -R chr1:2829690-4918526  -G /home/old_home/haoz/workspace/data/NA12878/hg38.fa -f 0.001 -N sample_name -b /home/old_home/haoz/workspace/data/NA12878/NA12878_S1.bam -c 1 -S 2 -E 3 -g 4 --th 1 --out ./tmp2.vcf
+../FastVC -R chr1:2829690-4918526  -G /home/old_home/haoz/workspace/data/NA12878/hg38.fa -f 0.001 -N sample_name -b /home/old_home/haoz/workspace/data/NA12878/NA12878_S1.bam -c 1 -S 2 -E 3 -g 4 --out ./tmp2.vcf
 
 #chr1:45478787-46863974
 #chr10:47800000-47900000

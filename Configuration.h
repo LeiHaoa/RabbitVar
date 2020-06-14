@@ -328,11 +328,11 @@ public:
     /**
      * Mean Insert size
      */
-     int INSSIZE = 300; //-w
+    // int INSSIZE = 300; //-w
     /**
      * Insert std
      */
-     int INSSTD = 100; //-W
+	//int INSSTD = 100; //-W
     /**
      * Insert std amount
      */
