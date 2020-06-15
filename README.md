@@ -5,7 +5,7 @@ FastVC is a high-performance and versatile mutation detection tool, which  disti
 - [htslib](https://github.com/samtools/htslib)
 
 ## Installation of binaries
-The easiest way to use FastVC is bo grab a binary from [here](https://github.com/LeiHaoa/FastVC/releases). We provide dependency-free binaries for x86_64 Linux.
+The easiest way to use FastVC is to grab a binary from [here](https://github.com/LeiHaoa/FastVC/releases). We provide dependency-free binaries for x86_64 Linux.
 
 ## Installation from source code
 FastVC is written in c++ for Linux platforms, you can download the source code and FastVC use some features supported by std-c++-11.
