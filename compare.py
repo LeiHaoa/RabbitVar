@@ -229,7 +229,7 @@ if __name__ == "__main__":
     print("chrome\tcr_len\tjr_len")
     for key in keys:
         print("%s\t%d\t%d"%(key, len(cr[key]), len(jr[key])))
-    exit(0)
+    #exit(0)
     #--- multi processing ---#                
     thread_num = len(cr)
     processes = list()

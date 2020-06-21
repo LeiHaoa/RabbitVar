@@ -17,35 +17,35 @@ OBJS= Launcher.o RegionBuilder.o cigarModifier.o parseCigar.o recordPreprocessor
 FastVC: $(OBJS)
 	$(CC) -o FastVC $(OBJS) $(FLAGS) -I$(INCLUDE) -L$(LIBS) 
 
-recordPreprocessor.o:recordPreprocessor.cpp
-	$(CC) -c recordPreprocessor.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
+recordPreprocessor.o:./src/recordPreprocessor.cpp
+	$(CC) -c ./src/recordPreprocessor.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
 
-cigarModifier.o:cigarModifier.cpp
-	$(CC) -c cigarModifier.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
+cigarModifier.o:./src/cigarModifier.cpp
+	$(CC) -c ./src/cigarModifier.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
 
-parseCigar.o:parseCigar.cpp
-	$(CC) -c parseCigar.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
+parseCigar.o:./src/parseCigar.cpp
+	$(CC) -c ./src/parseCigar.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
 
-RegionBuilder.o: RegionBuilder.cpp
-	$(CC) -c RegionBuilder.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
+RegionBuilder.o: ./src/RegionBuilder.cpp
+	$(CC) -c ./src/RegionBuilder.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
 
-VariationRealigner.o: VariationRealigner.cpp
-	$(CC) -c VariationRealigner.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
+VariationRealigner.o: ./src/VariationRealigner.cpp
+	$(CC) -c ./src/VariationRealigner.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
 
-ToVarsBuilder.o: ToVarsBuilder.cpp
-	$(CC) -c ToVarsBuilder.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
+ToVarsBuilder.o: ./src/ToVarsBuilder.cpp
+	$(CC) -c ./src/ToVarsBuilder.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
 
-Launcher.o: Launcher.cpp
-	$(CC) -c Launcher.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
+Launcher.o: ./src/Launcher.cpp
+	$(CC) -c ./src/Launcher.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
 
-simpleMode.o: ./modes/simpleMode.cpp
-	$(CC) -c ./modes/simpleMode.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
+simpleMode.o: ./src/modes/simpleMode.cpp
+	$(CC) -c ./src/modes/simpleMode.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
 
-somaticMode.o: ./modes/somaticMode.cpp
-	$(CC) -c ./modes/somaticMode.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
+somaticMode.o: ./src/modes/somaticMode.cpp
+	$(CC) -c ./src/modes/somaticMode.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
 
-ampliconMode.o: ./modes/ampliconMode.cpp
-	$(CC) -c ./modes/ampliconMode.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
+ampliconMode.o: ./src/modes/ampliconMode.cpp
+	$(CC) -c ./src/modes/ampliconMode.cpp $(FLAGS) -I$(INCLUDE) -L$(LIBS)
 
 .PHONY:clean
 clean:
