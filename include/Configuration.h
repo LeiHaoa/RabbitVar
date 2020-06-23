@@ -287,6 +287,10 @@ public:
      */
      int threads; //-th
 
+    /**
+     * if set, perform fisher exact test in fastvc other than R file
+     */
+    bool fisher;
     ///**
     // * The larger seed size
     // */

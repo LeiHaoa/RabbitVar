@@ -312,7 +312,7 @@ Configuration* cmdParse(int argc, char* argv[]){
     cmd.add<string>("delemiter", 'd',"The delimiter for split region_info, default to tab \"\\t\"",false,"\t");
     cmd.add<string>("regular_expression", 'n', "The regular expression to extract sample name from BAM filenames.  \n\t\t\t      Default to: /([^\\/\\._]+?)_[^\\/]*.bam/",false,"/([^\\/\\._]+?)_[^\\/]*.bam/");
     cmd.add<string>("Name", 'N', "The sample name to be used directly.  Will overwrite -n option",false,"");
-    //------------"b",require??--java
+
     cmd.add<string>("in_bam", 'b', "The indexed BAM file", true, "");
     cmd.add<int>("region_start", 'S',"The column for region start, e.g. gene start", false, DEFAULT_BED_ROW_FORMAT.startColumn);
     cmd.add<int>("region_end", 'E', "The column for region end, e.g. gene end",false, DEFAULT_BED_ROW_FORMAT.endColumn);
@@ -330,6 +330,7 @@ Configuration* cmdParse(int argc, char* argv[]){
     
     cmd.add<int>("Indel_size", 'I', "The indel size.  Default: 50bp", false, 50);
     cmd.add<int>("th", 0, "Threads count.", false, 0);
+    cmd.add("fisher", 0, "Experimental feature: fisher test");
     cmd.add<int>("Min_macth", 'M', "The minimum matches for a read to be considered. If, after soft-clipping, the matched bp is less \n\t\t\t      than INT, then the read is discarded. It's meant for PCR based targeted sequencing where there's no \n\t\t\t      insert and the matching is only the primers. Default: 0, or no filtering", false, 0);
     cmd.add<int>("STD", 'A', "The number of STD. A pair will be considered for DEL if INSERT > INSERT_SIZE + INSERT_STD_AMT * \n\t\t\t      INSERT_STD.  Default: 4", false, 4);
     //cmd.add<int>("insert-std", 'W', "The insert size STD.  Used for SV calling.  Default: 100", false, 100);
@@ -473,6 +474,7 @@ Configuration* cmdParse(int argc, char* argv[]){
         config->SVMINLEN = cmd.get<int>('L');
 
         config->threads = max(cmd.get<int>("th"), 1);
+        config->fisher = cmd.exist("fisher");
         config->referenceExtension = cmd.get<int>('Y');
 
         if (cmd.exist("adaptor")) {

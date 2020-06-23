@@ -4,6 +4,7 @@
 #include "../../include/parseCigar.h"
 #include "../../include/VariationRealigner.h"
 #include "../../include/ToVarsBuilder.h"
+#include "htslib/kfunc.h"
 #include <omp.h>
 #include <assert.h>
 #include <thread>
@@ -62,7 +63,7 @@ Scope<AlignedVarsData>* SimpleMode::one_region_run(Region region, Configuration*
 	return avd;
 }
 
-void SimpleMode::print_output_variant_simple(const Variant* variant, Region &region, std::string sv, int position, std::string sample){
+void SimpleMode::print_output_variant_simple(const Variant* variant, Region &region, std::string sv, int position, std::string sample, bool fisher){
 	vector<std::string> str;
 	str.reserve(36);
 
@@ -92,6 +93,19 @@ void SimpleMode::print_output_variant_simple(const Variant* variant, Region &reg
 		str.emplace_back(variant->isAtLeastAt2Positions ? std::to_string(1) :std::to_string(0));//ptsd
 		str.emplace_back(std::to_string(variant->meanQuality)); //qual
 		str.emplace_back(variant->hasAtLeast2DiffQualities ? std::to_string(1) : std::to_string(0)); //qstd
+		if(fisher){
+			double fisher_left_p, fisher_right_p, fisher_twoside_p;
+			kt_fisher_exact(variant->refForwardCoverage, variant->refReverseCoverage, variant->varsCountOnForward, variant->varsCountOnReverse,
+							&fisher_left_p, &fisher_right_p, &fisher_twoside_p);
+			str.emplace_back(std::to_string(fisher_twoside_p)); //pvale
+			double ad = (variant->refForwardCoverage * variant->varsCountOnReverse);
+			double bc = (variant->refReverseCoverage * variant->varsCountOnForward); //ratio: (a*d) / (b*c)
+			double ratio = 0.00;
+			if( bc != 0  && ad != 0){
+				ratio = ad > bc ? (ad / bc) : (bc / ad);
+			}
+			str.emplace_back(std::to_string(ratio)); //ratio(not odd ratio)
+		}
 		str.emplace_back(std::to_string(variant->meanMappingQuality)); //mapq
 		str.emplace_back(std::to_string(variant->highQualityToLowQualityRatio)); //qratio 
 		str.emplace_back(std::to_string(variant->highQualityReadsFrequency)); //higreq
@@ -107,7 +121,7 @@ void SimpleMode::print_output_variant_simple(const Variant* variant, Region &reg
 		str.emplace_back(region.chr + ":" + std::to_string(region.start) + "-" + std::to_string(region.end)); //region
 		str.emplace_back(variant->vartype); //varType
 		str.emplace_back(std::to_string(variant->duprate)); //duprate
-		str.emplace_back(sv == "" ? "0": sv); //sv
+		str.emplace_back(sv == "" ? "0": sv); //sv: just for place-holder
 
 		//str.emplace_back(std::to_string(variant->crispr));
 
@@ -153,7 +167,7 @@ void SimpleMode::output(Scope<AlignedVarsData>* mapScope, Configuration* conf){
 				if (vref == NULL) {
 					//SimpleOutputVariant outputVariant = new SimpleOutputVariant(vref, mapScope->region, variantsOnPosition->sv, position);
 					//variantPrinter.print(outputVariant);
-					print_output_variant_simple(vref, mapScope->region, variantsOnPosition->sv, position, conf->sample);
+					print_output_variant_simple(vref, mapScope->region, variantsOnPosition->sv, position, conf->sample, conf->fisher);
 					continue;
 				}
 				vref->vartype = "";
@@ -184,7 +198,7 @@ void SimpleMode::output(Scope<AlignedVarsData>* mapScope, Configuration* conf){
 				}
 				//SimpleOutputVariant outputVariant = new SimpleOutputVariant(vref, mapScope->region, variantsOnPosition->sv, position);
 				//variantPrinter.print(outputVariant);
-				print_output_variant_simple(vref, mapScope->region, variantsOnPosition->sv, position, conf->sample);
+				print_output_variant_simple(vref, mapScope->region, variantsOnPosition->sv, position, conf->sample, conf->fisher);
 			}
 		} catch(...) {
 			cerr << "position" << lastPosition << "error!!" << std::endl;
