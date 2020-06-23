@@ -6,6 +6,7 @@
 #include "../../include/ToVarsBuilder.h"
 #include <omp.h>
 #include <assert.h>
+#include "htslib/kfunc.h"
 //#include 
 string STRONG_SOMATIC = "StrongSomatic";
 string SAMPLE_SPECIFIC = "SampleSpecific";
@@ -117,7 +118,8 @@ static ScopePair one_region_run_somt(Region region, Configuration* conf, Somatic
 	return sp;
 }
 
-string SomaticMode::print_output_variant_simple(Variant* beginVariant, Variant* endVariant, Variant* tumorVariant, Variant* normalVariant, Region region, string& varLabel){
+string SomaticMode::print_output_variant_simple(Variant* beginVariant, Variant* endVariant, Variant* tumorVariant, Variant* normalVariant, 
+												Region region, string& varLabel, bool fisher){
 	const string null_case_str = "0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t";
 	string var_str = "";
 	var_str.append(conf->sample).append("\t")
@@ -156,6 +158,25 @@ string SomaticMode::print_output_variant_simple(Variant* beginVariant, Variant* 
 	}else{
 		var_str.append(null_case_str);
 	}
+	//- fisher 1
+	if(fisher){
+		if(tumorVariant != NULL){
+			double fisher_left_p, fisher_right_p, fisher_twoside_p;
+			kt_fisher_exact(tumorVariant->refForwardCoverage, tumorVariant->refReverseCoverage, 
+							tumorVariant->varsCountOnForward, tumorVariant->varsCountOnReverse,
+							&fisher_left_p, &fisher_right_p, &fisher_twoside_p);
+			var_str.append(std::to_string(fisher_twoside_p)).append("\t"); //pvale
+			double ad = (tumorVariant->refForwardCoverage * tumorVariant->varsCountOnReverse);
+			double bc = (tumorVariant->refReverseCoverage * tumorVariant->varsCountOnForward); //ratio: (a*d) / (b*c)
+			double ratio = 0.00;
+			if( bc != 0  && ad != 0){
+				ratio = ad > bc ? (ad / bc) : (bc / ad);
+			}
+			var_str.append(std::to_string(ratio)).append("\t"); //ratio(not odd ratio)
+		}else{
+			var_str.append("0\t0\t");
+		}
+	}
 
 	//---var2
 	if(normalVariant != NULL){
@@ -182,6 +203,25 @@ string SomaticMode::print_output_variant_simple(Variant* beginVariant, Variant* 
 	}else{
 		var_str.append(null_case_str);
 	}
+	//- fisher 2
+	if(fisher){
+		if(normalVariant != NULL){
+			double fisher_left_p, fisher_right_p, fisher_twoside_p;
+			kt_fisher_exact(normalVariant->refForwardCoverage, normalVariant->refReverseCoverage, 
+							normalVariant->varsCountOnForward, normalVariant->varsCountOnReverse,
+							&fisher_left_p, &fisher_right_p, &fisher_twoside_p);
+			var_str.append(std::to_string(fisher_twoside_p)).append("\t"); //pvale
+			double ad = (normalVariant->refForwardCoverage * normalVariant->varsCountOnReverse);
+			double bc = (normalVariant->refReverseCoverage * normalVariant->varsCountOnForward); //ratio: (a*d) / (b*c)
+			double ratio = 0.00;
+			if( bc != 0  && ad != 0){
+				ratio = ad > bc ? (ad / bc) : (bc / ad);
+			}
+			var_str.append(std::to_string(ratio)).append("\t"); //ratio(not odd ratio)
+		}else{
+			var_str.append("0\t0\t");
+		}
+	}
 
 	if(endVariant != NULL){
 		var_str.append(to_string(endVariant->shift3)).append("\t")
@@ -202,24 +242,45 @@ string SomaticMode::print_output_variant_simple(Variant* beginVariant, Variant* 
 		var_str.append("\t");
 	}
 
-	//if(tumorVariant != NULL){
-	//	var_str.append(to_string(tumorVariant->duprate)).append("\t");
-	//}else{
-	//	var_str.append("0").append("\t");
-	//}
     //-------there is no sv related member------//
 	if(tumorVariant != NULL){
 		var_str.append(to_string(tumorVariant->duprate)).append("\t");
 	}else{
 		var_str.append("0").append("\t");
 	}
+	var_str.append("0").append("\t"); //var1sv just placeholder
 
 	if(normalVariant != NULL){
 		var_str.append(to_string(normalVariant->duprate)).append("\t");
 	}else{
 		var_str.append("0").append("\t");
 	}
+	var_str.append("0").append("\t"); //var2sv just placeholder
 
+	//- fiser 3
+	if(fisher){
+		int var1totalCoverage   = tumorVariant == NULL ? 0 : tumorVariant->totalPosCoverage;
+		int var1variantCoverage = tumorVariant == NULL ? 0 : tumorVariant->positionCoverage;
+		int var2totalCoverage   = normalVariant == NULL ? 0 : normalVariant->totalPosCoverage;
+		int var2variantCoverage = normalVariant == NULL ? 0 : normalVariant->positionCoverage;
+		int tref = var1totalCoverage - var1variantCoverage;
+		int rref = var2totalCoverage - var2variantCoverage;
+		if(tref < 0) tref = 0;
+		if(rref < 0) rref = 0;
+
+		double fisher_less_p, fisher_greater_p, fisher_twoside_p;
+		kt_fisher_exact(var1variantCoverage, tref, var2variantCoverage, rref,
+						&fisher_less_p, &fisher_greater_p, &fisher_twoside_p);
+		var_str.append(std::to_string(fisher_less_p < fisher_greater_p? fisher_less_p : fisher_less_p)).append("\t"); //pvale
+		double ad = (var1variantCoverage * rref);
+		double bc = (tref * var2variantCoverage); //ratio: (a*d) / (b*c)
+		double ratio = 0.00;
+		if (bc != 0 && ad != 0)
+		{
+			ratio = ad > bc ? (ad / bc) : (bc / ad);
+		}
+		var_str.append(std::to_string(ratio)).append("\t"); //ratio(not odd ratio)
+	}
 	var_str.append("\n");
 
 	return var_str;
@@ -302,11 +363,11 @@ string SomaticMode::callingForOneSample(Vars* variants, bool isFirstCover, strin
 		if (isFirstCover) {
 			//outputVariant = new SomaticOutputVariant(variant, variant, NULL, variant, region, "", variants.sv, varLabel);
 			//variantPrinter.print(outputVariant);
-			one_sample_string.append(print_output_variant_simple(variant, variant, NULL, variant, region, varLabel));
+			one_sample_string.append(print_output_variant_simple(variant, variant, NULL, variant, region, varLabel, conf->fisher));
 		} else {
 			//outputVariant = new SomaticOutputVariant(variant, variant, variant, NULL, region, variants.sv, "", varLabel);
 			//variantPrinter.print(outputVariant);
-			one_sample_string.append(print_output_variant_simple(variant, variant, variant, NULL, region, varLabel));
+			one_sample_string.append(print_output_variant_simple(variant, variant, variant, NULL, region, varLabel, conf->fisher));
 		}
 	}
 	return one_sample_string;
@@ -351,7 +412,7 @@ string SomaticMode::printVariationsFromFirstSample(int position, Vars* v1, Vars*
 			string type = determinateType(v2, vref, v2nt, splice);
 			//outputVariant = new SomaticOutputVariant(vref, v2nt, vref, v2nt, region, v1.sv, v2.sv, type);
 			//variantPrinter.print(outputVariant);
-			first_sample_string.append(print_output_variant_simple(vref, v2nt, vref, v2nt, region, type));
+			first_sample_string.append(print_output_variant_simple(vref, v2nt, vref, v2nt, region, type, conf->fisher));
 		} else { // sample 1 only, should be strong somatic
 			Variant* varForPrint = new Variant();
 			bool delete_vfp = false;
@@ -390,9 +451,9 @@ string SomaticMode::printVariationsFromFirstSample(int position, Vars* v1, Vars*
 				}
 			}
 			if (type == STRONG_SOMATIC) {
-				first_sample_string.append(print_output_variant_simple(vref, vref, vref, varForPrint, region, STRONG_SOMATIC));
+				first_sample_string.append(print_output_variant_simple(vref, vref, vref, varForPrint, region, STRONG_SOMATIC, conf->fisher));
 			} else {
-				first_sample_string.append(print_output_variant_simple(vref, vref, vref, v2nt, region, type));
+				first_sample_string.append(print_output_variant_simple(vref, vref, vref, v2nt, region, type, conf->fisher));
 			}
 			if(delete_vfp) delete varForPrint;
 			if(v2nt) delete v2nt;
@@ -422,7 +483,7 @@ string SomaticMode::printVariationsFromFirstSample(int position, Vars* v1, Vars*
 				v1nt->vartype = v1nt->varType();
 				//outputVariant = new SomaticOutputVariant(v1nt, v2var, v1nt, v2var, region, v1.sv, v2.sv, type);
 				//variantPrinter.print(outputVariant);
-				first_sample_string.append(print_output_variant_simple(v1nt, v2var, v1nt, v2var, region, type));
+				first_sample_string.append(print_output_variant_simple(v1nt, v2var, v1nt, v2var, region, type, conf->fisher));
 			} else {
 				//Variant* v1var = getVarMaybe(v1, var, 0);
 				Variant* v1var = v1->variants.size() ? v1->variants[0] : NULL;
@@ -447,7 +508,7 @@ string SomaticMode::printVariationsFromFirstSample(int position, Vars* v1, Vars*
 
 				//outputVariant = new SomaticOutputVariant(v2var, v2var, varForPrint, v2var, region, "", v2.sv, STRONG_LOH);
 				//variantPrinter.print(outputVariant);
-				first_sample_string.append(print_output_variant_simple(v2var, v2var, varForPrint, v2var, region, STRONG_LOH));
+				first_sample_string.append(print_output_variant_simple(v2var, v2var, varForPrint, v2var, region, STRONG_LOH, conf->fisher));
 
 				delete varForPrint;
 			}
@@ -522,7 +583,7 @@ string SomaticMode::printVariationsFromSecondSample(int position, Vars* v1, Vars
 
         //SomaticOutputVariant outputVariant = new SomaticOutputVariant(v2var, v2var, varForPrint, v2var, region, "", v2.sv, type);
         //variantPrinter.print(outputVariant);
-        second_sample_string.append(print_output_variant_simple(v2var, v2var, varForPrint, v2var, region, type));
+        second_sample_string.append(print_output_variant_simple(v2var, v2var, varForPrint, v2var, region, type, conf->fisher));
 		if(new_v1nt) delete v1nt;
     }
 	return second_sample_string;
@@ -723,7 +784,8 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 		//dscope.region = region;
 		set<string> splice;
 		ScopePair pair = one_region_run_somt(region, conf, trs, &splice);
-		cout << output(pair.normal_scope, pair.tumor_scope, trs) << endl;
+		string variant_result = output(pair.normal_scope, pair.tumor_scope, trs);
+		fwrite(variant_result.c_str(), 1, variant_result.length(), this->file_ptr);
 
 		for(Variation* variation: trs.data_pool->_data){
 			delete variation;

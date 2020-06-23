@@ -44,7 +44,8 @@ public:
 										string& chrName, int position,
 										string& descriptionString, set<string>* splice,
 										int maxReadLength, SomaticThreadResource &trs);
-	string print_output_variant_simple(Variant* beginVariant, Variant* endVariant, Variant* tumorVariant, Variant* normalVariant, Region region, string& varLabel);
+	string print_output_variant_simple(Variant* beginVariant, Variant* endVariant, Variant* tumorVariant, Variant* normalVariant,
+									   Region region, string& varLabel, bool fisher);
 
 private:
 	Configuration* conf;
