@@ -3,6 +3,7 @@
 #include "../../include/parseCigar.h"
 #include "../../include/VariationRealigner.h"
 #include "../../include/ToVarsBuilder.h"
+#include "htslib/kfunc.h"
 #include <map>
 #include <omp.h>
 #include <assert.h>
@@ -119,6 +120,101 @@ static Scope<AlignedVarsData>* amp_one_region_run(Region region, Configuration* 
 AmpliconMode::AmpliconMode(Configuration* conf){
 	this->conf = conf;
 }
+void AmpliconMode::print_out_amp_sample(Variant* variant, Region &region, 
+	vector<var2str_tup> *goodVariants, vector<var2str_tup> *badVariants, int position, int gvscnt,
+	int noCov, bool flag){
+
+	vector<std::string> str;
+	str.reserve(40);
+
+	str.emplace_back(conf->sample);
+	str.emplace_back(region.gene);
+	str.emplace_back(region.chr);
+	if(variant == NULL){
+		str.emplace_back(std::to_string(position)); // start position
+		str.emplace_back(std::to_string(position)); // end position
+		str.emplace_back(region.chr + ":" + std::to_string(position) + "-" + std::to_string(position));
+	}
+	else{
+		str.emplace_back(std::to_string(variant->startPosition));
+		str.emplace_back(std::to_string(variant->endPosition));
+		str.emplace_back(variant->refallele);
+		str.emplace_back(variant->varallele);
+
+		str.emplace_back(std::to_string(variant->totalPosCoverage));
+		str.emplace_back(std::to_string(variant->positionCoverage));
+		str.emplace_back(std::to_string(variant->refForwardCoverage));
+		str.emplace_back(std::to_string(variant->refReverseCoverage));
+		str.emplace_back(std::to_string(variant->varsCountOnForward));
+		str.emplace_back(std::to_string(variant->varsCountOnReverse));
+		str.emplace_back(variant->genotype == "" ? "0" : variant->genotype);
+		str.emplace_back(std::to_string(variant->frequency));
+		str.emplace_back(variant->strandBiasFlag);
+		str.emplace_back(std::to_string(variant->meanPosition));
+		str.emplace_back(variant->isAtLeastAt2Positions ? std::to_string(1) :std::to_string(0));//ptsd
+		str.emplace_back(std::to_string(variant->meanQuality)); //qual
+		str.emplace_back(variant->hasAtLeast2DiffQualities ? std::to_string(1) : std::to_string(0)); //qstd
+		if(conf->fisher){
+			double fisher_left_p, fisher_right_p, fisher_twoside_p;
+			kt_fisher_exact(variant->refForwardCoverage, variant->refReverseCoverage, variant->varsCountOnForward, variant->varsCountOnReverse,
+							&fisher_left_p, &fisher_right_p, &fisher_twoside_p);
+			str.emplace_back(std::to_string(fisher_twoside_p)); //pvale
+			double ad = (variant->refForwardCoverage * variant->varsCountOnReverse);
+			double bc = (variant->refReverseCoverage * variant->varsCountOnForward); //ratio: (a*d) / (b*c)
+			double ratio = 0.00;
+			if( bc != 0  && ad != 0){
+				ratio = ad > bc ? (ad / bc) : (bc / ad);
+			}
+			str.emplace_back(std::to_string(ratio)); //ratio(not odd ratio)
+		}
+		str.emplace_back(std::to_string(variant->meanMappingQuality)); //mapq
+		str.emplace_back(std::to_string(variant->highQualityToLowQualityRatio)); //qratio 
+		str.emplace_back(variant->highQualityReadsFrequency == 0
+							? std::to_string(0)
+							: std::to_string(variant->highQualityReadsFrequency)); //higreq
+		str.emplace_back(std::to_string(variant->extraFrequency)); //extrafreq
+		str.emplace_back(std::to_string(variant->shift3)); //shift3
+		str.emplace_back(std::to_string(variant->msi)); //msi
+		str.emplace_back(std::to_string(variant->msint)); //msint
+		str.emplace_back(variant->numberOfMismatches > 0 ? std::to_string(variant->numberOfMismatches) : std::to_string(0)); // nm
+		str.emplace_back(std::to_string(variant->hicnt)); //hicnt
+		str.emplace_back(std::to_string(variant->hicov)); //hicov
+		str.emplace_back(variant->leftseq.empty() ? "0": variant->leftseq); //leftSequence
+		str.emplace_back(variant->rightseq.empty() ? "0": variant->rightseq); //rightSequence
+		if(goodVariants && !goodVariants->empty()){
+			str.emplace_back(std::get<1>(goodVariants->at(0))); //region
+		}else{
+			str.emplace_back(region.chr + ":" + std::to_string(position) + "-" + std::to_string(position));
+		}
+
+		str.emplace_back(variant->vartype); //varType
+		str.emplace_back(std::to_string(gvscnt));
+		str.emplace_back(std::to_string(gvscnt + badVariants->size()));
+		str.emplace_back(std::to_string(noCov));
+		str.emplace_back(flag ? "1" : "0");
+	}
+
+	//----join print----//
+	string result = "";
+	int str_len = str.size();
+	if(str_len == 6){ //variant == NULL
+		for(int i = 0; i < 38 - 6; i++){
+			str.emplace_back("0");
+		}
+		if(conf->fisher){
+			str.emplace_back("0");
+			str.emplace_back("0");
+		}
+	}
+	str_len = str.size();
+	for(int i = 0; i < str_len - 1; i++){
+		result.append(str[i]).append("\t");
+	}
+	result.append(str[str_len - 1]);
+	result += "\n";
+	fwrite(result.c_str(), 1, result.length(), this->file_ptr);
+}
+
 void AmpliconMode::interest_region_from_cmd(vector<vector<Region> > &segments){
 	AmpThreadResource trs;
 	//----init bamReader------//
@@ -405,6 +501,8 @@ void AmpliconMode::output(Region rg, vector<robin_hood::unordered_map<int, Vars*
 					} else {
 						//AmpliconOutputVariant outputVariant = new AmpliconOutputVariant(null, rg, null, null, position, 0, nocov, false);
 						//variantPrinter.print(outputVariant);
+						print_out_amp_sample(NULL, rg, NULL, NULL, position, 0, nocov, false);
+
 						continue;
 					}
 				} else {
@@ -487,6 +585,7 @@ void AmpliconMode::output(Region rg, vector<robin_hood::unordered_map<int, Vars*
 				}
 				//AmpliconOutputVariant outputVariant = new AmpliconOutputVariant(vref, rg, goodVariants, badVariants, position, currentGvscnt, nocov, flag);
 				//variantPrinter.print(outputVariant);
+				print_out_amp_sample(vref, rg, &goodVariants, &badVariants, position, currentGvscnt, nocov, flag);
 			}
 		} catch(...) {
 			cerr << "Amplicon out put error" << endl;

@@ -65,7 +65,7 @@ Scope<AlignedVarsData>* SimpleMode::one_region_run(Region region, Configuration*
 
 void SimpleMode::print_output_variant_simple(const Variant* variant, Region &region, std::string sv, int position, std::string sample, bool fisher){
 	vector<std::string> str;
-	str.reserve(36);
+	str.reserve(40);
 
 	str.emplace_back(sample);
 	str.emplace_back(region.gene);
