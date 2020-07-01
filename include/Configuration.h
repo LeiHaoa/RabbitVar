@@ -157,7 +157,7 @@ public:
     /**
      * If set, reads with mapping quality less than INT will be filtered and ignored
      */
-     int mappingQuality;//-Q
+     int mappingQuality = 0;//-Q
     /**
      * Indicate to remove duplicated reads
      */

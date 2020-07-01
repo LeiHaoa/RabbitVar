@@ -831,6 +831,7 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 			//vector<bamReader> bamReaders;
 			trs[t].bamReaders.resize(2);
 			if(conf->bam.getBam1() != ""){
+				//cerr << "[debug]: bam1: " << conf->bam.getBam1() << endl;
 				for(string bamname: ssplit(conf->bam.getBam1(), ":")){
 					samFile* in = sam_open(bamname.c_str(), "r");
 					bam_hdr_t* header;
@@ -847,6 +848,7 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 				}
 			}
 			if(conf->bam.getBam2() != ""){
+				//cerr << "[debug]: bam2: " << conf->bam.getBam2() << endl;
 				for(string bamname: ssplit(conf->bam.getBam2(), ":")){
 					samFile* in = sam_open(bamname.c_str(), "r");
 					bam_hdr_t* header;
