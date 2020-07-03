@@ -209,6 +209,11 @@ void SimpleMode::output(Scope<AlignedVarsData>* mapScope, Configuration* conf){
 
 void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 	this->file_ptr = fopen(conf->outFileName.c_str(), "wb");
+	if(this->file_ptr == NULL){
+		cerr << "open file: " << conf->outFileName << " error!" << endl;
+	}else{
+		cout << "[info] output file name: " << conf->outFileName << endl;	
+	}
 	//--------------use interest region parameter: singel thread-------------------//
 	if(conf->regionOfInterest != ""){
 		//----add by haoz: init bamReader------//

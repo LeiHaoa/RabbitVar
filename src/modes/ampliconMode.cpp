@@ -236,9 +236,9 @@ void AmpliconMode::interest_region_from_cmd(vector<vector<Region> > &segments){
 		}
 	}
 	assert(bamReaders.size() > 0);
-	cout << "reader info: " << static_cast<void*>(bamReaders[0].in) << " "
-		 << static_cast<void*>(bamReaders[0].header) << " "
-		 << static_cast<void*>(bamReaders[0].idx) << endl;
+	//cout << "reader info: " << static_cast<void*>(bamReaders[0].in) << " "
+	//	 << static_cast<void*>(bamReaders[0].header) << " "
+	//	 << static_cast<void*>(bamReaders[0].idx) << endl;
 	//----init bamReader end------//
 	Region region;
 	region = segments[0][0];
@@ -396,6 +396,11 @@ void AmpliconMode::multi_regions_from_bed(vector<vector<Region> > &segments){
 
 void AmpliconMode::process(vector<vector<Region> > &segments){
 	this->file_ptr = fopen(conf->outFileName.c_str(), "wb");
+	if(this->file_ptr == NULL){
+		cerr << "open file: " << conf->outFileName << " error!" << endl;
+	}else{
+		cout << "[info] output file name: " << conf->outFileName << endl;	
+	}
 	/* use interest region parameter: single thread*/
 	if(conf->regionOfInterest != ""){
 		interest_region_from_cmd(segments);

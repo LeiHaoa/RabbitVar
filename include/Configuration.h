@@ -104,7 +104,7 @@ public:
     /**
      * Print a header row describing columns
      */
-     bool printHeader; //-h
+	//bool printHeader; //-h
     /**
      * The delimiter for split region_info
      */

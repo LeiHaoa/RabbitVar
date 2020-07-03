@@ -285,7 +285,7 @@ Configuration* cmdParse(int argc, char* argv[]){
 
     // input/output
     cmd.add("help", 'H', "Print this help page");
-    cmd.add("header", 'h', "Print a header row describing columns");
+    //cmd.add("header", 'h', "Print a header row describing columns");
     //cmd.add("vcf_format", 'v',"VCF format output");
     //cmd.add("splice", 'i', "Output splicing read counts");
     cmd.add("pileup", 'p', "Do pileup regardless of the frequency");
@@ -362,7 +362,7 @@ Configuration* cmdParse(int argc, char* argv[]){
     Configuration *config = new Configuration();
 	    config->patterns = new Patterns();
 		config->bed = argv[1];
-        config->printHeader = cmd.exist('h');
+        //config->printHeader = cmd.exist('h');
         config->chromosomeNameIsNumber = cmd.exist('C');
         config->debug = cmd.exist('D');
         config->removeDuplicatedReads = cmd.exist('t');
