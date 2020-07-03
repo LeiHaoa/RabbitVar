@@ -286,8 +286,8 @@ Configuration* cmdParse(int argc, char* argv[]){
     // input/output
     cmd.add("help", 'H', "Print this help page");
     cmd.add("header", 'h', "Print a header row describing columns");
-    cmd.add("vcf_format", 'v',"VCF format output");
-    cmd.add("splice", 'i', "Output splicing read counts");
+    //cmd.add("vcf_format", 'v',"VCF format output");
+    //cmd.add("splice", 'i', "Output splicing read counts");
     cmd.add("pileup", 'p', "Do pileup regardless of the frequency");
     cmd.add("Chr_name", 'C', "Indicate the chromosome names are just numbers, such as 1, 2, not chr1, chr2 (deprecated)");
     cmd.add("debug", 'D', "Debug mode.  Will print some error messages and append full genotype at the end.");
@@ -450,7 +450,7 @@ Configuration* cmdParse(int argc, char* argv[]){
             config->minr = 0;
         }
         config->y = cmd.exist('y');
-        config->outputSplicing = cmd.exist('i');
+        //config->outputSplicing = cmd.exist('i');
 
         if (cmd.exist('M')) {
             //config->minmatch = ((Number) cmd.getParsedOptionValue("M")).intValue();

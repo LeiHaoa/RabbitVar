@@ -258,7 +258,7 @@ public:
     /**
      *  Output splicing read counts
      */
-     bool outputSplicing = false; // -i
+	//bool outputSplicing = false; // -i
 
     /**
      * How strict to be when reading a SAM or BAM.
