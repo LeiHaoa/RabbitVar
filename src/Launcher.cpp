@@ -307,7 +307,7 @@ Configuration* cmdParse(int argc, char* argv[]){
     cmd.add<string>("amplicon", 'a', "Indicate it's amplicon based calling. Reads that don't map to the amplicon will be skipped. A read\n\t\t\t      pair is considered belonging to the amplicon if the edges are less than int bp to the amplicon, \n\t\t\t      and overlap fraction is at least float.  Default: 10:0.95", false, "" );
     
     cmd.add<int>("column", 'c', "The column for chromosome", false, DEFAULT_BED_ROW_FORMAT.chrColumn);
-    cmd.add<string>("Genome_fasta", 'G', "The reference fasta. Should be indexed (.fai).\n\t\t\t      Defaults to: /ngs/reference_data/genomes/Hsapiens/hg19/seq/hg19.fa. \n\t\t\t      Also short commands can be used to set path to: \n\t\t\t      hg19 - /ngs/reference_data/genomes/Hsapiens/hg19/seq/hg19.fa\n\t\t\t      hg38 - /ngs/reference_data/genomes/Hsapiens/hg38/seq/hg38.fa\n\t\t\t      mm10 - /ngs/reference_data/genomes/Mmusculus/mm10/seq/mm10.fa", true, "");
+    cmd.add<string>("Genome_fasta", 'G', "The reference fasta. Should be indexed (.fai).", true, "");
     cmd.add<string>("Region", 'R', "The region of interest. In the format of chr:start-end. If end is omitted, then a single position.  \n\t\t\t      No BED is needed.", false, "");
     cmd.add<string>("delemiter", 'd',"The delimiter for split region_info, default to tab \"\\t\"",false,"\t");
     cmd.add<string>("regular_expression", 'n', "The regular expression to extract sample name from BAM filenames.  \n\t\t\t      Default to: /([^\\/\\._]+?)_[^\\/]*.bam/",false,"/([^\\/\\._]+?)_[^\\/]*.bam/");
@@ -352,7 +352,7 @@ Configuration* cmdParse(int argc, char* argv[]){
     cmd.add<double>("mfreq", 0, "The variant frequency threshold to determine variant as good in case of monomer MSI. \n\t\t\t      Default: 0.25", false, 0.25);
     cmd.add<double>("nmfreq", 0, "The variant frequency threshold to determine variant as good in case of non-monomer MSI. \n\t\t\t      Default: 0.1", false, 0.1);
 
-	cmd.add<string>("out", 0, "The out put file path \n\t\t\t\t Default: ./out.vcf", false, "./out.vcf");
+	cmd.add<string>("out", 0, "The out put file path. \n\t\t\t      Default: ./out.vcf", false, "./out.vcf");
     //cmd.add<string>("DP", 0, "The printer type used for different outputs. Default: OUT (i.e. System.out).", false, "OUT");    
 
     //================================================================================

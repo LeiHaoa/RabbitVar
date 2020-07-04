@@ -55,9 +55,6 @@ User can also specify multi pregions with bed file:
 ```
 options:
   -H, --help                  Print this help page
-  -h, --header                Print a header row describing columns
-  -v, --vcf_format            VCF format output
-  -i, --splice                Output splicing read counts
   -p, --pileup                Do pileup regardless of the frequency
   -C, --Chr_name              Indicate the chromosome names are just numbers, such as 1, 2, not chr1, chr2 (deprecated)
   -D, --debug                 Debug mode.  Will print some error messages and append full genotype at the end.
@@ -65,34 +62,29 @@ options:
   -3, --3-prime               Indicate to move indels to 3-prime if alternative alignment can be achieved.
   -K, --calcu_Ns              Include Ns in the total depth calculation
   -u, --uni                   Indicate unique mode, which when mate pairs overlap, the overlapping part will be counted only once
-			      using forward read only.
+			                  using forward read only.
       --UN                    Indicate unique mode, which when mate pairs overlap, the overlapping part will be counted only once
-			      using first read only.
+			                  using first read only.
       --chimeric              Indicate to turn off chimeric reads filtering.
       --deldupvar             Turn on deleting of duplicate variants. Variants in this mode are considered and outputted only if
-			      start position of variant is inside the region interest.
+			                  start position of variant is inside the region interest.
   -y, --verbose
   -F, --Filter                The hexical to filter reads using samtools. Default: 0x504 (filter 2nd alignments, unmapped reads
-			      and duplicates).  Use -F 0 to turn it off. (string [=1284])
+			                  and duplicates).  Use -F 0 to turn it off. (string [=1284])
   -z, --zero_based            Indicate whether coordinates are zero-based, as IGV uses.  Default: 1 for BED file or amplicon BED
-			      file.Use 0 to turn it off. When using the -R option, it's set to 0
+			                  file.Use 0 to turn it off. When using the -R option, it's set to 0
   -k, --local_realig          Indicate whether to perform local realignment.  Default: 1.  Set to 0 to disable it.  For Ion or
-			      PacBio, 0 is recommended. (int [=1])
+			                  PacBio, 0 is recommended. (int [=1])
   -a, --amplicon              Indicate it's amplicon based calling. Reads that don't map to the amplicon will be skipped. A read
-			      pair is considered belonging to the amplicon if the edges are less than int bp to the amplicon,
-			      and overlap fraction is at least float.  Default: 10:0.95 (string [=])
+			                  pair is considered belonging to the amplicon if the edges are less than int bp to the amplicon,
+			                  and overlap fraction is at least float.  Default: 10:0.95 (string [=])
   -c, --column                The column for chromosome (int [=2])
-  -G, --Genome_fasta          The reference fasta. Should be indexed (.fai).
-			      Defaults to: /ngs/reference_data/genomes/Hsapiens/hg19/seq/hg19.fa.
-			      Also short commands can be used to set path to:
-			      hg19 - /ngs/reference_data/genomes/Hsapiens/hg19/seq/hg19.fa
-			      hg38 - /ngs/reference_data/genomes/Hsapiens/hg38/seq/hg38.fa
-			      mm10 - /ngs/reference_data/genomes/Mmusculus/mm10/seq/mm10.fa (string)
+  -G, --Genome_fasta          The reference fasta. Should be indexed (.fai). (string)
   -R, --Region                The region of interest. In the format of chr:start-end. If end is omitted, then a single position.
-			      No BED is needed. (string [=])
+			                  No BED is needed. (string [=])
   -d, --delemiter             The delimiter for split region_info, default to tab "\t" (string [=	])
   -n, --regular_expression    The regular expression to extract sample name from BAM filenames.
-			      Default to: /([^\/\._]+?)_[^\/]*.bam/ (string [=/([^\/\._]+?)_[^\/]*.bam/])
+			                  Default to: /([^\/\._]+?)_[^\/]*.bam/ (string [=/([^\/\._]+?)_[^\/]*.bam/])
   -N, --Name                  The sample name to be used directly.  Will overwrite -n option (string [=])
   -b, --in_bam                The indexed BAM file (string)
   -S, --region_start          The column for region start, e.g. gene start (int [=6])
@@ -104,57 +96,58 @@ options:
   -B, --min                   The minimum # of reads to determine strand bias, default 2 (int [=2])
   -Q, --Quality               If set, reads with mapping quality less than INT will be filtered and ignored (int [=0])
   -q, --phred_score           The phred score for a base to be considered a good call.  Default: 25 (for Illumina) For PGM, set
-			      it to ~15, as PGM tends to under estimate base quality. (double [=22.5])
+			                  it to ~15, as PGM tends to under estimate base quality. (double [=22.5])
   -m, --mismatch              If set, reads with mismatches more than INT will be filtered and ignored.  Gaps are not counted as
-			      mismatches. Valid only for bowtie2/TopHat or BWA aln followed by sampe.  BWA mem is calculated as
-			      NM - Indels.  Default: 8, or reads with more than 8 mismatches will not be used. (int [=8])
+			                  mismatches. Valid only for bowtie2/TopHat or BWA aln followed by sampe.  BWA mem is calculated as
+			                  NM - Indels.  Default: 8, or reads with more than 8 mismatches will not be used. (int [=8])
   -T, --trim                  Trim bases after [INT] bases in the reads (int [=0])
   -X, --extension             Extension of bp to look for mismatches after insersion or deletion.  Default to 2 bp, or only calls
-			      when they're within 2 bp. (int [=2])
+			                  when they're within 2 bp. (int [=2])
   -P, --Position              The read position filter.  If the mean variants position is less that specified, it's considered
-			      false positive.  Default: 5 (int [=5])
+			                  false positive.  Default: 5 (int [=5])
   -I, --Indel_size            The indel size.  Default: 50bp (int [=50])
-      --th                    Threads count. (int)
+      --th                    Threads count. (int [=0])
+      --fisher                Experimental feature: fisher test
   -M, --Min_macth             The minimum matches for a read to be considered. If, after soft-clipping, the matched bp is less
-			      than INT, then the read is discarded. It's meant for PCR based targeted sequencing where there's no
-			      insert and the matching is only the primers. Default: 0, or no filtering (int [=0])
+			                  than INT, then the read is discarded. It's meant for PCR based targeted sequencing where there's no
+			                  insert and the matching is only the primers. Default: 0, or no filtering (int [=0])
   -A, --STD                   The number of STD. A pair will be considered for DEL if INSERT > INSERT_SIZE + INSERT_STD_AMT *
-			      INSERT_STD.  Default: 4 (int [=4])
+			                  INSERT_STD.  Default: 4 (int [=4])
   -L, --minlen_sv             The minimum structural variant length to be presented using <DEL> <DUP> <INV> <INS>, etc.
-			      Default: 1000. Any indel, complex variants less than this will be spelled out with exact
-			      nucleotides. (int [=1000])
+			                  Default: 1000. Any indel, complex variants less than this will be spelled out with exact
+			                  nucleotides. (int [=1000])
   -Y, --ref-extension         Extension of bp of reference to build lookup table. Default to 1200 bp. Increase the number will
-			      slowdown the program. The main purpose is to call large indels with 1000 bit that can be missed by
-			      discordant mate pairs. (int [=1200])
+			                  slowdown the program. The main purpose is to call large indels with 1000 bit that can be missed by
+			                  discordant mate pairs. (int [=1200])
   -r, --minimum_reads         The minimum # of variant reads, default 2 (int [=2])
   -o, --Qratio                The Qratio of (good_quality_reads)/(bad_quality_reads+0.5).  The quality is defined by -q option.
-			      Default: 1.5 (double [=1.5])
+			                  Default: 1.5 (double [=1.5])
   -O, --MapQ                  The reads should have at least mean MapQ to be considered a valid variant.
-			      Default: no filtering (double [=0])
+			                  Default: no filtering (double [=0])
   -V, --freq                  The lowest frequency in the normal sample allowed for a putative somatic mutation.
-			      Defaults to 0.05 (double [=0.05])
+			                  Defaults to 0.05 (double [=0.05])
   -f, --allele_fre            The threshold for allele frequency, default: 0.01 or 1% (double [=0.01])
   -Z, --downsample            For downsampling fraction.  e.g. 0.7 means roughly 70% downsampling.  Default: No downsampling.
-			      Use with caution.  The downsampling will be random and non-reproducible. (double [=0])
+			                  Use with caution.  The downsampling will be random and non-reproducible. (double [=0])
       --VS                    How strict to be when reading a SAM or BAM.
-			      STRICT	- throw an exception if something looks wrong.
-			      LENIENT	- Emit warnings but keep going if possible.
-			      SILENT	- Like LENIENT, only don't emit warning messages.
-			      Default: LENIENT (string [=LENIENT])
+			                  STRICT	- throw an exception if something looks wrong.
+			                  LENIENT	- Emit warnings but keep going if possible.
+			                  SILENT	- Like LENIENT, only don't emit warning messages.
+			                  Default: LENIENT (string [=LENIENT])
       --adaptor               Filter adaptor sequences so that they aren't used in realignment. Multiple adaptors can be supplied
-			      by setting them with comma, like: --adaptor ACGTTGCTC,ACGGGGTCTC,ACGCGGCTAG . (string [=])
+			                  by setting them with comma, like: --adaptor ACGTTGCTC,ACGGGGTCTC,ACGCGGCTAG . (string [=])
   -J, --crispr                The genomic position that CRISPR/Cas9 suppose to cut, typically 3bp from the PAM NGG site and
-			      within the guide.  For CRISPR mode only.  It will adjust the variants (mostly In-Del) start and end
-			      sites to as close to this location as possible,if there are alternatives. The option should only be
-			      used for CRISPR mode. (int [=0])
+			                  within the guide.  For CRISPR mode only.  It will adjust the variants (mostly In-Del) start and end
+			                  sites to as close to this location as possible,if there are alternatives. The option should only be
+			                  used for CRISPR mode. (int [=0])
   -j, --CRISPR_fbp            In CRISPR mode, the minimum amount in bp that a read needs to overlap with cutting site.  If a read does not meet the criteria,
-			      it will not be used for variant calling, since it is likely just a partially amplified PCR.  Default: not set, or no filtering (int [=0])
+			                  it will not be used for variant calling, since it is likely just a partially amplified PCR.  Default: not set, or no filtering (int [=0])
       --mfreq                 The variant frequency threshold to determine variant as good in case of monomer MSI.
-			      Default: 0.25 (double [=0.25])
+			                  Default: 0.25 (double [=0.25])
       --nmfreq                The variant frequency threshold to determine variant as good in case of non-monomer MSI.
-			      Default: 0.1 (double [=0.1])
-      --out                   The out put file path
-				 Default: ./out.vcf (string [=./out.vcf])
+			                  Default: 0.1 (double [=0.1])
+      --out                   The out put file path.
+			                  Default: ./out.vcf (string [=./out.vcf])
 ```
 
 
