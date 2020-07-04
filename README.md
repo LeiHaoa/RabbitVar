@@ -50,7 +50,21 @@ User can also specify multi pregions with bed file:
    --th 40
    --out ./out.vcf
 ```
-
+**Format**
+  ```
+  #germline
+  cat ./out.vcf | ./teststrandbias.R | var2vcf_valid.pl -N sample_name -f 0.01
+  #somatic
+  cat ./out.vcf | ./testsomatic.R | ./var2vcf_paired.pl -N sample_name -f 0.01
+  ```
+  if you use --fisher paramater when runing FastVC, then you do not need the fisher test step by R file. just
+  ```
+  #germline
+  cat ./out.vcf | var2vcf_valid.pl -N sample_name -f 0.01
+  #somatic
+  cat ./out.vcf | ./var2vcf_paired.pl -N sample_name -f 0.01
+  ```
+  Use the fisher exact test in FastVC is much faster than use the R script, but the test function in R script is a little accurate.
 ## Usage 
 ```
 options:
