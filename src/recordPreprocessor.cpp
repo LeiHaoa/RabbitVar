@@ -122,10 +122,6 @@ int RecordPreprocessor::next_record(bam1_t *record){
 			continue;
 		}
 		/*
-		if (conf->isDownsampling && RND.nextDouble() <= conf->downsampling) {
-			printf("return false due to downsampling\n");
-			continue;
-		}
 
 
         //Skip not primary alignment reads
@@ -134,6 +130,11 @@ int RecordPreprocessor::next_record(bam1_t *record){
 			continue;
         }
 		*/
+
+		if (conf->isDownsampling && rand() <= RAND_MAX * conf->downsampling) {
+			continue;
+		}
+
         // Ignore low mapping quality reads
         int mappingQuality = record->core.qual;
         if (mappingQuality < conf->mappingQuality) {

@@ -436,6 +436,7 @@ Configuration* cmdParse(int argc, char* argv[]){
         config->vext = cmd.get<int>('X');
         config->readPosFilter = cmd.get<int>('P');
         if (cmd.exist('Z')) {
+			config->isDownsampling = true;
             config->downsampling = cmd.get<double>('Z');
         }
         config->qratio = cmd.get<double>('o');

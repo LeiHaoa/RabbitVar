@@ -151,6 +151,7 @@ public:
     /**
      * For downsampling fraction
      */
+	 bool isDownsampling = false;
      double downsampling; //-Z
 
      bool chromosomeNameIsNumber; // -C
