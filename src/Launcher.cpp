@@ -1,15 +1,15 @@
-#include "Launcher.h"
-#include "RegionBuilder.h"
+#include "../include/Launcher.h"
+#include "../include/RegionBuilder.h"
 
 #include "htslib/hts.h"
 #include "htslib/sam.h"
 #include <fstream>
 #include <iostream>
-#include "./patterns.h"
-#include "./cmdline.h"
-#include "modes/simpleMode.h"
-#include "modes/somaticMode.h"
-#include "modes/ampliconMode.h"
+#include "../include/patterns.h"
+#include "../include/cmdline.h"
+#include "../include/modes/simpleMode.h"
+#include "../include/modes/somaticMode.h"
+#include "../include/modes/ampliconMode.h"
 #include <assert.h>
 
 using namespace std;
@@ -285,9 +285,9 @@ Configuration* cmdParse(int argc, char* argv[]){
 
     // input/output
     cmd.add("help", 'H', "Print this help page");
-    cmd.add("header", 'h', "Print a header row describing columns");
-    cmd.add("vcf_format", 'v',"VCF format output");
-    cmd.add("splice", 'i', "Output splicing read counts");
+    //cmd.add("header", 'h', "Print a header row describing columns");
+    //cmd.add("vcf_format", 'v',"VCF format output");
+    //cmd.add("splice", 'i', "Output splicing read counts");
     cmd.add("pileup", 'p', "Do pileup regardless of the frequency");
     cmd.add("Chr_name", 'C', "Indicate the chromosome names are just numbers, such as 1, 2, not chr1, chr2 (deprecated)");
     cmd.add("debug", 'D', "Debug mode.  Will print some error messages and append full genotype at the end.");
@@ -307,12 +307,12 @@ Configuration* cmdParse(int argc, char* argv[]){
     cmd.add<string>("amplicon", 'a', "Indicate it's amplicon based calling. Reads that don't map to the amplicon will be skipped. A read\n\t\t\t      pair is considered belonging to the amplicon if the edges are less than int bp to the amplicon, \n\t\t\t      and overlap fraction is at least float.  Default: 10:0.95", false, "" );
     
     cmd.add<int>("column", 'c', "The column for chromosome", false, DEFAULT_BED_ROW_FORMAT.chrColumn);
-    cmd.add<string>("Genome_fasta", 'G', "The reference fasta. Should be indexed (.fai).\n\t\t\t      Defaults to: /ngs/reference_data/genomes/Hsapiens/hg19/seq/hg19.fa. \n\t\t\t      Also short commands can be used to set path to: \n\t\t\t      hg19 - /ngs/reference_data/genomes/Hsapiens/hg19/seq/hg19.fa\n\t\t\t      hg38 - /ngs/reference_data/genomes/Hsapiens/hg38/seq/hg38.fa\n\t\t\t      mm10 - /ngs/reference_data/genomes/Mmusculus/mm10/seq/mm10.fa", true, "");
+    cmd.add<string>("Genome_fasta", 'G', "The reference fasta. Should be indexed (.fai).", true, "");
     cmd.add<string>("Region", 'R', "The region of interest. In the format of chr:start-end. If end is omitted, then a single position.  \n\t\t\t      No BED is needed.", false, "");
     cmd.add<string>("delemiter", 'd',"The delimiter for split region_info, default to tab \"\\t\"",false,"\t");
     cmd.add<string>("regular_expression", 'n', "The regular expression to extract sample name from BAM filenames.  \n\t\t\t      Default to: /([^\\/\\._]+?)_[^\\/]*.bam/",false,"/([^\\/\\._]+?)_[^\\/]*.bam/");
     cmd.add<string>("Name", 'N', "The sample name to be used directly.  Will overwrite -n option",false,"");
-    //------------"b",require??--java
+
     cmd.add<string>("in_bam", 'b', "The indexed BAM file", true, "");
     cmd.add<int>("region_start", 'S',"The column for region start, e.g. gene start", false, DEFAULT_BED_ROW_FORMAT.startColumn);
     cmd.add<int>("region_end", 'E', "The column for region end, e.g. gene end",false, DEFAULT_BED_ROW_FORMAT.endColumn);
@@ -330,6 +330,7 @@ Configuration* cmdParse(int argc, char* argv[]){
     
     cmd.add<int>("Indel_size", 'I', "The indel size.  Default: 50bp", false, 50);
     cmd.add<int>("th", 0, "Threads count.", false, 0);
+    cmd.add("fisher", 0, "Experimental feature: fisher test");
     cmd.add<int>("Min_macth", 'M', "The minimum matches for a read to be considered. If, after soft-clipping, the matched bp is less \n\t\t\t      than INT, then the read is discarded. It's meant for PCR based targeted sequencing where there's no \n\t\t\t      insert and the matching is only the primers. Default: 0, or no filtering", false, 0);
     cmd.add<int>("STD", 'A', "The number of STD. A pair will be considered for DEL if INSERT > INSERT_SIZE + INSERT_STD_AMT * \n\t\t\t      INSERT_STD.  Default: 4", false, 4);
     //cmd.add<int>("insert-std", 'W', "The insert size STD.  Used for SV calling.  Default: 100", false, 100);
@@ -351,7 +352,7 @@ Configuration* cmdParse(int argc, char* argv[]){
     cmd.add<double>("mfreq", 0, "The variant frequency threshold to determine variant as good in case of monomer MSI. \n\t\t\t      Default: 0.25", false, 0.25);
     cmd.add<double>("nmfreq", 0, "The variant frequency threshold to determine variant as good in case of non-monomer MSI. \n\t\t\t      Default: 0.1", false, 0.1);
 
-	cmd.add<string>("out", 0, "The out put file path \n\t\t\t\t Default: ./out.vcf", false, "./out.vcf");
+	cmd.add<string>("out", 0, "The out put file path. \n\t\t\t      Default: ./out.vcf", false, "./out.vcf");
     //cmd.add<string>("DP", 0, "The printer type used for different outputs. Default: OUT (i.e. System.out).", false, "OUT");    
 
     //================================================================================
@@ -361,7 +362,7 @@ Configuration* cmdParse(int argc, char* argv[]){
     Configuration *config = new Configuration();
 	    config->patterns = new Patterns();
 		config->bed = argv[1];
-        config->printHeader = cmd.exist('h');
+        //config->printHeader = cmd.exist('h');
         config->chromosomeNameIsNumber = cmd.exist('C');
         config->debug = cmd.exist('D');
         config->removeDuplicatedReads = cmd.exist('t');
@@ -435,6 +436,7 @@ Configuration* cmdParse(int argc, char* argv[]){
         config->vext = cmd.get<int>('X');
         config->readPosFilter = cmd.get<int>('P');
         if (cmd.exist('Z')) {
+			config->isDownsampling = true;
             config->downsampling = cmd.get<double>('Z');
         }
         config->qratio = cmd.get<double>('o');
@@ -449,7 +451,7 @@ Configuration* cmdParse(int argc, char* argv[]){
             config->minr = 0;
         }
         config->y = cmd.exist('y');
-        config->outputSplicing = cmd.exist('i');
+        //config->outputSplicing = cmd.exist('i');
 
         if (cmd.exist('M')) {
             //config->minmatch = ((Number) cmd.getParsedOptionValue("M")).intValue();
@@ -473,6 +475,7 @@ Configuration* cmdParse(int argc, char* argv[]){
         config->SVMINLEN = cmd.get<int>('L');
 
         config->threads = max(cmd.get<int>("th"), 1);
+        config->fisher = cmd.exist("fisher");
         config->referenceExtension = cmd.get<int>('Y');
 
         if (cmd.exist("adaptor")) {

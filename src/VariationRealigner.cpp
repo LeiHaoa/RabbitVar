@@ -1,6 +1,6 @@
-#include "Cluster.h"
+#include "../include/Cluster.h"
 #include <sys/time.h>
-#include "VariationRealigner.h"
+#include "../include/VariationRealigner.h"
 #include "htslib/hts.h"
 #include "htslib/sam.h"
 #include "htslib/faidx.h"

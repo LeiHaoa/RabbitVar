@@ -104,7 +104,7 @@ public:
     /**
      * Print a header row describing columns
      */
-     bool printHeader; //-h
+	//bool printHeader; //-h
     /**
      * The delimiter for split region_info
      */
@@ -151,13 +151,14 @@ public:
     /**
      * For downsampling fraction
      */
+	 bool isDownsampling = false;
      double downsampling; //-Z
 
      bool chromosomeNameIsNumber; // -C
     /**
      * If set, reads with mapping quality less than INT will be filtered and ignored
      */
-     int mappingQuality;//-Q
+     int mappingQuality = 0;//-Q
     /**
      * Indicate to remove duplicated reads
      */
@@ -258,7 +259,7 @@ public:
     /**
      *  Output splicing read counts
      */
-     bool outputSplicing = false; // -i
+	//bool outputSplicing = false; // -i
 
     /**
      * How strict to be when reading a SAM or BAM.
@@ -287,6 +288,10 @@ public:
      */
      int threads; //-th
 
+    /**
+     * if set, perform fisher exact test in fastvc other than R file
+     */
+    bool fisher;
     ///**
     // * The larger seed size
     // */

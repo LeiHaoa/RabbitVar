@@ -1,9 +1,9 @@
-#include "./cigarModifier.h"
-#include "./util.h"
+#include "../include/cigarModifier.h"
+#include "../include/util.h"
 #include <iostream>
 #include <set>
-#include "./Configuration.h"
-#include "./VariationUtils.h"
+#include "../include/Configuration.h"
+#include "../include/VariationUtils.h"
 
 using namespace std;
 
@@ -217,7 +217,6 @@ bool CigarModifier::modifyCigar_debug(ModifiedCigar &mc, string& err_info) {
  * @return modified position and cigar string
  */
 bool CigarModifier::modifyCigar(ModifiedCigar &mc, string& err_info) {
-	//cout << "modified start: " << cigarStr << endl;
 	//flag is set to true if CIGAR string is modified and should be looked at again
 	//Patterns *pats = conf->patterns;
 	bool mm;
@@ -387,8 +386,10 @@ bool CigarModifier::modifyCigar(ModifiedCigar &mc, string& err_info) {
 			int new_ncigar;
 			if(!cigarstr_2cigar(cigarStr, cigar, new_ncigar)){
 				cigarstr_2cigar(originalCigar, cigar, new_ncigar);
-				cerr << "back from " << cigarStr <<
-					" to: " << originalCigar << endl;
+				//cerr << "back from " << cigarStr <<
+				//	" to: " << originalCigar << endl;
+				cerr << "invalide cigar string: " << cigarStr <<
+					 ", back to originalcigar" << endl;
 				return false;
 			}
 			mc.position = position;

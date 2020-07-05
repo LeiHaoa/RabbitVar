@@ -2,9 +2,9 @@
 #include <cmath>
 #include <regex>
 
-#include "VariationUtils.h"
-#include "ToVarsBuilder.h"
-#include "VariationMap.h"
+#include "../include/VariationUtils.h"
+#include "../include/ToVarsBuilder.h"
+#include "../include/VariationMap.h"
 
 using namespace std;
 /**

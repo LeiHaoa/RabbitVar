@@ -1,5 +1,5 @@
-#include "Region.h"
-#include "RegionBuilder.h"
+#include "../include/Region.h"
+#include "../include/RegionBuilder.h"
 #include <iostream>
 
 BedRowFormat CUSTOM_BED_ROW_FORMAT(0, 1, 2, 3, 1, 2);

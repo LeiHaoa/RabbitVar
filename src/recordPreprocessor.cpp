@@ -1,6 +1,6 @@
-#include "recordPreprocessor.h"
-#include "Configuration.h"
-#include "./VariationUtils.h"
+#include "../include/recordPreprocessor.h"
+#include "../include/Configuration.h"
+#include "../include/VariationUtils.h"
 #include <string>
 #include <assert.h>
 
@@ -122,17 +122,7 @@ int RecordPreprocessor::next_record(bam1_t *record){
 			continue;
 		}
 		/*
-		if (conf->isDownsampling && RND.nextDouble() <= conf->downsampling) {
-			printf("return false due to downsampling\n");
-			continue;
-		}
-        int mappingQuality = record->core.qual;
 
-        // Ignore low mapping quality reads
-        if (conf->hasMappingQuality() && mappingQuality < conf->mappingQuality) {
-			printf("return false due to mapping quality!!\n");
-			continue;
-        }
 
         //Skip not primary alignment reads
         if ((record->core.flag & BAM_FSECONDARY) && !(conf->samfilter == 0)) {
@@ -140,6 +130,17 @@ int RecordPreprocessor::next_record(bam1_t *record){
 			continue;
         }
 		*/
+
+		if (conf->isDownsampling && rand() <= RAND_MAX * conf->downsampling) {
+			continue;
+		}
+
+        // Ignore low mapping quality reads
+        int mappingQuality = record->core.qual;
+        if (mappingQuality < conf->mappingQuality) {
+			//printf("return false due to mapping quality!!\n");
+			continue;
+        }
         // Skip reads where sequence is not stored in read
         if (record->core.l_qseq == 1){//&& seq_nt16_str[bam_get_seq(record)] == "*") {
 			printf("return false due to not stored\n");

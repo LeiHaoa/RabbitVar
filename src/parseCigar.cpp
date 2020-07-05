@@ -9,11 +9,11 @@
 #include <iostream>
 
 
-#include "parseCigar.h"
-#include "cigarModifier.h"
-#include "patterns.h"
-#include "VariationUtils.h"
-#include "data/BaseInsertion.h"
+#include "../include/parseCigar.h"
+#include "../include/cigarModifier.h"
+#include "../include/patterns.h"
+#include "../include/VariationUtils.h"
+#include "../include/data/BaseInsertion.h"
 #include <map>
 #include <sstream>
 //#include <unordered_map>
@@ -359,15 +359,6 @@ Variation* getVariationFromSeq(Sclip* softClip,
 		seq_map->insert(robin_hood::unordered_map<char, Variation*>::value_type(ch, variation));
 		return variation;
 	}
-    //if (map == NULL) {
-    //    map = new HashMap<>();
-    //    softClip.seq.put(idx, map);
-    //}
-    //Variation variation = map[ch];
-    //if (variation == NULL) {
-    //    variation = new Variation();
-    //    map.put(ch, variation);
-    //}
     return variation;
 }
 void CigarParser::print_result(){
@@ -439,41 +430,7 @@ Scope<VariationData> CigarParser::process(Scope<InitialData> scope){
 	//print_result();
 	//printf("totally %d record processed over! and time is %f: \n", count, end_time-start_time);
 	//cerr << "record num: " << count << endl;  //<< " map size: " << nonInsertionVariants->size() << endl;
-	//-----------------------------------------------------//
-	//cout << "non/Insertionvariants: " << nonInsertionVariants.size() << " - " << insertionVariants.size() << " - " << refCoverage.size() << " - " <<positionToDeletionCount.size() << " - " << positionToInsertionCount.size()<< endl;
-	//for(auto &v: mnp){
-	//	int position = v.first;
-	//	map<string, int> insert_count = v.second;
-	//	for(auto &vm : insert_count){
-	//		printf("%d - %s - %d\n", position, vm.first.c_str(), vm.second);
-	//	}
-
-	//}	
-	//int res[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-	//for(auto &v: insertionVariants){
-	//	int position = v.first;
-	//	VariationMap* var_map = v.second;
-	//	//res[var_map->variation_map.size()]++;
-	//	//printf("%d - %d\n", position, var_map->variation_map.size());
-	//	for(auto &vm : var_map -> variation_map){
-	//		printf("%d - %s - %d\n", position, vm.first.c_str(), vm.second->varsCount);
-	//	}
-	//		
-	//}
-	//for(auto &v: refCoverage){
-	//	printf("%d - %d\n", v.first, v.second);
-	//}
-	//printf("---sc3e size: %d---\n",softClips3End.size());
-	//for(auto& v: softClips3End){
-	//	int pos = v.first;
-	//	Sclip* sc = v.second;
-	//	//printf("%d - %s - %d\n", pos, sc->sequence.c_str(), sc->varsCount);
-	//	printf("%d - %d\n", pos, sc->varsCount);
-	//}
-	//------------------------------------
 	VariationData *vardata = new VariationData(nonInsertionVariants, insertionVariants, &positionToInsertionCount, &positionToDeletionCount, refCoverage, softClips5End, softClips3End, splice, &mnp, &spliceCount, 0);
-	//cout << "non: " << nonInsertionVariants->size() << " in: " << insertionVariants->size() << endl;
-	//Scope<VariationData> toData(conf->bam.getBamRaw(), this->region, this->reference, this->maxReadLength, this->splice, vardata);
 	Scope<VariationData> toData(scope.bam, scope.region, scope.regionRef, maxReadLength, scope.splice, scope.bamReaders, vardata);
 	//------------------------------------
 	//bam_hdr_destroy(header);
@@ -549,11 +506,10 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 	cigar = bam_get_cigar(record);
 	n_cigar = record->core.n_cigar;
 	bool debug_flag = false;
-	//---haoz: filter the cigar that n_cigar = 0
+	//---filter the cigar that n_cigar = 0
 	if(n_cigar <= 0){
 		return;
 	}
-	//printf("------------n_cigar: %d-----------\n",record->core.n_cigar);
 	robin_hood::unordered_map<int, char> &ref = reference->referenceSequences;
 
 	const int insertion_deletion_length = getInsertionDeletionLength(cigar, n_cigar);
@@ -565,7 +521,6 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 		total_number_of_mismatches = num_of_mismatches_form_tag - insertion_deletion_length;
 		if(total_number_of_mismatches > conf->mismatch) {
 			//printf("---return for totalmismatch > config : NM_tag:%d idl: %d tnom: %d\n", num_of_mismatches_form_tag, insertion_deletion_length, total_number_of_mismatches);
-			//print_cigar_string(cigar, record->core.n_cigar, 0);
 			return;
 		}
 	}else{
@@ -582,7 +537,7 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 	bool is_mate_reference_name_equal = (record->core.tid == record->core.mtid) ? true : false;
 	const int number_of_mismatches = total_number_of_mismatches;
 	bool direction = bam_is_rev(record);
-	//if (instance().ampliconBasedCalling != null) {  //TODO
+	//if (instance().ampliconBasedCalling != null) {  //amplicon mode: TODO
 	//	if (parseCigarWithAmpCase(record, isMateReferenceNameEqual))  {
 	//		return;
 	//	}
@@ -591,7 +546,6 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 	readPositionIncludingSoftClipped = 0;
 	readPositionExcludingSoftClipped = 0;
 	if(conf->performLocalRealignment){
-		//cigar_modifier(cigar); //TODO
 		position = getAlignmentStart(record);
 		cigar = bam_get_cigar(record);
 
@@ -603,10 +557,6 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 		string err_info = region.chr + ":"+ to_string(region.start)
 			+ "-" + to_string(region.end);
 
-		//if(get_cigar_string(cigar, n_cigar) == "53M1I12M1D6M1D9M1D12M7S"){
-		//	cm.modifyCigar_debug(mc, err_info);
-		//	exit(0);
-		//}
 		if(cm.modifyCigar(mc, err_info)){
 			//cigar = mc.cigar;
 			//cerr << "org: " <<n_cigar<< " " <<position << " " << lseq << endl;

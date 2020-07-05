@@ -13,10 +13,10 @@ export KMP_AFFINITY=scatter
 
 DATA_DIR=/home/old_home/haoz/workspace/data
 ../FastVC ${DATA_DIR}/NA12878/ConfidentRegions.bed \
-	-G ${DATA_DIR}/NA12878/hg38.fa \
+	-G ${DATA_DIR}/hg38/hg38.fa \
 	-f 0.001 \
-	-N sample_name \
+	-N "HCC1187C|HCC1187BL" \
 	-b "${DATA_DIR}/HCC1187C/HCC1187C_S1_Proband_S1.bam|${DATA_DIR}/HCC1187BL/HCC1187BL_S1_Proband_S1.bam" \
 	-c 1 -S 2 -E 3 -g 4 \
 	--th $1 \
-	--out ../detection_result/for_test.vcf
+	--out deletethis_HCC1187C_HCC1187BL_raw.vcf 
