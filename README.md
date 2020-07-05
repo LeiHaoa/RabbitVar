@@ -11,54 +11,67 @@ The easiest way to use FastVC is to grab a binary from [here](https://github.com
 FastVC is written in c++ for Linux platforms, you can download the source code and FastVC use some features supported by std-c++-11.
 So, c++ 11 or higher version is required.
 For better performance, ICPC is used as the default compiler. 
-Just Comipile FastVC with Makefile:
+Just Comipile FastVC with CMake:
 ```
-$ make clean && make
+$ mkdir build && cd build
+$ cmake -DHTS_PREFIX=path/to/htslib/ ..
+$ make -j4
+$ make install
 ```
+Then the binary file of FastVC will be installed as `bin/FastVC`.
 ## Testing dataset
 
-We use NA12787 and HCC1187 as our test data. To facilitate analysis, we excluded all decoys and small contigs and kept the regions of chr1 to chr22, chrX, and chrY. Then we break chromosome regions with the interval of 10,000 into a BED region file for benchmarking.
+### CHM1\_CHM13
+For germline mode, we use a recently published benchmarking dataset for small-variants  which  from  the  de  novo  PacBio  assemblies  of  two  fully  homozygoushuman  cell  lines.   It  declared  to  provides  a  relatively  more  accurate  and  lessbiased estimate of small-variant-calling error rates.  the tested data is aligned toGRCh37 and can be downloaded from [CHM1\_CHM13_2](ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR134/ERR1341796/CHM1\_CHM13\_2.bam).
 
-### NA12878
-In our experimentation, we use NA12878 as our germline benchmark dataset. The aligned data are downloaded form Illumina Platinum Genomes analysis [HiSeq 2000: Tumor Normal WGS (HCC1187 & HCC2218) TNW analysis](https://basespace.illumina.com/projects/18065049), the reference genome is Homo Sapiens (NCBI GRCh38 with decoys) and the mean coverage is 50.
+### B17NC
+In terms of somatic benchmarking, we use tumor and normal datasets fromNational Center for Clinical Laboratories (NCCL) for quality assessment of so-matic mutations detection.  Raw sequencing files containing 97 somatic variants.There are two sequence file (both 14GB) which contains 116M reads in B1701 tumor dataset, and two sequence file (both 11GB) which contains 92M reads in B17NC normal dataset data can be requested in [NCCL](https://www.nccl.org.cn/showEqaPlanEnProDetail?id=2)
 
-### HCC1187
-As for somatic data, we use the HCC1187 tumor-normal dataset for benchmarking. 
-HCC1187C\_Proband refers to the tumor cell, it contains 3,491,978 SNVs, 415,549 Deletions, and 410,585 Insertions, mean coverage is 84 and the size of the aligned file is 234GB.
-HCC1187BL\_Proband refers to the normal cell, it contains 3,768,510 SNVs, 427,947 Deletions, and 416,874 Insertions, mean coverage is 50 and the size of the aligned file is 112GB.
-Both sequencing data are aligned to GRCh38 and can be downloaded from Illumina Platinum Genomes [Project: NextSeq 2000: Comprehensive Cancer Panel (Replicates of NA12878)](https://basespace.illumina.com/projects/61714653).
+## Required Input
+In FastVC, the following input are required:
 
+- Alignment `.bam` files. 
 
+  The `.bam` file should be sorted and indexed.
+
+- Region file `.bed`, or specify the region by -R parameter
+
+- Genome reference file `.fa` or `.fasta`, like hg19.fa or hg38.fa. 
+
+  the reference file should be indexed (`.fai`).
 ## Run Example 
-User can specify one region with `-r` parameter:
-```
-./FastVC \
-    -R chr1:2829690-4918526  \
-    -G /home/old_home/haoz/workspace/data/NA12878/hg38.fa \
-    -f 0.001 -N sample_name -b /home/old_home/haoz/workspace/data/NA12878/NA12878_S1.bam \
-    -c 1 -S 2 -E 3 -g 4 \
-    --out ./out.vcf
-```
 
-User can also specify multi pregions with bed file:
-```
-./FastVC \
-   /home/data/NA12878/WGSRegions.bed \
-   -G /home/data/NA12878/hg38.fa \
-   -f 0.001 \
-   -N sample_name \
-   -b /home/data/NA12878/NA12878_S1.bam \
-   -c 1 -S 2 -E 3 -g 4 \
-   --th 40
-   --out ./out.vcf
-```
-**Format**
+**1. Variant Detection**
+
+  User can specify one region with `-r` parameter:
+  ```
+  ./FastVC \
+    -R chr1:2829690-4918526  \
+    -G /home/data/hg38.fa \
+    -f 0.001 -N sample_name -b /home/data/CHM1_CHM13_2.bam \
+    -c 1 -S 2 -E 3 \
+    --out ./out.vcf
+  ```
+
+  User can also specify multi pregions with bed file:
+  ```
+  ./FastVC \
+    -i /home/data/NA12878/WGSRegions.bed \
+    -G /home/data/hg38.fa \
+    -f 0.001 -N sample_name -b /home/data/CHM1_CHM13_2.bam \
+    -c 1 -S 2 -E 3 \
+    --out ./out.vcf
+  ```
+
+**2. Format**
+
   ```
   #germline
   cat ./out.vcf | ./teststrandbias.R | var2vcf_valid.pl -N sample_name -f 0.01
   #somatic
   cat ./out.vcf | ./testsomatic.R | ./var2vcf_paired.pl -N sample_name -f 0.01
   ```
+
   if you use --fisher paramater when runing FastVC, then you do not need the fisher test step by R file. just
   ```
   #germline
@@ -67,6 +80,7 @@ User can also specify multi pregions with bed file:
   cat ./out.vcf | ./var2vcf_paired.pl -N sample_name -f 0.01
   ```
   Use the fisher exact test in FastVC is much faster than use the R script, but the test function in R script is a little accurate.
+
 ## Usage 
 ```
 options:
@@ -164,6 +178,7 @@ options:
 			                  Default: 0.1 (double [=0.1])
       --out                   The out put file path.
 			                  Default: ./out.vcf (string [=./out.vcf])
+  -i, --bed             The region file to be processed (string [=])                        
 ```
 
 ## Cite
