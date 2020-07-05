@@ -111,7 +111,6 @@ std::tuple<string, bool, vector<string> > VarDictLauncher::readBedFile(Configura
     string ampliconParameters = conf->ampliconBasedCalling;
     bool zeroBased = conf->zeroBased;
     vector<string> segraw;
-    //try (BufferedReader bedFileReader = new BufferedReader(new FileReader(conf.bed))) {
 	std::ifstream infile(conf->bed);
 	string line;
 	//cout << "bed file: " << conf->bed << endl;
@@ -353,6 +352,7 @@ Configuration* cmdParse(int argc, char* argv[]){
     cmd.add<double>("nmfreq", 0, "The variant frequency threshold to determine variant as good in case of non-monomer MSI. \n\t\t\t      Default: 0.1", false, 0.1);
 
 	cmd.add<string>("out", 0, "The out put file path. \n\t\t\t      Default: ./out.vcf", false, "./out.vcf");
+    cmd.add<string>("bed", 'i', "The region file to be processed", false, "");
     //cmd.add<string>("DP", 0, "The printer type used for different outputs. Default: OUT (i.e. System.out).", false, "OUT");    
 
     //================================================================================
@@ -361,7 +361,15 @@ Configuration* cmdParse(int argc, char* argv[]){
     //------------------- config assignment -------------
     Configuration *config = new Configuration();
 	    config->patterns = new Patterns();
-		config->bed = argv[1];
+		//config->bed = argv[1];
+		if(cmd.exist('R')){				
+			config->regionOfInterest = cmd.get<string>('R');
+		}else if(cmd.exist('i')){
+			config->bed = cmd.get<string>('i');
+		}else{
+			std::cerr << "You must specify a region! (by -R or -i)" << std::endl;
+			exit(1);
+		}
         //config->printHeader = cmd.exist('h');
         config->chromosomeNameIsNumber = cmd.exist('C');
         config->debug = cmd.exist('D');
@@ -378,7 +386,6 @@ Configuration* cmdParse(int argc, char* argv[]){
 
         config->fasta = setFastaFile(cmd);
 
-        config->regionOfInterest = cmd.get<string>('R');
         config->delimiter = cmd.get<string>('d' );
         config->sampleName = cmd.get<string>('N');
 
