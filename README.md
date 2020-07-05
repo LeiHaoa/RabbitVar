@@ -22,10 +22,10 @@ Then the binary file of FastVC will be installed as `bin/FastVC`.
 ## Testing dataset
 
 ### CHM1\_CHM13
-For germline mode, we use a recently published benchmarking dataset for small-variants  which  from  the  de  novo  PacBio  assemblies  of  two  fully  homozygoushuman  cell  lines.   It  declared  to  provides  a  relatively  more  accurate  and  lessbiased estimate of small-variant-calling error rates.  the tested data is aligned toGRCh37 and can be downloaded from [CHM1\_CHM13_2](ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR134/ERR1341796/CHM1\_CHM13\_2.bam).
+For germline mode, we use a recently published benchmarking dataset for small-variants  which  from  the  de  novo  PacBio  assemblies  of  two  fully  homozygoushuman  cell  lines.   It  declared  to  provides  a  relatively  more  accurate  and  lessbiased estimate of small-variant-calling error rates.  the tested data is aligned to GRCh37 and can be downloaded from [CHM1\_CHM13_2](ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR134/ERR1341796/CHM1\_CHM13\_2.bam).
 
 ### B17NC
-In terms of somatic benchmarking, we use tumor and normal datasets fromNational Center for Clinical Laboratories (NCCL) for quality assessment of so-matic mutations detection.  Raw sequencing files containing 97 somatic variants.There are two sequence file (both 14GB) which contains 116M reads in B1701 tumor dataset, and two sequence file (both 11GB) which contains 92M reads in B17NC normal dataset data can be requested in [NCCL](https://www.nccl.org.cn/showEqaPlanEnProDetail?id=2)
+In terms of somatic benchmarking, we use tumor and normal datasets from National Center for Clinical Laboratories (NCCL) for quality assessment of somatic mutations detection.  Raw sequencing files containing 97 somatic variants.There are two sequence file (both 14GB) which contains 116M reads in B1701 tumor dataset, and two sequence file (both 11GB) which contains 92M reads in B17NC normal dataset data can be requested in [NCCL](https://www.nccl.org.cn/showEqaPlanEnProDetail?id=2)
 
 ## Required Input
 In FastVC, the following input are required:
