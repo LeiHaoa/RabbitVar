@@ -3,9 +3,10 @@ FastVC is a high-performance and versatile mutation detection tool, which  disti
 
 ## Dependency
 - [htslib](https://github.com/samtools/htslib)
+- [zlib (inluded with most Linuxes)](http://www.zlib.net)
 
 ## Installation of binaries
-The easiest way to use FastVC is to grab a binary from [here](https://github.com/LeiHaoa/FastVC/releases). We provide dependency-free binaries for x86_64 Linux.
+The easiest way to use FastVC is to grab a binary from [here](https://github.com/LeiHaoa/FastVC/releases). We provide dependency-free(zlib required) binaries for x86_64 Linux.
 
 ## Installation from source code
 FastVC is written in c++ for Linux platforms, you can download the source code and FastVC use some features supported by std-c++-11.
@@ -14,11 +15,11 @@ For better performance, ICPC is used as the default compiler.
 Just Comipile FastVC with CMake:
 ```
 $ mkdir build && cd build
-$ cmake -DHTS_PREFIX=path/to/htslib/ ..
+$ cmake -DHTS_PREFIX=<path to htslib> -DCMAKE_INSTALL_PREDIX=<install path> ..
 $ make -j4
 $ make install
 ```
-Then the binary file of FastVC will be installed as `bin/FastVC`.
+Then the binary file of FastVC will be installed as `bin/FastVC` if CMAKE_INSTALL_PREFIX not specified.
 ## Testing dataset
 
 ### CHM1\_CHM13
