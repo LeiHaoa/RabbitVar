@@ -12,7 +12,7 @@
 #include <algorithm>
 #include <cxxabi.h>
 #include <cstdlib>
-#include <./version.h>
+#include "version.h"
 
 namespace cmdline{
 
