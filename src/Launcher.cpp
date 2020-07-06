@@ -10,6 +10,7 @@
 #include "../include/modes/simpleMode.h"
 #include "../include/modes/somaticMode.h"
 #include "../include/modes/ampliconMode.h"
+#include "../include/version.h"
 #include <assert.h>
 
 using namespace std;
@@ -279,7 +280,6 @@ string setFastaFile(cmdline::parser& cmd) {
 }
 
 Configuration* cmdParse(int argc, char* argv[]){
-    // display version info if no argument is given
     cmdline::parser cmd;
 
     // input/output
@@ -353,6 +353,7 @@ Configuration* cmdParse(int argc, char* argv[]){
 
 	cmd.add<string>("out", 0, "The out put file path. \n\t\t\t      Default: ./out.vcf", false, "./out.vcf");
     cmd.add<string>("bed", 'i', "The region file to be processed", false, "");
+    cmd.add("version", 0, "Print FastVC version information");
     //cmd.add<string>("DP", 0, "The printer type used for different outputs. Default: OUT (i.e. System.out).", false, "OUT");    
 
     //================================================================================

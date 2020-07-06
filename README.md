@@ -179,7 +179,8 @@ options:
 			                  Default: 0.1 (double [=0.1])
       --out                   The out put file path.
 			                  Default: ./out.vcf (string [=./out.vcf])
-  -i, --bed             The region file to be processed (string [=])                        
+  -i, --bed            		  The region file to be processed (string [=])                        
+      --version               Print FastVC version information
 ```
 
 ## Cite

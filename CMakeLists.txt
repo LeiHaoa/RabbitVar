@@ -15,7 +15,12 @@ endif()
 
 #link
 #HTS_PREFIX
+if(DEFINED HTS_PREFIX)
+else()
+	set(HTS_PREFIX "/usr/local/htslib")	
+endif()
 message("hts dir: " ${HTS_PREFIX})
+
 LINK_DIRECTORIES(${HTS_PREFIX}/lib)
 
 set(CMAKE_CXX_STANDARD 11)

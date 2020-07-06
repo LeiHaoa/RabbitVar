@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cxxabi.h>
 #include <cstdlib>
+#include <./version.h>
 
 namespace cmdline{
 
@@ -590,6 +591,10 @@ private:
       std::cerr<<usage();
       exit(0);
     }
+	if(exist("version")){
+		std::cerr << FASTVC_VERSION << std::endl;
+		exit(0);
+	}
 
     if (!ok){
 		std::cerr << "not ok!" << std::endl;
