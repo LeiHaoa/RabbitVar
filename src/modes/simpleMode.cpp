@@ -264,7 +264,7 @@ void SimpleMode::process(Configuration* conf, vector<vector<Region>> &segments){
 	//-------------------use bed file: multithreads------------------------//
 	else
 	{
-		cout << "[info] bed file name: " << endl;
+		cout << "[info] bed file name: " << conf->bed << endl;
 		Region reg;
 		//vector<Region> regs;
 		dataPool* data_pool;
