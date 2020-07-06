@@ -62,7 +62,7 @@ inline bool starts_with(string& s, string t){
 inline bool ends_with(string& s, string t){
 	return s.rfind(t) == s.length()-t.length();
 }
-
+/*
 inline vector<string> ssplit(const string& str, const string& delim) {
 //inline vector<string> ssplit(const string& str, const char delim) {
 	vector<string> res;
@@ -87,6 +87,31 @@ inline vector<string> ssplit(const string& str, const string& delim) {
  
 	return res;
 }
+*/
+std::vector<std::string> inline ssplit(const std::string &source, const std::string delimiter, bool keepEmpty = false)
+{
+    std::vector<std::string> results;
+
+    size_t prev = 0;
+    size_t next = 0;
+
+    while ((next = source.find_first_of(delimiter, prev)) != std::string::npos)
+    {
+        if (keepEmpty || (next - prev != 0))
+        {
+            results.push_back(source.substr(prev, next - prev));
+        }
+        prev = next + 1;
+    }
+
+    if (prev < source.size())
+    {
+        results.push_back(source.substr(prev));
+    }
+
+    return results;
+}
+
 inline string complement(string& forward){
 	char reverse[forward.length()];
 	for(int i = 0; i < forward.length(); i++){
