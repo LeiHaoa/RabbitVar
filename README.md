@@ -1,9 +1,9 @@
-# FastVC (experimental)
+# FastVC
 FastVC is a high-performance and versatile mutation detection tool, which  distinguishes between somatic and germline sequencing applications and simultaneously calls single nucleotide variants (SNVs), multiple-nucleotide variants (MNVs), insertions,and deletions(InDels) and complex variants.
 
 ## Dependency
 - [htslib](https://github.com/samtools/htslib)
-- [zlib (inluded with most Linuxes)](http://www.zlib.net)
+- [zlib (included with most Linuxes)](http://www.zlib.net)
 
 ## Installation of binaries
 The easiest way to use FastVC is to grab a binary from [here](https://github.com/LeiHaoa/FastVC/releases). We provide dependency-free(zlib required) binaries for x86_64 Linux.
