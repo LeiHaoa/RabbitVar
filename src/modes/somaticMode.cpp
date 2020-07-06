@@ -830,7 +830,7 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 		double * time = new double[processor_num];
 		for(int i = 0; i < processor_num; i++)	time[i] = 0.0;
 		SomaticThreadResource *trs = new SomaticThreadResource[processor_num];
-#pragma omp parallel for schedule(static) //num_threads(processor_num)
+//#pragma omp parallel for schedule(static) //num_threads(processor_num)
 		for(int t = 0; t < processor_num; t++){
 			//----add by haoz: init bamReader------//
 			//vector<bamReader> bamReaders;

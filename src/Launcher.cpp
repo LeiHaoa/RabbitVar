@@ -536,7 +536,7 @@ int main_single(int argc, char* argv[]){
 	if(conf->regionOfInterest != "" || conf->ampliconBasedCalling == ""){
 		if(!conf->bam.hasBam2()){
 			SimpleMode *mode = new SimpleMode();
-			cout << "[info] seg size: " << launcher.segments.size() << " - " << launcher.segments[0].size() << endl;
+			cout << "[info] seg size: " << launcher.segments.size() << " : " << launcher.segments[0].size() << endl;
 			mode->process(conf, launcher.segments);
 			delete mode;
 		}else{

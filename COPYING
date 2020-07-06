@@ -1,3 +1,21 @@
+PURPOSE
+
+FastVC is a high-performance and versatile mutation detection tool, 
+which distinguishes between somatic and germline sequencing applications 
+and simultaneously calls single nucleotide variants (SNVs), 
+multiple-nucleotide variants (MNVs), insertions, and deletions(InDels) 
+and complex variants. It is implemented in C++ and is distributed 
+with:
+
+VarDict
+  https://github.com/AstraZeneca-NGS/VarDict
+  MIT License
+
+robin-hood-hashing
+  https://github.com/martinus/robin-hood-hashing
+  MIT License
+
+
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 
