@@ -34,10 +34,10 @@ include_directories(./include ./include/modes ${HTS_PREFIX}/include)
 
 add_executable (FastVC ${SOURCE_LIST})
 
-if(STATiC)
-	target_link_libraries(FastVC hts)
-else()
+if(STATIC)
 	target_link_libraries(FastVC libhts.a)
+else()
+	target_link_libraries(FastVC hts)
 endif()
 
 SET(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR})
