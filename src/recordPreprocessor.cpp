@@ -6,7 +6,7 @@
 
 using namespace std;
 
-//TODO next_reader funtion not implemented: 多个reader的功能并没有实现。
+//TODO next_reader funtion not implemented
 RecordPreprocessor::RecordPreprocessor(Region region, Configuration *conf, vector<bamReader> bamReaders){
 	this->region = region;
 	this->conf = conf;
