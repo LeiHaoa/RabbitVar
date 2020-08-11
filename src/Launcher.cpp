@@ -68,6 +68,9 @@ void VarDictLauncher::initResources(Configuration *conf) {
                 segments = builder.buildAmpRegions(segraw, zeroBased);
             } else {
                 segments = builder.buildRegions(segraw, zeroBased);
+				if(conf->adaptiveRegionSize){
+					builder.AdjustRegionSize(segments);
+				}
             }
         }
 		//--------------print parsed interest region-----------//
@@ -353,6 +356,7 @@ Configuration* cmdParse(int argc, char* argv[]){
     cmd.add<double>("nmfreq", 0, "The variant frequency threshold to determine variant as good in case of non-monomer MSI. \n\t\t\t      Default: 0.1", false, 0.1);
 
 	cmd.add<string>("out", 0, "The out put file path. \n\t\t\t      Default: ./out.vcf", false, "./out.vcf");
+    cmd.add("auto_resize", 0, "Auto resize the bed region size for better performance");
     //cmd.add<string>("DP", 0, "The printer type used for different outputs. Default: OUT (i.e. System.out).", false, "OUT");    
 
     //================================================================================
@@ -476,6 +480,7 @@ Configuration* cmdParse(int argc, char* argv[]){
 
         config->threads = max(cmd.get<int>("th"), 1);
         config->fisher = cmd.exist("fisher");
+        config->adaptiveRegionSize = cmd.exist("auto_resize");
         config->referenceExtension = cmd.get<int>('Y');
 
         if (cmd.exist("adaptor")) {

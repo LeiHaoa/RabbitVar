@@ -1,9 +1,10 @@
-#include "../include/Region.h"
 #include "../include/RegionBuilder.h"
 #include <iostream>
 
 BedRowFormat CUSTOM_BED_ROW_FORMAT(0, 1, 2, 3, 1, 2);
 BedRowFormat AMP_BED_ROW_FORMAT(0, 1, 2, 6, 7, 3);
+
+#define REGION_SIZE_MAX 100000
 
 RegionBuilder::RegionBuilder(robin_hood::unordered_map<string, int> chromosomesLengths, Configuration* config) {
 	this->chromosomesLengths = chromosomesLengths;
@@ -11,7 +12,28 @@ RegionBuilder::RegionBuilder(robin_hood::unordered_map<string, int> chromosomesL
 }
 	//TODO:
     //Comparator<Region> INSERT_START_COMPARATOR = Comparator.comparingInt(o -> o.insertStart);
-
+void RegionBuilder::AdjustRegionSize(vector<vector<Region> > &segments){
+	vector<Region>::iterator segitr;
+	if(segments.size() != 1){
+		cerr << "amplicon mode do not support region auto resize!" << endl;
+		exit(0);
+	}
+	vector<Region> &segs = segments[0];
+	for(segitr = segs.begin(); segitr < segs.end(); segitr++){
+		if(segitr->end - segitr->start > REGION_SIZE_MAX){
+			int start = segitr->start;			
+			int end = segitr->end;
+			while(end - start > REGION_SIZE_MAX){
+				segs.emplace_back(Region(segitr->chr, start, start + REGION_SIZE_MAX, segitr->gene));
+				start = start + REGION_SIZE_MAX;
+			}
+			segs.emplace_back(Region(segitr->chr, start, end, segitr->gene));
+			segitr = segs.erase(segitr);
+		}
+	}
+	//sort(segs.begin(), segs.end());
+	return;
+}
 /**
  * Method splits list of lines from BED file to list of Regions in non-amplicon mode.
  * @param segRaws list of lines from BED file
