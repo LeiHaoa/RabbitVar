@@ -18,6 +18,7 @@ public:
 	RegionBuilder();
 	RegionBuilder(robin_hood::unordered_map<string, int> chromosomesLengths, Configuration *config);
 	void buildRegionFromConfiguration(vector<vector<Region> >& segments);
+	vector<vector<Region> >  AdjustRegionSize(vector<vector<Region> > &segments);
 	string correctChromosome(robin_hood::unordered_map<string, int>& chromosomesLengths, string chr);
 	vector<vector<Region> > buildAmpRegions(vector<string>& segRaws, bool zeroBased);
 	vector<vector<Region> > buildRegions(vector<string>& segRaws, bool zeroBased);

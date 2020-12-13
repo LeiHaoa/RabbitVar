@@ -292,6 +292,11 @@ public:
      * if set, perform fisher exact test in fastvc other than R file
      */
     bool fisher;
+	
+	/**
+	 * Auto resize the bed region size for better performance
+	 */
+	bool adaptiveRegionSize = false;
     ///**
     // * The larger seed size
     // */
