@@ -12,27 +12,29 @@ RegionBuilder::RegionBuilder(robin_hood::unordered_map<string, int> chromosomesL
 }
 	//TODO:
     //Comparator<Region> INSERT_START_COMPARATOR = Comparator.comparingInt(o -> o.insertStart);
-void RegionBuilder::AdjustRegionSize(vector<vector<Region> > &segments){
-	vector<Region>::iterator segitr;
-	if(segments.size() != 1){
-		cerr << "amplicon mode do not support region auto resize!" << endl;
-		exit(0);
-	}
-	vector<Region> &segs = segments[0];
-	for(segitr = segs.begin(); segitr < segs.end(); segitr++){
-		if(segitr->end - segitr->start > REGION_SIZE_MAX){
-			int start = segitr->start;			
-			int end = segitr->end;
+
+vector<vector<Region> > RegionBuilder::AdjustRegionSize(vector<vector<Region> > &segments){
+	vector<vector<Region> > balanced_segments;
+
+	for(vector<Region>& segs : segments){
+		Region segitr = segs[0];
+		if(segitr.end - segitr.start > REGION_SIZE_MAX){
+			int start = segitr.start;			
+			int end = segitr.end;
 			while(end - start > REGION_SIZE_MAX){
-				segs.emplace_back(Region(segitr->chr, start, start + REGION_SIZE_MAX, segitr->gene));
+				vector<Region> tmp = {Region(segitr.chr, start, start + REGION_SIZE_MAX, segitr.gene)};
+				balanced_segments.emplace_back(tmp);
 				start = start + REGION_SIZE_MAX;
 			}
-			segs.emplace_back(Region(segitr->chr, start, end, segitr->gene));
-			segitr = segs.erase(segitr);
+			vector<Region> tmp = {Region(segitr.chr, start, end, segitr.gene)};
+			balanced_segments.emplace_back(tmp);
+		}else{
+			balanced_segments.emplace_back(segs);
 		}
 	}
 	//sort(segs.begin(), segs.end());
-	return;
+	//balanced_segments.emplace_back(balanced_segs);
+	return balanced_segments;
 }
 /**
  * Method splits list of lines from BED file to list of Regions in non-amplicon mode.

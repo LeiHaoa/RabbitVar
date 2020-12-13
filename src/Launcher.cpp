@@ -37,69 +37,76 @@ void VarDictLauncher::start(Configuration *config) {
  */
 void VarDictLauncher::initResources(Configuration *conf) {
 	//try {
-        //unordered_map<std::string, int> chrLengths;
-        robin_hood::unordered_map<std::string, int> chrLengths;
-		cout << "[info] bam raw: " << conf->bam.getBamRaw() << endl;
-		readChr(conf->bam.getBamX(), chrLengths);
-		std::tuple<string, string> samples;
-        if ((conf->regionOfInterest != "") && (conf->bam.hasBam2())) {
-            samples = getSampleNamesSomatic(conf);
-        } else {
-            samples = getSampleNames(conf);
-        }
+	//unordered_map<std::string, int> chrLengths;
+	robin_hood::unordered_map<std::string, int> chrLengths;
+	cout << "[info] bam raw: " << conf->bam.getBamRaw() << endl;
+	readChr(conf->bam.getBamX(), chrLengths);
+	std::tuple<string, string> samples;
+	if ((conf->regionOfInterest != "") && (conf->bam.hasBam2())) {
+		samples = getSampleNamesSomatic(conf);
+	} else {
+		samples = getSampleNames(conf);
+	}
 
-        RegionBuilder builder(chrLengths, conf);
-        string ampliconBasedCalling = "";
+	RegionBuilder builder(chrLengths, conf);
+	string ampliconBasedCalling = "";
 
-		if (conf->regionOfInterest != "") {
-			builder.buildRegionFromConfiguration(segments);
-        } else {
-			std::tuple<string, bool, vector<string> > tpl = readBedFile(conf);
-            ampliconBasedCalling = std::get<0>(tpl);
-            bool zeroBased = std::get<1>(tpl);
-            vector<string> segraw = std::get<2>(tpl);
-			//for(string seg: segraw){
-			//	cout << "seg: " <<  seg << endl;
-			//}	
-			//cout << "ampliconBasedcalling: " << ampliconBasedCalling << endl;
+	if (conf->regionOfInterest != "") {
+		builder.buildRegionFromConfiguration(segments);
+	} else {
+		std::tuple<string, bool, vector<string> > tpl = readBedFile(conf);
+		ampliconBasedCalling = std::get<0>(tpl);
+		bool zeroBased = std::get<1>(tpl);
+		vector<string> segraw = std::get<2>(tpl);
+		//for(string seg: segraw){
+		//	cout << "seg: " <<  seg << endl;
+		//}	
+		//cout << "ampliconBasedcalling: " << ampliconBasedCalling << endl;
 
-			if (ampliconBasedCalling != "") {
-                //segments = builder.buildAmpRegions(segraw, zeroBased != null ? zeroBased : false);
-                segments = builder.buildAmpRegions(segraw, zeroBased);
-            } else {
-                segments = builder.buildRegions(segraw, zeroBased);
-				if(conf->adaptiveRegionSize){
-					builder.AdjustRegionSize(segments);
-				}
-            }
-        }
-		//--------------print parsed interest region-----------//
-		//for(vector<Region> &vr: segments){
-		//	for(Region& r: vr){
-		//		cout << "region info: " << r.chr << " " << r.start << " " << r.end << " " << r.gene << endl;
-		//	}
-		//}
-        //Fill adaptor maps
-        robin_hood::unordered_map<string, int> adaptorForward;
-        robin_hood::unordered_map<string, int> adaptorReverse;
-        if (!conf->adaptor.size()) {
-            for(string sequence : conf->adaptor) {
-                for (int i = 0; i <= 6 && i + CONF_ADSEED < sequence.length(); i++) {
-                    string forwardSeed = vc_substr(sequence, i, CONF_ADSEED);
-					string ftmp = forwardSeed;
-					reverse(ftmp.begin(), ftmp.end());
-                    string reverseSeed = complement(ftmp); //TODO maybe do not need ftmp;
-                    adaptorForward[forwardSeed] = i + 1;
-                    adaptorReverse[reverseSeed] = i + 1;
-                }
-            }
-        }
-		conf->adaptorForward = adaptorForward;
-		conf->adaptorReverse = adaptorReverse;
-		conf->sample  = std::get<0>(samples);
-		conf->samplem = std::get<1>(samples);
-		conf->ampliconBasedCalling = ampliconBasedCalling;
-		conf->chrLengths = chrLengths;
+		if (ampliconBasedCalling != "") {
+			//segments = builder.buildAmpRegions(segraw, zeroBased != null ? zeroBased : false);
+			segments = builder.buildAmpRegions(segraw, zeroBased);
+		} else {
+			segments = builder.buildRegions(segraw, zeroBased);
+			if(conf->adaptiveRegionSize){
+                cout << segments.size() << " - " << segments[0].size() << endl;
+				segments = builder.AdjustRegionSize(segments);
+                cout << segments.size() << " - " << segments[0].size() << endl;
+				//for(vector<Region> &regs: segments){
+                //   for(Region &reg: regs){
+                //        cout << reg.chr << ":" << reg.start << "-" << reg.end << endl;
+                //    }
+				//}
+			}
+		}
+	}
+	//--------------print parsed interest region-----------//
+	//for(vector<Region> &vr: segments){
+	//	for(Region& r: vr){
+	//		cout << "region info: " << r.chr << " " << r.start << " " << r.end << " " << r.gene << endl;
+	//	}
+	//}
+	//Fill adaptor maps
+	robin_hood::unordered_map<string, int> adaptorForward;
+	robin_hood::unordered_map<string, int> adaptorReverse;
+	if (!conf->adaptor.size()) {
+		for(string sequence : conf->adaptor) {
+			for (int i = 0; i <= 6 && i + CONF_ADSEED < sequence.length(); i++) {
+				string forwardSeed = vc_substr(sequence, i, CONF_ADSEED);
+				string ftmp = forwardSeed;
+				reverse(ftmp.begin(), ftmp.end());
+				string reverseSeed = complement(ftmp); //TODO maybe do not need ftmp;
+				adaptorForward[forwardSeed] = i + 1;
+				adaptorReverse[reverseSeed] = i + 1;
+			}
+		}
+	}
+	conf->adaptorForward = adaptorForward;
+	conf->adaptorReverse = adaptorReverse;
+	conf->sample  = std::get<0>(samples);
+	conf->samplem = std::get<1>(samples);
+	conf->ampliconBasedCalling = ampliconBasedCalling;
+	conf->chrLengths = chrLengths;
 }
 
 /**
