@@ -230,12 +230,14 @@ class Variant {
         if (meanMappingQuality < conf->mapq) {
             return false;
         }
+		/*
         if (msi >= 15 && frequency <= conf->monomerMsiFrequency && msint == 1) {
             return false;
         }
         if (msi >= 12 && frequency <= conf->nonMonomerMsiFrequency && msint > 1) {
             return false;
         }
+		*/
         if (strandBiasFlag == "2;1" && frequency < 0.20) {
             if (type.empty() || type == "SNV" || (refallele.length() < 3 && varallele.length() < 3)) {
                 return false;

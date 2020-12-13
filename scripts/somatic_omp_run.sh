@@ -7,10 +7,10 @@ set -x
 export KMP_AFFINITY=scatter
 
 #BIN=/home/old_home/haoz/workspace/VCTools/FastVC/bin/FastVC_notloose
-BIN=/home/old_home/haoz/workspace/FastVC/FastVC
+BIN=/home/old_home/haoz/workspace/FastVC/bin/FastVC
 FDDir=/home/old_home/haoz/workspace/data/FD
 ${BIN} \
-	/home/old_home/haoz/workspace/data/NA12878/ConfidentRegions.bed \
+	-i /home/old_home/haoz/workspace/data/NA12878/ConfidentRegions.bed \
 	-G /home/old_home/haoz/workspace/data/hg38/hg38.fa \
 	-f 0.01 \
 	-N "FD_T_2|FD_N_2" \
