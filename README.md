@@ -1,25 +1,25 @@
-# FastVC
-FastVC is a high-performance and versatile mutation detection tool, which  distinguishes between somatic and germline sequencing applications and simultaneously calls single nucleotide variants (SNVs), multiple-nucleotide variants (MNVs), insertions,and deletions(InDels) and complex variants.
+# RabbitVar (experimental)
+RabbitVar is a high-performance and versatile mutation detection tool, which  distinguishes between somatic and germline sequencing applications and simultaneously calls single nucleotide variants (SNVs), multiple-nucleotide variants (MNVs), insertions, and deletions(InDels) and complex variants.
 
 ## Dependency
 - [htslib](https://github.com/samtools/htslib)
 - [zlib (included with most Linuxes)](http://www.zlib.net)
 
 ## Installation of binaries
-The easiest way to use FastVC is to grab a binary from [here](https://github.com/LeiHaoa/FastVC/releases). We provide dependency-free(zlib required) binaries for x86_64 Linux.
+The easiest way to use RabbitVar is to grab a binary from [here](https://github.com/LeiHaoa/RabbitVar/releases). We provide dependency-free(zlib required) binaries for x86_64 Linux.
 
 ## Installation from source code
-FastVC is written in c++ for Linux platforms, you can download the source code and FastVC use some features supported by std-c++-11.
+RabbitVar is written in c++ for Linux platforms, you can download the source code and RabbitVar use some features supported by std-c++-11.
 So, c++ 11 or higher version is required.
 For better performance, ICPC is used as the default compiler. 
-Just Comipile FastVC with CMake:
+Just Comipile RabbitVar with CMake:
 ```
 $ mkdir build && cd build
 $ cmake -DHTS_PREFIX=<path to htslib> -DCMAKE_INSTALL_PREDIX=<install path> ..
 $ make -j4
 $ make install
 ```
-Then the binary file of FastVC will be installed as `bin/FastVC` if CMAKE_INSTALL_PREFIX not specified.
+Then the binary file of RabbitVar will be installed as `bin/RabbitVar` if CMAKE_INSTALL_PREFIX not specified.
 ## Testing dataset
 
 ### CHM1\_CHM13
@@ -29,7 +29,7 @@ For germline mode, we use a recently published benchmarking dataset for small-va
 In terms of somatic benchmarking, we use tumor and normal datasets from National Center for Clinical Laboratories (NCCL) for quality assessment of somatic mutations detection.  Raw sequencing files containing 97 somatic variants.There are two sequence file (both 14GB) which contains 116M reads in B1701 tumor dataset, and two sequence file (both 11GB) which contains 92M reads in B17NC normal dataset data can be requested in [NCCL](https://www.nccl.org.cn/showEqaPlanEnProDetail?id=2)
 
 ## Required Input
-In FastVC, the following input are required:
+In RabbitVar, the following input are required:
 
 - Alignment `.bam` files. 
 
@@ -46,7 +46,7 @@ In FastVC, the following input are required:
 
   User can specify one region with `-r` parameter:
   ```
-  ./FastVC \
+  ./RabbitVar \
     -R chr1:2829690-4918526  \
     -G /home/data/hg38.fa \
     -f 0.001 -N sample_name -b /home/data/CHM1_CHM13_2.bam \
@@ -56,7 +56,7 @@ In FastVC, the following input are required:
 
   User can also specify multi pregions with bed file:
   ```
-  ./FastVC \
+  ./RabbitVar \
     -i /home/data/NA12878/WGSRegions.bed \
     -G /home/data/hg38.fa \
     -f 0.001 -N sample_name -b /home/data/CHM1_CHM13_2.bam \
@@ -73,14 +73,14 @@ In FastVC, the following input are required:
   cat ./out.vcf | ./testsomatic.R | ./var2vcf_paired.pl -N sample_name -f 0.01
   ```
 
-  if you use --fisher paramater when runing FastVC, then you do not need the fisher test step by R file. just
+  if you use --fisher paramater when runing RabbitVar, then you do not need the fisher test step by R file. just
   ```
   #germline
   cat ./out.vcf | var2vcf_valid.pl -N sample_name -f 0.01
   #somatic
   cat ./out.vcf | ./var2vcf_paired.pl -N sample_name -f 0.01
   ```
-  Use the fisher exact test in FastVC is much faster than use the R script, but the test function in R script is a little accurate.
+  Use the fisher exact test in RabbitVar is much faster than use the R script, but the test function in R script is a little accurate.
 
 ## Usage 
 ```
@@ -180,7 +180,7 @@ options:
       --out                   The out put file path.
 			                  Default: ./out.vcf (string [=./out.vcf])
   -i, --bed            	      The region file to be processed (string [=])                        
-      --version               Print FastVC version information
+      --version               Print RabbitVar version information
 ```
 
 ## Cite
