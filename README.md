@@ -22,9 +22,6 @@ $ make install
 Then the binary file of RabbitVar will be installed as `bin/RabbitVar` if CMAKE_INSTALL_PREFIX not specified.
 ## Testing dataset
 
-### CHM1\_CHM13
-For germline mode, we use a recently published benchmarking dataset for small-variants  which  from  the  de  novo  PacBio  assemblies  of  two  fully  homozygoushuman  cell  lines.   It  declared  to  provides  a  relatively  more  accurate  and  lessbiased estimate of small-variant-calling error rates.  the tested data is aligned to GRCh37 and can be downloaded from [CHM1\_CHM13_2](ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR134/ERR1341796/CHM1\_CHM13\_2.bam).
-
 ### B17NC
 In terms of somatic benchmarking, we use tumor and normal datasets from National Center for Clinical Laboratories (NCCL) for quality assessment of somatic mutations detection.  Raw sequencing files containing 97 somatic variants.There are two sequence file (both 14GB) which contains 116M reads in B1701 tumor dataset, and two sequence file (both 11GB) which contains 92M reads in B17NC normal dataset data can be requested in [NCCL](https://www.nccl.org.cn/showEqaPlanEnProDetail?id=2)
 
@@ -62,7 +59,19 @@ In RabbitVar, the following input are required:
     -f 0.001 -N sample_name -b /home/data/CHM1_CHM13_2.bam \
     -c 1 -S 2 -E 3 \
     --out ./out.vcf
-  ```
+```
+
+## Train model
+You can train your own model in python and embbing in c++ codes by [Porter](https://github.com/nok/sklearn-porter)
+**install Poster according to porter github, **
+
+``` bash
+cd RandomForest
+python3 make_data.py xxx
+python3 train_rf.py xxx
+porter uniform_somatic_indel0d05.pkl --c --to .
+
+```
 
 **2. Format**
 
