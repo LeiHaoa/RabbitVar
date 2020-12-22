@@ -309,7 +309,7 @@ Configuration* cmdParse(int argc, char* argv[]){
     cmd.add("deldupvar", 0, "Turn on deleting of duplicate variants. Variants in this mode are considered and outputted only if \n\t\t\t      start position of variant is inside the region interest.");
     //cmd.add("nosv", 'U', "Turn off structural variant calling.");    
     cmd.add("verbose", 'y',"");
-    cmd.add<string>("Filter", 'F', "The hexical to filter reads using samtools. Default: 0x504 (filter 2nd alignments, unmapped reads \n\t\t\t      and duplicates).  Use -F 0 to turn it off.", false, "1284");
+    cmd.add<string>("Filter", 'F', "The hexical to filter reads using samtools. Default: 0x504 (filter 2nd alignments, unmapped reads \n\t\t\t      and duplicates).  Use -F 0 to turn it off.", false, "0x504");
     cmd.add("zero_based", 'z', "Indicate whether coordinates are zero-based, as IGV uses.  Default: 1 for BED file or amplicon BED \n\t\t\t      file.Use 0 to turn it off. When using the -R option, it's set to 0");
     cmd.add<int>("local_realig", 'k', "Indicate whether to perform local realignment.  Default: 1.  Set to 0 to disable it.  For Ion or \n\t\t\t      PacBio, 0 is recommended.", false, 1);
     //cmd.add<string>("amplicon", 'a', "Indicate it's amplicon based calling. Reads that don't map to the amplicon will be skipped. A read\n\t\t\t      pair is considered belonging to the amplicon if the edges are less than int bp to the amplicon, \n\t\t\t      and overlap fraction is at least float.  Default: 10:0.95", false, "10:0.95" );

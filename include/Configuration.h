@@ -220,8 +220,8 @@ public:
     /**
      * The hexical to filter reads.
      */
-     //string samfilter = "0x504"; //-F
-     string samfilter = "1284"; //-F
+     string samfilter = "0x504"; //-F
+     //string samfilter = "1284"; //-F
     /**
      * chr:start[-end]. If end is omitted, then a single position.
      */
