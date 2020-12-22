@@ -361,12 +361,8 @@ string SomaticMode::callingForOneSample(Vars* variants, bool isFirstCover, strin
 		}
 
 		if (isFirstCover) {
-			//outputVariant = new SomaticOutputVariant(variant, variant, NULL, variant, region, "", variants.sv, varLabel);
-			//variantPrinter.print(outputVariant);
 			one_sample_string.append(print_output_variant_simple(variant, variant, NULL, variant, region, varLabel, conf->fisher));
 		} else {
-			//outputVariant = new SomaticOutputVariant(variant, variant, variant, NULL, region, variants.sv, "", varLabel);
-			//variantPrinter.print(outputVariant);
 			one_sample_string.append(print_output_variant_simple(variant, variant, variant, NULL, region, varLabel, conf->fisher));
 		}
 	}
@@ -410,14 +406,11 @@ string SomaticMode::printVariationsFromFirstSample(int position, Vars* v1, Vars*
 		if (v2nt_itr != v2->varDescriptionStringToVariants.end()) {
 			v2nt = v2nt_itr->second;
 			string type = determinateType(v2, vref, v2nt, splice);
-			//outputVariant = new SomaticOutputVariant(vref, v2nt, vref, v2nt, region, v1.sv, v2.sv, type);
-			//variantPrinter.print(outputVariant);
 			first_sample_string.append(print_output_variant_simple(vref, v2nt, vref, v2nt, region, type, conf->fisher));
 		} else { // sample 1 only, should be strong somatic
 			Variant* varForPrint = new Variant();
 			bool delete_vfp = false;
 			if (!v2->variants.empty()) {
-				//Variant v2r = getVarMaybe(v2, var, 0);
 				Variant* v2r = v2->variants[0];
 				varForPrint->totalPosCoverage   = v2r->totalPosCoverage   ;
 				varForPrint->refForwardCoverage = v2r->refForwardCoverage ;
@@ -430,11 +423,9 @@ string SomaticMode::printVariationsFromFirstSample(int position, Vars* v1, Vars*
 			}
 
 			string type = STRONG_SOMATIC;
-			//jregex.Matcher mm = MINUS_NUM_NUM.matcher(nt);
 			bool mm = regex_search(nt, conf->patterns->MINUS_NUM_NUM);
 			if (vref->vartype != SNV && (nt.length() > 10 || mm)) {
 				v2nt = new Variant();
-				//v2.varDescriptionStringToVariants.put(nt, v2nt); // Ensure it's initialized before passing to combineAnalysis
 				//[it is no use]v2->varDescriptionStringToVariants[nt] = v2nt; // Ensure it's initialized before passing to combineAnalysis
 				if (vref->positionCoverage < conf->minr + 3 && nt.find("<") != string::npos) {
 					CombineAnalysisData tpl = combineAnalysis(vref, v2nt, region.chr, position, nt,
@@ -481,8 +472,6 @@ string SomaticMode::printVariationsFromFirstSample(int position, Vars* v1, Vars*
 				}
 
 				v1nt->vartype = v1nt->varType();
-				//outputVariant = new SomaticOutputVariant(v1nt, v2var, v1nt, v2var, region, v1.sv, v2.sv, type);
-				//variantPrinter.print(outputVariant);
 				first_sample_string.append(print_output_variant_simple(v1nt, v2var, v1nt, v2var, region, type, conf->fisher));
 			} else {
 				//Variant* v1var = getVarMaybe(v1, var, 0);
@@ -525,15 +514,15 @@ string SomaticMode::printVariationsFromFirstSample(int position, Vars* v1, Vars*
  * */
 string SomaticMode::printVariationsFromSecondSample(int position, Vars* v1, Vars* v2, Region region, set<string> *splice, int& maxReadLength, SomaticThreadResource &trs){
 	string second_sample_string;
-    for (Variant *v2var : v2->variants) {
-        v2var->vartype = v2var->varType();
-        if (!v2var->isGoodVar(v2->referenceVariant, v2var->vartype, splice, conf)) {
-            continue;
-        }
-        // potential LOH
-        string &descriptionString = v2var->descriptionString;
-        string type = STRONG_LOH;
-        //Variant* v1nt = v1->varDescriptionStringToVariants.computeIfAbsent(descriptionString, k -> new Variant());
+	for (Variant *v2var : v2->variants) {
+		v2var->vartype = v2var->varType();
+		if (!v2var->isGoodVar(v2->referenceVariant, v2var->vartype, splice, conf)) {
+			continue;
+		}
+		// potential LOH
+		string &descriptionString = v2var->descriptionString;
+		string type = STRONG_LOH;
+		//Variant* v1nt = v1->varDescriptionStringToVariants.computeIfAbsent(descriptionString, k -> new Variant());
 		Variant* v1nt;
 		bool new_v1nt = false;
 		if(v1->varDescriptionStringToVariants.find(descriptionString) != v1->varDescriptionStringToVariants.end()){
@@ -543,49 +532,49 @@ string SomaticMode::printVariationsFromSecondSample(int position, Vars* v1, Vars
 			new_v1nt = true;
 		}
 		
-        v1nt->positionCoverage = 0;
-        string newType = EMPTY_STRING;
-        //jregex.Matcher mm = MINUS_NUM_NUM.matcher(descriptionString);
+		v1nt->positionCoverage = 0;
+		string newType = EMPTY_STRING;
+		//jregex.Matcher mm = MINUS_NUM_NUM.matcher(descriptionString);
 		bool mm = regex_search(descriptionString, conf->patterns->MINUS_NUM_NUM);
 		if (v2->varDescriptionStringToVariants.at(descriptionString)->positionCoverage < conf->minr + 3
-			&& descriptionString.find("<") != string::npos
-			&& (descriptionString.length() > 10 || mm)) {
-            CombineAnalysisData tpl = combineAnalysis(
-                    v2->varDescriptionStringToVariants.at(descriptionString),
-                    v1nt,
-                    region.chr,
-                    position,
-                    descriptionString,
-                    splice,
-                    maxReadLength,
-					trs);
-            maxReadLength = tpl.maxReadLength;
-            newType = tpl.type;
-            if (FALSE == newType) {
-                continue;
-            }
-        }
-        Variant* varForPrint;
-        if (newType.length() > 0) {
-            type = newType;
-            varForPrint = v1nt;
-        } else {
-            Variant *v1ref = v1->referenceVariant;
-            if (v1ref != NULL) {
-                varForPrint = v1ref;
-            } else {
-                varForPrint = NULL;
-            }
-        }
-        if (COMPLEX == v2var->vartype) {
-            v2var->adjComplex();
-        }
+				&& descriptionString.find("<") != string::npos
+				&& (descriptionString.length() > 10 || mm)) {
+			CombineAnalysisData tpl = combineAnalysis(
+				v2->varDescriptionStringToVariants.at(descriptionString),
+				v1nt,
+				region.chr,
+				position,
+				descriptionString,
+				splice,
+				maxReadLength,
+				trs);
+			maxReadLength = tpl.maxReadLength;
+			newType = tpl.type;
+			if (FALSE == newType) {
+				continue;
+			}
+		}
+		Variant* varForPrint;
+		if (newType.length() > 0) {
+			type = newType;
+			varForPrint = v1nt;
+		} else {
+			Variant *v1ref = v1->referenceVariant;
+			if (v1ref != NULL) {
+				varForPrint = v1ref;
+			} else {
+				varForPrint = NULL;
+			}
+		}
+		if (COMPLEX == v2var->vartype) {
+			v2var->adjComplex();
+		}
 
-        //SomaticOutputVariant outputVariant = new SomaticOutputVariant(v2var, v2var, varForPrint, v2var, region, "", v2.sv, type);
-        //variantPrinter.print(outputVariant);
-        second_sample_string.append(print_output_variant_simple(v2var, v2var, varForPrint, v2var, region, type, conf->fisher));
+		//SomaticOutputVariant outputVariant = new SomaticOutputVariant(v2var, v2var, varForPrint, v2var, region, "", v2.sv, type);
+		//variantPrinter.print(outputVariant);
+		second_sample_string.append(print_output_variant_simple(v2var, v2var, varForPrint, v2var, region, type, conf->fisher));
 		if(new_v1nt) delete v1nt;
-    }
+	}
 	return second_sample_string;
 }
 
@@ -891,7 +880,7 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 			string variant_result = output(pair.tumor_scope, pair.normal_scope, trs[thread_id]);
 			#pragma omp critical
 			{
-				fwrite(variant_result.c_str(), 1, variant_result.length(), this->file_ptr);
+				//fwrite(variant_result.c_str(), 1, variant_result.length(), this->file_ptr);
 			}
 			delete pair.tumor_scope->data;
 			delete pair.normal_scope->data;
