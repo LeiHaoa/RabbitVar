@@ -27,10 +27,8 @@ void SomaticMode::InitItemRepository(const int size){
 }
 
 static Scope<AlignedVarsData>* one_region_run(Region region, Configuration* conf, dataPool* data_pool, vector<bamReader> &bamReaders, set<string> *splice){
-//AlignedVarsData* one_region_run(Region region, Configuration* conf, dataPool* data_pool){
 	
 	//cout << "reader info2: " << static_cast<void*>(bamReaders[0].in) << " " << static_cast<void*>(bamReaders[0].header) << " "  <<static_cast<void*>(bamReaders[0].idx) << endl;
-	//DataScope dscope;
 	//dscope.region = region;
 	data_pool->reset();
 	InitialData *init_data = new InitialData;
@@ -69,8 +67,6 @@ static Scope<AlignedVarsData>* one_region_run(Region region, Configuration* conf
 }
 
 static ScopePair one_region_run_somt(Region region, Configuration* conf, SomaticThreadResource &trs, set<string>* splice){
-	//DataScope dscope;
-	//dscope.region = region;
 	dataPool *data_pool = trs.data_pool;
 	data_pool->reset();
 	InitialData *init_data = new InitialData;
@@ -310,18 +306,6 @@ string SomaticMode::output(Scope<AlignedVarsData>* scopeFromBam1, Scope<AlignedV
 			if(position < region.start || position > region.end) {
 				continue;
 			}
-			//Vars v1 = variationsFromBam1.get(position);
-			//Vars v2 = variationsFromBam2.get(position);
-			//if (v1 == null && v2 == null) { // both samples have no coverage
-			//	continue;
-			//}
-			//if (v1 == null) { // no coverage for sample 1
-			//	callingForOneSample(v2, true, DELETION, region, splice);
-			//} else if (v2 == null) { // no coverage for sample 2
-			//	callingForOneSample(v1, false, SAMPLE_SPECIFIC, region, splice);
-			//} else { // both samples have coverage
-			//	callingForBothSamples(position, v1, v2, region, splice);
-			//}
 
 			robin_hood::unordered_map<int, Vars*>::iterator v1 = variationsFromBam1.find(position);
 			robin_hood::unordered_map<int, Vars*>::iterator v2 = variationsFromBam2.find(position);
@@ -588,26 +572,26 @@ string SomaticMode::printVariationsFromSecondSample(int position, Vars* v1, Vars
 string SomaticMode::determinateType(Vars* variants, Variant* standardVariant, Variant* variantToCompare, set<string> *splice) {
 	string type;
 	if (variantToCompare->isGoodVar(variants->referenceVariant, standardVariant->vartype, splice, conf)) {
-        if (standardVariant->frequency > (1 - conf->lofreq) && variantToCompare->frequency < 0.8d && variantToCompare->frequency > 0.2d) {
-            type = LIKELY_LOH;
-        } else {
-            if (variantToCompare->frequency < conf->lofreq || variantToCompare->positionCoverage <= 1) {
-                type = LIKELY_SOMATIC;
-            } else {
-                type = GERMLINE;
-            }
-        }
-    } else {
-        if (variantToCompare->frequency < conf->lofreq || variantToCompare->positionCoverage <= 1) {
-            type = LIKELY_SOMATIC;
-        } else {
-            type = AF_DIFF;
-        }
-    }
-    if (variantToCompare->isNoise(conf) && standardVariant->vartype == SNV) {
-        type = STRONG_SOMATIC;
-    }
-    return type;
+		if (standardVariant->frequency > (1 - conf->lofreq) && variantToCompare->frequency < 0.8d && variantToCompare->frequency > 0.2d) {
+			type = LIKELY_LOH;
+		} else {
+			if (variantToCompare->frequency < conf->lofreq || variantToCompare->positionCoverage <= 1) {
+				type = LIKELY_SOMATIC;
+			} else {
+				type = GERMLINE;
+			}
+		}
+	} else {
+		if (variantToCompare->frequency < conf->lofreq || variantToCompare->positionCoverage <= 1) {
+			type = LIKELY_SOMATIC;
+		} else {
+			type = AF_DIFF;
+		}
+	}
+	if (variantToCompare->isNoise(conf) && standardVariant->vartype == SNV) {
+		type = STRONG_SOMATIC;
+	}
+	return type;
 }
 
 
@@ -627,22 +611,22 @@ string SomaticMode::determinateType(Vars* variants, Variant* standardVariant, Va
  * @return (new <code>maxReadLength</code>, "FALSE" | "")
  */
 CombineAnalysisData SomaticMode::combineAnalysis(Variant* variant1, Variant* variant2,
-									string& chrName, int position,
-									string& descriptionString, set<string>* splice,
-												 int maxReadLength, SomaticThreadResource &trs){
+																								 string& chrName, int position,
+																								 string& descriptionString, set<string>* splice,
+																								 int maxReadLength, SomaticThreadResource &trs){
 	//cout << "Start Conbine Analysis!!" << endl;
-    // Don't do it for structural variants
-    if (variant1->endPosition - variant1->startPosition > conf->SVMINLEN) {
-        return CombineAnalysisData(maxReadLength, EMPTY_STRING);
-    }
+	// Don't do it for structural variants
+	if (variant1->endPosition - variant1->startPosition > conf->SVMINLEN) {
+		return CombineAnalysisData(maxReadLength, EMPTY_STRING);
+	}
 
-    Region region(chrName, variant1->startPosition - maxReadLength, variant1->endPosition + maxReadLength, "");
-    //Reference ref = referenceResource.getReference(region);
+	Region region(chrName, variant1->startPosition - maxReadLength, variant1->endPosition + maxReadLength, "");
+	//Reference ref = referenceResource.getReference(region);
 
-    //Scope<InitialData> currentScope = new Scope<>(config.bam.getBam1() + ":" + config.bam.getBam2(),
-    //          region, ref, referenceResource, maxReadLength, splice,
-    //          variantPrinter, new InitialData());
-    //AlignedVarsData tpl = getMode().pipeline(currentScope, new DirectThreadExecutor()).join().data;
+	//Scope<InitialData> currentScope = new Scope<>(config.bam.getBam1() + ":" + config.bam.getBam2(),
+	//          region, ref, referenceResource, maxReadLength, splice,
+	//          variantPrinter, new InitialData());
+	//AlignedVarsData tpl = getMode().pipeline(currentScope, new DirectThreadExecutor()).join().data;
 	vector<bamReader> merged_bamReaders;
 	for(vector<bamReader>& bami : trs.bamReaders){
 		merged_bamReaders.insert(merged_bamReaders.end(), bami.begin(), bami.end());
@@ -650,78 +634,78 @@ CombineAnalysisData SomaticMode::combineAnalysis(Variant* variant1, Variant* var
 	//---我觉得传thread resource这个数据结构比价好。---------
 	AlignedVarsData *tpl = one_region_run(region, conf, trs.data_pool, merged_bamReaders, splice)->data;
 
-    maxReadLength = tpl->maxReadLength;
+	maxReadLength = tpl->maxReadLength;
 	robin_hood::unordered_map<int, Vars*> &vars = tpl->alignedVariants;
-    //Variant *vref = getVarMaybe(vars, position, varn, descriptionString);
+	//Variant *vref = getVarMaybe(vars, position, varn, descriptionString);
 	Variant* vref = vars.find(position) != vars.end()
 		? vars.at(position)->varDescriptionStringToVariants.count(descriptionString)
-		 ? vars.at(position)->varDescriptionStringToVariants.at(descriptionString)
-		 : NULL
+		? vars.at(position)->varDescriptionStringToVariants.at(descriptionString)
+		: NULL
 		: NULL;
 	if (vref != NULL) {
-        if (vref->positionCoverage - variant1->positionCoverage >= conf->minr) {
-            variant2->totalPosCoverage = vref->totalPosCoverage - variant1->totalPosCoverage;
-            if (variant2->totalPosCoverage < 0)
-                variant2->totalPosCoverage = 0;
+		if (vref->positionCoverage - variant1->positionCoverage >= conf->minr) {
+			variant2->totalPosCoverage = vref->totalPosCoverage - variant1->totalPosCoverage;
+			if (variant2->totalPosCoverage < 0)
+				variant2->totalPosCoverage = 0;
 
-            variant2->positionCoverage = vref->positionCoverage - variant1->positionCoverage;
-            if (variant2->positionCoverage < 0)
-                variant2->positionCoverage = 0;
+			variant2->positionCoverage = vref->positionCoverage - variant1->positionCoverage;
+			if (variant2->positionCoverage < 0)
+				variant2->positionCoverage = 0;
 
-            variant2->refForwardCoverage = vref->refForwardCoverage - variant1->refForwardCoverage;
-            if (variant2->refForwardCoverage < 0)
-                variant2->refForwardCoverage = 0;
+			variant2->refForwardCoverage = vref->refForwardCoverage - variant1->refForwardCoverage;
+			if (variant2->refForwardCoverage < 0)
+				variant2->refForwardCoverage = 0;
 
-            variant2->refReverseCoverage = vref->refReverseCoverage - variant1->refReverseCoverage;
-            if (variant2->refReverseCoverage < 0)
-                variant2->refReverseCoverage = 0;
+			variant2->refReverseCoverage = vref->refReverseCoverage - variant1->refReverseCoverage;
+			if (variant2->refReverseCoverage < 0)
+				variant2->refReverseCoverage = 0;
 
-            variant2->varsCountOnForward = vref->varsCountOnForward - variant1->varsCountOnForward;
-            if (variant2->varsCountOnForward < 0)
-                variant2->varsCountOnForward = 0;
+			variant2->varsCountOnForward = vref->varsCountOnForward - variant1->varsCountOnForward;
+			if (variant2->varsCountOnForward < 0)
+				variant2->varsCountOnForward = 0;
 
-            variant2->varsCountOnReverse = vref->varsCountOnReverse - variant1->varsCountOnReverse;
-            if (variant2->varsCountOnReverse < 0)
-                variant2->varsCountOnReverse = 0;
+			variant2->varsCountOnReverse = vref->varsCountOnReverse - variant1->varsCountOnReverse;
+			if (variant2->varsCountOnReverse < 0)
+				variant2->varsCountOnReverse = 0;
 
-            if (variant2->positionCoverage != 0) {
-                variant2->meanPosition = (vref->meanPosition * vref->positionCoverage - variant1->meanPosition * variant1->positionCoverage) / variant2->positionCoverage;
-                variant2->meanQuality = (vref->meanQuality * vref->positionCoverage - variant1->meanQuality * variant1->positionCoverage) / variant2->positionCoverage;
-                variant2->meanMappingQuality = (vref->meanMappingQuality * vref->positionCoverage - variant1->meanMappingQuality * variant1->positionCoverage) / variant2->positionCoverage;
-                variant2->highQualityReadsFrequency = (vref->highQualityReadsFrequency * vref->positionCoverage - variant1->highQualityReadsFrequency * variant1->positionCoverage) / variant2->positionCoverage;
-                variant2->extraFrequency = (vref->extraFrequency * vref->positionCoverage - variant1->extraFrequency * variant1->positionCoverage) / variant2->positionCoverage;
-                variant2->numberOfMismatches = (vref->numberOfMismatches * vref->positionCoverage - variant1->numberOfMismatches * variant1->positionCoverage) / variant2->positionCoverage;
-            } else {
-                variant2->meanPosition = 0;
-                variant2->meanQuality = 0;
-                variant2->meanMappingQuality = 0;
-                variant2->highQualityReadsFrequency = 0;
-                variant2->extraFrequency = 0;
-                variant2->numberOfMismatches = 0;
-            }
-            variant2->isAtLeastAt2Positions = true;
-            variant2->hasAtLeast2DiffQualities = true;
+			if (variant2->positionCoverage != 0) {
+				variant2->meanPosition = (vref->meanPosition * vref->positionCoverage - variant1->meanPosition * variant1->positionCoverage) / variant2->positionCoverage;
+				variant2->meanQuality = (vref->meanQuality * vref->positionCoverage - variant1->meanQuality * variant1->positionCoverage) / variant2->positionCoverage;
+				variant2->meanMappingQuality = (vref->meanMappingQuality * vref->positionCoverage - variant1->meanMappingQuality * variant1->positionCoverage) / variant2->positionCoverage;
+				variant2->highQualityReadsFrequency = (vref->highQualityReadsFrequency * vref->positionCoverage - variant1->highQualityReadsFrequency * variant1->positionCoverage) / variant2->positionCoverage;
+				variant2->extraFrequency = (vref->extraFrequency * vref->positionCoverage - variant1->extraFrequency * variant1->positionCoverage) / variant2->positionCoverage;
+				variant2->numberOfMismatches = (vref->numberOfMismatches * vref->positionCoverage - variant1->numberOfMismatches * variant1->positionCoverage) / variant2->positionCoverage;
+			} else {
+				variant2->meanPosition = 0;
+				variant2->meanQuality = 0;
+				variant2->meanMappingQuality = 0;
+				variant2->highQualityReadsFrequency = 0;
+				variant2->extraFrequency = 0;
+				variant2->numberOfMismatches = 0;
+			}
+			variant2->isAtLeastAt2Positions = true;
+			variant2->hasAtLeast2DiffQualities = true;
 
-            if (variant2->totalPosCoverage <= 0) {
-                return CombineAnalysisData(maxReadLength, FALSE);
-            }
+			if (variant2->totalPosCoverage <= 0) {
+				return CombineAnalysisData(maxReadLength, FALSE);
+			}
 
-            variant2->frequency = variant2->positionCoverage / (double)variant2->totalPosCoverage;
-            variant2->highQualityToLowQualityRatio = variant1->highQualityToLowQualityRatio; // Can't back calculate and should be inaccurate
-            variant2->genotype = vref->genotype;
-            variant2->strandBiasFlag = strandBias(variant2->refForwardCoverage, variant2->refReverseCoverage, conf) + ";" +
+			variant2->frequency = variant2->positionCoverage / (double)variant2->totalPosCoverage;
+			variant2->highQualityToLowQualityRatio = variant1->highQualityToLowQualityRatio; // Can't back calculate and should be inaccurate
+			variant2->genotype = vref->genotype;
+			variant2->strandBiasFlag = strandBias(variant2->refForwardCoverage, variant2->refReverseCoverage, conf) + ";" +
 				strandBias(variant2->varsCountOnForward, variant2->varsCountOnReverse, conf);
-            return CombineAnalysisData(maxReadLength, GERMLINE);
-        } else if (vref->positionCoverage < variant1->positionCoverage - 2) {
-            return CombineAnalysisData(maxReadLength, FALSE);
-        } else {
-            return CombineAnalysisData(maxReadLength, EMPTY_STRING);
-        }
-    }
+			return CombineAnalysisData(maxReadLength, GERMLINE);
+		} else if (vref->positionCoverage < variant1->positionCoverage - 2) {
+			return CombineAnalysisData(maxReadLength, FALSE);
+		} else {
+			return CombineAnalysisData(maxReadLength, EMPTY_STRING);
+		}
+	}
 
 	delete tpl;
 	
-    return CombineAnalysisData(maxReadLength, FALSE);
+	return CombineAnalysisData(maxReadLength, FALSE);
 }
 
 void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments){
@@ -735,7 +719,6 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 	}
 	//--------------use interest region parameter: singel thread-------------------//
 	if(conf->regionOfInterest != ""){
-		//DataScope dscope;
 		SomaticThreadResource trs;
 		trs.bamReaders.resize(2);
 		if(conf->bam.getBam1() != ""){
@@ -798,7 +781,6 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 		int max_ref_size = 0;
 		for(vector<Region> reg_vec: segments){
 			for(int i = 0; i < reg_vec.size(); i++){
-				//int reg_i = omp_get_thread_num();
 				mRegs.emplace_back(reg_vec[i]);
 				if((reg_vec[i].end - reg_vec[i].start) > max_ref_size){
 					max_ref_size = reg_vec[i].end - reg_vec[i].start;
@@ -822,7 +804,6 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 //#pragma omp parallel for schedule(static) //num_threads(processor_num)
 		for(int t = 0; t < processor_num; t++){
 			//----add by haoz: init bamReader------//
-			//vector<bamReader> bamReaders;
 			trs[t].bamReaders.resize(2);
 			if(conf->bam.getBam1() != ""){
 				//cerr << "[debug]: bam1: " << conf->bam.getBam1() << endl;
@@ -859,7 +840,6 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 				}
 			}
 			assert(trs[t].bamReaders[0].size() > 0);
-			//cout << "reader info: " << static_cast<void*>(bamReaders[0].in) << " " << static_cast<void*>(bamReaders[0].header) << " "  <<static_cast<void*>(bamReaders[0].idx) << endl;
 			//----init bamReader end------//
 			trs[t].data_pool = new dataPool(conf->mempool_size);
 		}
