@@ -4,7 +4,7 @@
 BedRowFormat CUSTOM_BED_ROW_FORMAT(0, 1, 2, 3, 1, 2);
 BedRowFormat AMP_BED_ROW_FORMAT(0, 1, 2, 6, 7, 3);
 
-#define REGION_SIZE_MAX 100000
+#define REGION_SIZE_MAX 10000
 
 RegionBuilder::RegionBuilder(robin_hood::unordered_map<string, int> chromosomesLengths, Configuration* config) {
 	this->chromosomesLengths = chromosomesLengths;

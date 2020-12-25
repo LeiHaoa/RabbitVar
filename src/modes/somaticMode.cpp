@@ -114,6 +114,8 @@ static ScopePair one_region_run_somt(Region region, Configuration* conf, Somatic
 	return sp;
 }
 
+//void SomaticMode::output_binary_variant():
+
 string SomaticMode::print_output_variant_simple(Variant* beginVariant, Variant* endVariant, Variant* tumorVariant, Variant* normalVariant, 
 												Region region, string& varLabel, bool fisher){
 	const string null_case_str = "0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t";
@@ -775,6 +777,7 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 	else 
 	{
 		cout << "[info] bed file name: " << conf->bed << endl;
+		double start_0 = get_time();
 		Region reg;
 		//vector<Region> regs;
 		dataPool* data_pool;
@@ -843,9 +846,11 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 			//----init bamReader end------//
 			trs[t].data_pool = new dataPool(conf->mempool_size);
 		}
+			double end_0 = get_time();
+			std::cerr << "generate thread resource" << end_0 - start_0<< std::endl;
 #pragma omp parallel for default(shared) private(reg, data_pool) schedule(dynamic) //num_threads(2)
 		for(int i = 0; i < reg_num; i++){
-		    double start2 = get_time();
+			double start2 = get_time();
 			int thread_id = omp_get_thread_num();
 			reg = mRegs[i];
 			data_pool = trs[thread_id].data_pool;
@@ -860,11 +865,14 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 			string variant_result = output(pair.tumor_scope, pair.normal_scope, trs[thread_id]);
 			#pragma omp critical
 			{
-				//fwrite(variant_result.c_str(), 1, variant_result.length(), this->file_ptr);
+				fwrite(variant_result.c_str(), 1, variant_result.length(), this->file_ptr);
 			}
 			delete pair.tumor_scope->data;
 			delete pair.normal_scope->data;
 		}
+		double end_1 = get_time();
+		std::cerr << "parallel time" << end_1 - end_0 << std::endl;
+
 
 		//------free threadResource_somatic------
 		for(int t = 0; t < processor_num; t++){
