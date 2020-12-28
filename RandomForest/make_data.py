@@ -88,8 +88,6 @@ def get_label(truth_vars, key):
         return 0
     return 0
 
-
-
 import sys
 
 if len(sys.argv) != 5:
@@ -108,8 +106,7 @@ with open(truth_file, 'r') as f:
             continue
         items = var.split('\t')
         chrom, pos, id, ref, alt, _, filter = items[:7]         
-        #if len(chrom) < 6 and filter == "PASS" and (len(ref) > 1 or len(alt) > 1) :
-        if len(chrom) < 6:
+        if len(chrom) <= 6:
             site = chrom + ":" + pos + ":" + ref + ":" + alt
             truth_vars.add(site)
 cr = list()

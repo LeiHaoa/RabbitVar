@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import time 
 import argparse
+import subprocess
 
 som_features = [
     "Sample", "Gene", "Chr", "Start", "End", "Ref", "Alt",
@@ -118,15 +119,25 @@ def call_rf(args):
     cr_start = time.time()
     pred = clf.predict(data)
     cr_end = time.time()
+    print("length {} - {}".format(len(data), len(pred)))
+    #i = int(0)
+    #with open('./models/result_demo.txt', 'w') as f:
+    #    for pi in pred:
+    #        f.write(','.join([str(x) for x in data[i]]) + '\n')
+    #        f.write(":" + str(pi) + "\n")
+    #        i+=1
+    #print("write input over")
+    #exit(0)    
     print("time of pred: {} s".format(cr_end - cr_start) )
 
     cr_start = time.time()
     with open(args.out_file, 'w') as f:
         for i in range(len(pred)):
             if pred[i] == 1:
-                f.write(str(raw[i]))
+                f.write(str(i) + ":"+str(raw[i]))
     cr_end = time.time()
     print("time of write: {} s".format(cr_end - cr_start) )
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

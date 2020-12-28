@@ -135,18 +135,25 @@ def train_rf(args):
                 else:
                     print("wrong data format!!", len(items))
     else: #use tsv file 
+        '''
         with open(args.tsv, 'r') as f:
             for var in f:
                 if var[0] == '#':
                     continue
                 cr.append(var.strip().split(','))
+        '''
+        #cr = np.fromfile(args.tsv) much slower than pd.read_csv
+        data = pd.read_csv("args.tsv", header=None)
 
     print("length of cr: ", len(cr))
+    print("cr[1]", cr[1])
+    exit(0)
     if vartype == "SNV":
-        data = pd.DataFrame(cr, columns=[*som_selected_features, "VarLabel", "label"])
-        data[data.columns] = data[data.columns].apply(pd.to_numeric)
+        #data = pd.DataFrame(cr, columns=[*som_selected_features, "VarLabel", "label"])
+        #data[data.columns] = data[data.columns].apply(pd.to_numeric)
         #data['VarLabel'] = data['VarLabel'].astype('category')
         #data["label"] = data["label"]
+        data.columns = ["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel", "label"]
 
         #--- data prepare ----#
         #data.rename(columns={0:'input',1:'label'},inplace=True)
@@ -168,10 +175,11 @@ def train_rf(args):
         print("type: ", type(train_set), type(y))
         print(len(train_set), len(y))
     elif vartype == "INDEL":
-        data = pd.DataFrame(cr, columns=["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel", "label"])
+        #data = pd.DataFrame(cr, columns=["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel", "label"])
         #data[data.columns[:-2]] = data[data.columns[:-2]].apply(pd.to_numeric)
         #data["label"] = data["label"].astype('category')
-        data[data.columns] = data[data.columns].apply(pd.to_numeric)
+        #data[data.columns] = data[data.columns].apply(pd.to_numeric)
+        data.columns = ["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel", "label"]
 
         #--- data prepare ----#
         #data.rename(columns={0:'input',1:'label'},inplace=True)
@@ -198,6 +206,8 @@ def train_rf(args):
                                      class_weight = 'balanced',
                                      n_estimators=50, max_features=None, verbose=1)
     else:
+        print("model {} exists!".format(args.pretrained_model))
+        exit(-1)
         if not os.path.exists(args.pretrained_model):
             print("model {} not exists, create new one!".format(args.pretrained_model))
             clf = RandomForestClassifier(n_jobs=args.nthreads, max_depth=12, min_samples_leaf=50, 

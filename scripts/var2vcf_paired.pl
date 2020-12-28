@@ -227,6 +227,7 @@ foreach my $chr (@chrs) {
 	    }
 	    if ( $pinfo1 ) {
 		#print "$pinfo1\t$pfilter\t$pinfo2\n" unless ( ($opt_M && $pinfo2 !~ /Somatic/) || $opt_S && $pfilter ne "PASS" );
+		$pfilter = "PASS";
 		print "$pinfo1\t$pfilter\t$pinfo2\n" unless ( $opt_S && $pfilter ne "PASS" );
 	    }
 	    ($pinfo1, $pfilter, $pinfo2) = (join("\t", $chr, $start, ".", $ref, $alt, $qual), $filter,
@@ -240,6 +241,7 @@ foreach my $chr (@chrs) {
 	}
     }
     if ( $pinfo1 ) {
+		$pfilter = "PASS";
 	print "$pinfo1\t$pfilter\t$pinfo2\n" unless ( $opt_S && $pfilter ne "PASS" );
     }
 }
