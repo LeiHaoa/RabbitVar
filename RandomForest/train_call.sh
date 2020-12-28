@@ -23,29 +23,39 @@ snv_truths=(
 		/home/old_home/haoz/workspace/data/EA/dreamsim_1227/synthetic_snvs.vcf 
 )
 
-for(( i=3; i<${#datas[@]}; i++ ))
+for(( i=5; i<${#datas[@]}; i++ ))
 do
 		DATA=${datas[i]}
 		TRUTH=${indel_truths[i]}
 		./make_data.py ${DATA} ${TRUTH} "INDEL" uniform_indel_data.tsv
 done
 
-for(( i=3; i<${#datas[@]}; i++ ))
+for(( i=5; i<${#datas[@]}; i++ ))
 do
 		DATA=${datas[i]}
 		TRUTH=${snv_truths[i]}
 		./make_data.py ${DATA} ${TRUTH} "SNV" uniform_snv_data.tsv
 done
 
+echo "-----------------training INDELs--------------------"
+time python train_rf.py \
+		 --tsv uniform_indel_data.tsv \
+		 --var_type "INDEL" \
+		 --out_model ./models/somatic_indel_downsample0d5.pkl  \
+
+echo "done"
+./call_and_hap.sh 
 exit
 
+echo "-----------------training SNVs--------------------"
 time python train_rf.py \
-		 --tsv uniform_data.tsv \
-		 --var_type "INDEL" \
-		 --out_model ./models/uniform_somatic_indel0d05.pkl.tmp  \
+		 --tsv uniform_snv_data.tsv \
+		 --var_type "SNV" \
+		 --out_model ./models/somatic_snv_downsample0d02.pkl  \
+
 echo "done"
 
-# ./call_and_hap.sh 
+#./call_and_hap.sh 
 
 #		 --train_data ${DATA} \
 #		 --truth_file ${TRUTH} \

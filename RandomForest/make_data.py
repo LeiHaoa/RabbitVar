@@ -91,6 +91,7 @@ def get_label(truth_vars, key):
 import sys
 
 if len(sys.argv) != 5:
+    print(len(sys.argv))
     print('intput parameter number wrong: '.format(len(sys.argv)))
     exit(-1)
 
@@ -98,6 +99,7 @@ fastvc_file = sys.argv[1]
 truth_file = sys.argv[2]
 vartype = sys.argv[3]
 tsv_file = sys.argv[4]
+print("proceing: {} - {}".format(vartype, fastvc_file))
 
 truth_vars = set()
 with open(truth_file, 'r') as f:

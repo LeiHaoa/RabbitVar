@@ -143,17 +143,17 @@ def train_rf(args):
                 cr.append(var.strip().split(','))
         '''
         #cr = np.fromfile(args.tsv) much slower than pd.read_csv
-        data = pd.read_csv("args.tsv", header=None)
+        data = pd.read_csv(args.tsv, header=None)
+        print("length of data: ", len(data))
 
-    print("length of cr: ", len(cr))
-    print("cr[1]", cr[1])
-    exit(0)
     if vartype == "SNV":
-        #data = pd.DataFrame(cr, columns=[*som_selected_features, "VarLabel", "label"])
-        #data[data.columns] = data[data.columns].apply(pd.to_numeric)
-        #data['VarLabel'] = data['VarLabel'].astype('category')
-        #data["label"] = data["label"]
-        data.columns = ["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel", "label"]
+        if args.tsv == None:
+            data = pd.DataFrame(cr, columns=[*som_selected_features, "VarLabel", "label"])
+            data[data.columns] = data[data.columns].apply(pd.to_numeric)
+            #data['VarLabel'] = data['VarLabel'].astype('category')
+            #data["label"] = data["label"]
+        else:
+            data.columns = [*som_selected_features, "VarLabel", "label"]
 
         #--- data prepare ----#
         #data.rename(columns={0:'input',1:'label'},inplace=True)
@@ -175,27 +175,28 @@ def train_rf(args):
         print("type: ", type(train_set), type(y))
         print(len(train_set), len(y))
     elif vartype == "INDEL":
-        #data = pd.DataFrame(cr, columns=["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel", "label"])
-        #data[data.columns[:-2]] = data[data.columns[:-2]].apply(pd.to_numeric)
-        #data["label"] = data["label"].astype('category')
-        #data[data.columns] = data[data.columns].apply(pd.to_numeric)
-        data.columns = ["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel", "label"]
+        if args.tsv == None:
+            data = pd.DataFrame(cr, columns=["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel", "label"])
+            data[data.columns[:-2]] = data[data.columns[:-2]].apply(pd.to_numeric)
+            #data["label"] = data["label"].astype('category')
+            data[data.columns] = data[data.columns].apply(pd.to_numeric)
+        else:
+            data.columns = ["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel", "label"]
 
         #--- data prepare ----#
         #data.rename(columns={0:'input',1:'label'},inplace=True)
         data['is_train'] = np.random.uniform(0, 1, len(data)) <= .9
         train, test = data[data['is_train'] == True], data[data['is_train'] == False]
-        
-        #--select 1/100 faslse data form fasle
+
+        #--select frac faslse data form fasle
         false = train[ train['label'] == 0 ]
-        false = false.sample(frac = 0.05)
+        #false = false.sample(frac = 0.05)
+        false = false.sample(frac = 0.5)
         truth = train[ train['label'] == 1]
-        print("faslse number: {}, truth number: {}".format(len(false), len(truth)) )
+        print("faslse number: {}, truth number: {}".format(len(false), len(truth)*5 ) )
         aug_data = shuffle(pd.concat([truth, false, truth, truth, truth, truth], axis = 0))
-        #aug_data = shuffle(pd.concat([truth, false], axis = 0))
         #aug_data = train
         train_set = aug_data[aug_data.columns[:-2]].to_numpy()
-        print(train_set[:2])
         y = aug_data["label"]
         print("type: ", type(train_set), type(y))
         print(len(train_set), len(y))
@@ -237,7 +238,7 @@ if __name__ == "__main__":
     parser.add_argument('--tsv', help = "tsv file, which contained data and label", type=str, required = False)
     parser.add_argument('--var_type', help = "var type you want to train(SNV/INDEL)", type=str, required = True)
     #parser.add_argument('--var_type', help = "var type you want to train(SNV/INDEL)", type=str, required = True)
-    parser.add_argument('--nthreads', help = "number of thread", type=int, default=20)
+    parser.add_argument('--nthreads', help = "number of thread, default -1", type=int, default=-1)
     parser.add_argument('--pretrained_model', help = "pretrained model", type=str, required = False)
     parser.add_argument('--out_model', help = "out model name (just for experiments)", type=str, required = True)
     args = parser.parse_args()
