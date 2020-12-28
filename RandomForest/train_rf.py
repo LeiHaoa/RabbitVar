@@ -162,7 +162,7 @@ def train_rf(args):
         
         #--select 1/100 faslse data form fasle
         false = train[ train['label'] == 0 ]
-        false = false.sample(frac = 0.02)
+        false = false.sample(frac = 0.2)
         truth = train[ train['label'] == 1]
         print("faslse number: {}, truth number: {}".format(len(false), len(truth)) )
         aug_data = shuffle(pd.concat([truth, false, truth, truth, truth, truth], axis = 0))
