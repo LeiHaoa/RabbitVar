@@ -76,9 +76,11 @@ def format_indel_data_item(jri, fisher):
         exit(-1)
     return key, data
 
-#out_file = "/home/old_home/haoz/workspace/FastVC/detection_result/somatic/train_set_10_21/FDSynthetic.notloose.txt"
+def my_predict(clf, data, scale):
+    proba = clf.predict_proba(data)
+    return np.asarray([1 if x > scale else 0 for x in proba[:,1]])
+
 def call_rf(args):
-    #out_file = "/home/old_home/haoz/workspace/FastVC/detection_result/NC_DATASET/NC_DATA_1.txt"
     in_file = args.in_file
     vartype = args.var_type
     cr = list()
@@ -117,7 +119,9 @@ def call_rf(args):
     print("time of np.asaray: {} s".format(cr_end - cr_start) )
     
     cr_start = time.time()
-    pred = clf.predict(data)
+    #pred = clf.predict(data)
+    scale = args.scale
+    pred = my_predict(clf, data, scale)
     cr_end = time.time()
     print("length {} - {}".format(len(data), len(pred)))
     #i = int(0)
@@ -144,6 +148,7 @@ if __name__ == "__main__":
         description = "train your network")
     parser.add_argument('--in_file', help = "RabbitVar intermidiate file(with fisher test)", type=str, required = True)
     parser.add_argument('--var_type', help = "var type you want to train(SNV/INDEL)", type=str, required = True)
+    parser.add_argument('--scale', help = 'scale for random forest predict_proba to filter, 0.5 perform the same result as function predict. (default > 0.2)', type = float, default = 0.2)
     #parser.add_argument('--var_type', help = "var type you want to train(SNV/INDEL)", type=str, required = True)
     parser.add_argument('--nthreads', help = "number of thread", type=int, default=20)
     parser.add_argument('--model', help = "random forest model", type=str, required = True)
