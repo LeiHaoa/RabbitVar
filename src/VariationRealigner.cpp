@@ -1149,410 +1149,6 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, robin_hood::u
     return NEWINS;
 }
 
-
-/**
- * Realign large deletions that are not present in alignment
- * @param svfdel list of DEL SVs in forward strand
- * @param svrdel list of DEL SVs in reverse strand
- */
-//TODO---------edit banlazi------------
-/**
-public void realignlgdel(list<Sclip> svfdel,
-                         list<Sclip> svrdel) {
-    const int longmm = 3;
-    unordered_map<int, char> ref = reference.referenceSequences;
-
-    vector<SortPositionSclip> tmp;
-    for (auto& ent5 : softClips5End) {
-        int p = ent5.first;
-        if (p < region.start - CONF_EXTENSION
-                || p > region.end + CONF_EXTENSION) {
-            continue;
-        }
-        tmp.push_back(new SortPositionSclip(ent5.first, ent5.second, 0));
-    }
-    //Collections.sort(tmp, COMP2);
-    sort(tmp.begin(), tmp.end(), COMP2);
-    int svcov = 0;
-    int clusters = 0;
-    int pairs = 0;
-    int lastPosition = 0;
-    for (SortPositionSclip t : tmp) {
-        try {
-            int p = t.position;
-            lastPosition = p;
-            Sclip sc5v = t.softClip;
-            int cnt = t.softClip.varsCount;
-            if (cnt < conf.minr) {
-                break;
-            }
-            //already been used in
-            if (sc5v.used) {
-                continue;
-            }
-            string seq = findconseq(sc5v, 5);
-            if (seq.empty()) {
-                continue;
-            }
-
-            if (seq.length() < 7) {
-                continue;
-            }
-
-            if (conf.y) {
-                //System.err.printf("  Working Realignlgdel: 5' %s '%s' %s\n", p, seq, cnt);
-            }
-
-            int bp = findbp(seq, p - 5, ref, -1, chr);
-
-            string extra = "";
-            string EXTRA = "";
-
-            if (bp == 0) {
-                //next if ($SOFTP2SV{ $p } && $SOFTP2SV{ $p }->[0]->{ used });
-                if (islowcomplexseq(seq)) {
-                    continue;
-                }
-                Match match = findMatch(seq, reference, p, -1, CONF_SEED_1, 1);
-                bp = match.basePosition;
-                EXTRA = match.matchedSequence;
-                if (!(bp != 0 && p - bp > 15 && p - bp < CONF_SVMAXLEN)) {
-                    continue;
-                }
-                bp++;
-                Tuple.Tuple3<int, int, int> svMark = markSV(bp, p, Arrays.aslist(svfdel, svrdel), maxReadLength);
-                svcov = svMark._1;
-                clusters = svMark._2;
-                pairs = svMark._3;
-                if (svcov == 0) {
-                    if (cnt <= conf.minr) {
-                        continue;
-                    }
-                }
-
-                Variationunordered_map.SV sv = getSV(nonInsertionVariants, bp);
-                sv.type = "DEL";
-                sv.pairs += pairs;
-                sv.splits += cnt;
-                sv.clusters += clusters;
-
-                if (bp < region.start) {
-                    int tts = bp - maxReadLength;
-                    int tte = bp + maxReadLength;
-                    if (bp + maxReadLength >= region.start) {
-                        tte = region.start - 1;
-                    }
-                    Region modifiedRegion = Region.newModifiedRegion(region, tts, tte);
-                    if (!isLoaded(chr, tts, tte, reference)) {
-                        referenceResource.getReference(modifiedRegion, maxReadLength, reference);
-                    }
-                    Scope<InitialData> currentScope = new Scope<>(bam, modifiedRegion, reference, referenceResource, maxReadLength, splice,
-                            variantPrinter, new InitialData(nonInsertionVariants, insertionVariants, refCoverage, softClips3End, softClips5End));
-                    getMode().partialPipeline(currentScope, new DirectThreadExecutor());
-                }
-            }
-            int dellen = p - bp;
-            int en = 0;
-            string gt = "-" + dellen;
-
-            if (EXTRA.empty()) {
-                while (en < seq.length() && isNotEquals(seq.charAt(en), ref.get(bp - en - 1))) {
-                    extra += substr(seq, en, 1);
-                    en++;
-                }
-                if (!extra.empty()) {
-                    extra = reverse(extra);
-                    gt = "-" + dellen + "&" + extra;
-                    bp -= extra.length();
-                }
-            } else {
-                dellen -= EXTRA.length();
-                gt = dellen == 0 ? "-" + EXTRA.length() + "^" + EXTRA : "-" + dellen + "&" + EXTRA;
-            }
-            if (conf.y) {
-                System.err.printf("  Found Realignlgdel: %s %s 5' %s %s %s\n", bp, gt, p, seq, cnt);
-            }
-
-            // Work on the softclipped read at 3'
-            int n = 0;
-
-            if (extra.empty() && EXTRA.empty()) {
-                while (ref.count(bp + n)
-                        && ref.count(bp + dellen + n)
-                        && isEquals(ref.get(bp + n), ref.get(bp + dellen + n))) {
-                    n++;
-                }
-            }
-            int sc3p = bp + n;
-            string str = new string();
-            int mcnt = 0;
-            while (mcnt <= longmm
-                    && ref.count(bp + n)
-                    && ref.count(bp + dellen + n)
-                    && isNotEquals(ref.get(bp + n), ref.get(bp + dellen + n))) {
-                str.append(ref.get(bp + dellen + n));
-                n++;
-                mcnt++;
-            }
-            if (str.length() == 1) {
-                int nm = 0;
-                while (ref.count(bp + n)
-                        && ref.count(bp + dellen + n)
-                        && isEquals(ref.get(bp + n), ref.get(bp + dellen + n))) {
-                    n++;
-                    if (n != 0) {
-                        nm++;
-                    }
-                }
-                if (nm >= 3 && !softClips3End.count(sc3p)) {
-                    sc3p = bp + n;
-                }
-            }
-
-            // likely a false positive
-            if (nonInsertionVariants.count(bp) && nonInsertionVariants.get(bp).sv != NULL && !softClips3End.count(sc3p)) {
-                if (svcov == 0 && cnt <= conf.minr) {
-                    eraseSV(nonInsertionVariants, bp);
-                    continue;
-                }
-            }
-            const Variation tv = getVariation(nonInsertionVariants, bp, gt);
-            //$hash->{$bp}->{ $gt }->{ cnt } = 0 unless( $hash->{$bp}->{ $gt }->{ cnt } );
-            tv.qstd = true; // more accurate implementation lat
-            tv.pstd = true; // more accurate implementation lat
-
-            adjCnt(tv, sc5v);
-            // $sc5v->{ used } = $bp;
-            sc5v.used = bp != 0;
-            //$cov->{ $bp } = $cov->{ $p } unless( $cov->{ $bp } );
-            if (!refCoverage.count(bp) && refCoverage.count(p)) {
-                refCoverage.put(bp, refCoverage.get(p));
-            }
-            if (dellen < conf.indelsize) {
-                for (int tp = bp; tp < bp + dellen; tp++) {
-                    incCnt(refCoverage, tp, sc5v.varsCount);
-                }
-            }
-
-            if (softClips3End.count(sc3p) && !softClips3End.get(sc3p).used) {
-                Sclip sclip = softClips3End.get(sc3p);
-                if (sc3p > bp) {
-                    adjCnt(tv, sclip, getVariationMaybe(nonInsertionVariants, bp, ref.get(bp)));
-                } else {
-                    adjCnt(tv, sclip);
-                }
-
-                if (sc3p == bp) {
-                    if (dellen < conf.indelsize) {
-                        for (int tp = bp; tp < bp + dellen; tp++) {
-                            incCnt(refCoverage, tp, sclip.varsCount);
-                        }
-                    }
-                }
-                for (int ip = bp + 1; ip < sc3p; ip++) {
-                    Variation vv = getVariation(nonInsertionVariants, ip, ref.get(dellen + ip).tostring());
-                    rmCnt(vv, sclip);
-                    if (vv.varsCount == 0) {
-                        nonInsertionVariants.get(ip).erase(ref.get(dellen + ip).tostring());
-                    }
-                    if (nonInsertionVariants.get(ip).empty()) {
-                        nonInsertionVariants.erase(ip);
-                    }
-                }
-                sclip.used = bp != 0;
-            }
-            unordered_map<int, unordered_map<string, int> > dels5 = singletonunordered_map(bp, singletonunordered_map(gt, tv.varsCount));
-            realigndel(bams, dels5);
-
-            if (nonInsertionVariants.count(bp) && nonInsertionVariants.get(bp).sv != NULL) {
-                nonInsertionVariants.get(bp).sv.splits += tv.varsCount - dels5.get(bp).get(gt);
-            }
-            if (svcov > tv.varsCount) {
-                addVarFactor(tv, (svcov - tv.varsCount) / (double) tv.varsCount);
-            }
-            if (conf.y) {
-                System.err.printf("  Found lgdel done: %s %s %s 5' %s %s\n\n", bp, gt, p, seq, tv.varsCount);
-            }
-        } catch (Exception exception) {
-            printExceptionAndContinue(exception, "variant", string.valueOf(lastPosition), region);
-        }
-    }
-
-    // Work on 3' clipped reads
-    tmp = new Arraylist<>();
-    for (unordered_map.Entry<int, Sclip> ent3 : softClips3End.entryset()) {
-        int p = ent3.getKey();
-        if (p < region.start - CONF_EXTENSION
-                || p > region.end + CONF_EXTENSION) {
-            continue;
-        }
-        tmp.add(new SortPositionSclip(ent3.getKey(), ent3.getValue(), 0));
-    }
-    Collections.sort(tmp, COMP2);
-    svcov = 0;
-    clusters = 0;
-    pairs = 0;
-    for (SortPositionSclip t : tmp) {
-        try {
-            int p = t.position;
-            lastPosition = p;
-            const Sclip sc3v = t.softClip;
-            const int cnt = sc3v.varsCount;
-            if (cnt < conf.minr) {
-                break;
-            }
-            if (sc3v.used) {
-                continue;
-            }
-            string seq = findconseq(sc3v, 3);
-            if (seq.empty()) {
-                continue;
-            }
-            if (seq.length() < 7) {
-                continue;
-            }
-
-            if (conf.y) {
-                System.err.printf("  Working Realignlgdel: 3' %s '%s' %s\n", p, seq, cnt);
-            }
-
-            int bp = findbp(seq, p + 5, ref, 1, chr);
-            string extra = "";
-            string EXTRA = "";
-
-            if (bp == 0) {
-                //#next if ($SOFTP2SV{ $p } && $SOFTP2SV{ $p }->[0]->{ used });
-                if (islowcomplexseq(seq)) {
-                    continue;
-                }
-                Match match = findMatch(seq, reference, p, 1, CONF_SEED_1, 1);
-                bp = match.basePosition;
-                EXTRA = match.matchedSequence;
-                if (!(bp != 0 && bp - p > 15 && p - bp < CONF_SVMAXLEN)) {
-                    continue;
-                }
-
-                Tuple.Tuple3<int, int, int> svMark = markSV(p, bp, Arrays.aslist(svfdel, svrdel), maxReadLength);
-                svcov = svMark._1;
-                clusters = svMark._2;
-                pairs = svMark._3;
-                if (svcov == 0) {
-                    if (cnt <= conf.minr) { //a little more stringent
-                        continue;
-                    }
-                }
-
-                Variationunordered_map.SV sv = getSV(nonInsertionVariants, p);
-                sv.type = "DEL";
-                sv.pairs += pairs;
-                sv.splits += cnt;
-                sv.clusters += clusters;
-
-                if (bp > region.end) {
-                    int tts = bp - maxReadLength;
-                    int tte = bp + maxReadLength;
-                    if (bp - maxReadLength <= region.end) {
-                        tts = region.end + 1;
-                    }
-                    Region modifiedRegion = Region.newModifiedRegion(region, tts, tte);
-                    if (!isLoaded(chr, tts, tte, reference)) {
-                        referenceResource.getReference(modifiedRegion, maxReadLength, reference);
-                    }
-                    Scope<InitialData> currentScope = new Scope<>(bam, modifiedRegion, reference, referenceResource, maxReadLength, splice,
-                            variantPrinter, new InitialData(nonInsertionVariants, insertionVariants, refCoverage, softClips3End, softClips5End));
-                    getMode().partialPipeline(currentScope, new DirectThreadExecutor());
-                }
-            }
-
-            int dellen = bp - p;
-            int en = 0;
-            if (!EXTRA.empty()) {
-                dellen -= EXTRA.length();
-            } else {
-                while (en < seq.length() && isNotEquals(seq.charAt(en), ref.get(bp + en))) {
-                    extra += seq.charAt(en);
-                    en++;
-                }
-            }
-            string gt = "-" + dellen;
-            int sc5p = bp;
-            bp = p; // set it to 5'
-            if (!extra.empty()) {
-                gt = "-" + dellen + "&" + extra;
-                sc5p += extra.length();
-            } else if (!EXTRA.empty()) {
-                gt = "-" + dellen + "&" + EXTRA;
-            } else {
-                // 5' adjustment
-                while (ref.count(bp - 1) && ref.count(bp + dellen - 1)
-                        && isEquals(ref.get(bp - 1), ref.get(bp + dellen - 1))) {
-                    bp--;
-                    if (bp != 0) {
-                        sc5p--;
-                    }
-                }
-                if (bp != p && nonInsertionVariants.count(p) && nonInsertionVariants.get(p).sv != NULL) {
-                    Variationunordered_map.SV sv = getSV(nonInsertionVariants, bp);
-                    sv.clusters = nonInsertionVariants.get(p).sv.clusters;
-                    sv.pairs = nonInsertionVariants.get(p).sv.pairs;
-                    sv.splits = nonInsertionVariants.get(p).sv.splits;
-                    sv.type = nonInsertionVariants.get(p).sv.type;
-                    eraseSV(nonInsertionVariants, p);
-                }
-            }
-
-            if (nonInsertionVariants.count(bp) && nonInsertionVariants.get(bp).sv != NULL && !softClips5End.count(sc5p)) {
-                if (svcov == 0 && cnt <= conf.minr) {
-                    eraseSV(nonInsertionVariants, bp);
-                    continue;
-                }
-            }
-            if (conf.y) {
-                System.err.printf("  Found Realignlgdel: bp: %s %s 3' %s 5'clip: %s '%s' %s\n", bp, gt, p, sc5p, seq, cnt);
-            }
-
-            Variation tv = getVariation(nonInsertionVariants, bp, gt);
-            tv.qstd = true; // more accurate implementation later
-            tv.pstd = true; // more accurate implementation later
-            if (dellen < conf.indelsize) {
-                for (int tp = bp; tp < bp + dellen + extra.length() + EXTRA.length(); tp++) {
-                    incCnt(refCoverage, tp, sc3v.varsCount);
-                }
-            }
-            //$cov->{$bp} = $cov->{ $p - 1 } ? $cov->{ $p - 1 } : $sc3v->{ cnt } unless( $cov->{ $bp } );
-            if (!refCoverage.count(bp)) {
-                if (refCoverage.count(p - 1)) {
-                    refCoverage.put(bp, refCoverage.get(p - 1));
-                } else refCoverage.put(bp, sc3v.varsCount);
-            }
-            sc3v.meanPosition += dellen * sc3v.varsCount;
-            adjCnt(tv, sc3v);
-            sc3v.used = p + dellen != 0;
-
-            unordered_map<int, unordered_map<string, int> > dels5 = new Hashunordered_map<>();
-            Hashunordered_map<string, int> map = new Hashunordered_map<>();
-            map.put(gt, tv.varsCount);
-            dels5.put(bp, map);
-            realigndel(bams, dels5);
-
-            if (nonInsertionVariants.count(bp) && nonInsertionVariants.get(bp).sv != NULL) {
-                nonInsertionVariants.get(bp).sv.splits += tv.varsCount - dels5.get(bp).get(gt);
-            }
-            if (conf.y) {
-                System.err.printf("  Found lgdel: %s %s %s 3' '%s' %s\n\n", bp, gt, p, seq, tv.varsCount);
-            }
-            if (svcov > tv.varsCount) {
-                addVarFactor(tv, (svcov - tv.varsCount) / (double) tv.varsCount);
-            }
-        } catch (Exception exception) {
-            printExceptionAndContinue(exception, "variant", string.valueOf(lastPosition), region);
-        }
-    }
-    if (conf.y) {
-        System.err.println("  Done: Realignlgdel\n");
-    }
-}
-*/
 /**
  * This will try to realign large insertions (typically larger than 30bp)
  */
@@ -1605,221 +1201,180 @@ void VariationRealigner::realignlgins30() {
 					lastPosition = p3;
 					Sclip *sc3v = t3->softClip;
 					int cnt3 = t3->count;
-					//printf("p5: %d, cnt5: %d, p3: %d, cnt3: %d, lastPosition: %d\n", p5, cnt5, p3, cnt3, lastPosition);
 					if (sc5v->used) {
-						//printf("sc5v used and break this for loop! : %d\n", p5);
 						break;
 					}
 					if (sc3v->used) {
-						//printf("sc3v used and break this for loop! : %d\n", p3);
 						continue_times++;
 						continue;
 					}
 					if (p5 - p3 > maxReadLength * 2.5) {
-						//printf("p5 - p3 and break this for loop! : p5: %d, p3: %d, mrl: %d\n", p5, p3, maxReadLength);
 						continue;
 					}
 					if (p3 - p5 > maxReadLength - 10) { // if they're too far away, don't even try
-						//printf("p3 - p5 and break this for loop! : p3: %d, p5: %d, mrl: %d\n", p3, p5, maxReadLength);
-                        continue;
-                    }
+						continue;
+					}
 					debug_valide_count++;
 					//string seq5 = findconseq(sc5v, 5);
 					string seq3 = findconseq(sc3v, 3);
 					//next until at least one of consensus sequences has length > 10
-					 //printf("seq5 - seq3: %s - %s\n", seq5 == " " ? "" : seq5.c_str(), seq3.c_str());
-					//if (seq5.length() <= 10 || seq3.length() <= 10) {
 					if (seq3.length() <= 10) {
-						//printf("seq len and break this for loop!\n");
-                        continue;
-                    } 
+						continue;
+					} 
 
-                    //if (conf.y) {
-                    //    System.err.printf("  Working lgins30: %s %s 3: %s %s 5: %s %s\n",
-                    //            p3, p5, seq3, cnt3, new string(seq5).reverse(), cnt5);
-                    //}
-                    // Don't even try if there're extreme bias
-
-                    if (!(cnt5 / (double) cnt3 >= 0.08 && cnt5 / (double) cnt3 <= 12)) {
-						//printf("cnt5/3 and break this for loop!\n");
-                        continue;
-                    }
+					if (!(cnt5 / (double) cnt3 >= 0.08 && cnt5 / (double) cnt3 <= 12)) {
+						continue;
+					}
 					Match35* match35 = find35match(seq5, seq3);
 					int bp5 = match35->matched5end;
 					int bp3 = match35->matched3End;
-                    //length of match
-                    int score = match35->maxMatchedLength;
+					//length of match
+					int score = match35->maxMatchedLength;
 					delete match35;
 
-                    if (score == 0) {
+					if (score == 0) {
 						//printf("score=0 and break this for loop!\n");
-                        continue;
-                    }
+						continue;
+					}
 
 					//debug_valide_count++;
-                    //to ensure higher quality of bases are used as read ends are usually poor quality
-                    int smscore = (int) (score / 2);
-                    //add matched part of seq3 (left clip)
-                    string ins = bp3 + smscore > 1 ? vc_substr(seq3,0, -(bp3 + smscore) + 1) : seq3;
-					//printf("ins1: %s\n", ins.c_str());
-                    if (bp5 + smscore > 0) { //add not matched part of seq5 (right clip)
-                        string tmpstr = seq5.substr(0, bp5 + smscore);
-                        reverse(tmpstr.begin(), tmpstr.end());
-                        ins += tmpstr;
-                    }
-					//printf("ins2: %s\n", ins.c_str());
-                    if (islowcomplexseq(ins)) {
-                        //if (conf.y) {
-                        //    System.err.println("  Discard low complexity insertion found " + ins + ".");
-                        //}
-						//printf("Discard low complexity insertion found: %s\n" ,ins.c_str());
-                        continue;
-                    }
-                    int bi = 0;
-                    Variation *vref;
-                    //if (conf.y) {
-                    //   System.err.printf("  Found candidate lgins30: %s %s %s\n", p3, p5, ins);
-                    //}
-					//debug_valide_count++;
+					//to ensure higher quality of bases are used as read ends are usually poor quality
+					int smscore = (int) (score / 2);
+					//add matched part of seq3 (left clip)
+					string ins = bp3 + smscore > 1 ? vc_substr(seq3,0, -(bp3 + smscore) + 1) : seq3;
+					if (bp5 + smscore > 0) { //add not matched part of seq5 (right clip)
+						string tmpstr = seq5.substr(0, bp5 + smscore);
+						reverse(tmpstr.begin(), tmpstr.end());
+						ins += tmpstr;
+					}
+					if (islowcomplexseq(ins)) {
+						continue;
+					}
+					int bi = 0;
+					Variation *vref;
 
-                    if (p5 > p3) {
-                        if (seq3.length() > ins.length()
-                                && !ismatch(seq3.substr(ins.length()), joinRef(ref, p5, p5 + seq3.length() - ins.length() + 2), 1)) {
-							//printf("p5>p3 continue 1\n");
-                            continue;
-                        }
-                        if (seq5.length() > ins.length()
-                                && !ismatch(seq5.substr( ins.length()), joinRef(ref, p3 - (seq5.length() - ins.length()) - 2, p3 - 1), -1)) {
-							//printf("p5>p3 continue 2\n");
-                            continue;
-                        }
-                        //if (conf.y) {
-                        //    System.err.printf("  Found lgins30 complex: %s %s %s %s\n", p3, p5, ins.length(), ins);
-                        //}
-                        string tmp = joinRef(ref, p3, p5 - 1);
-                        if (tmp.length() > ins.length()) { // deletion is longer
-                            ins = to_string(p3 - p5) + "^" + ins;
-                            bi = p3;
-                            vref = getVariation(data_pool, *nonInsertionVariants, p3, ins);
-							//printf("find deletion1587: %s : varsCount: %d\n", ins.c_str(), vref->varsCount);
-                        } else if (tmp.length() < ins.length()) {
-                            ins = vc_substr(ins, 0, ins.length() - tmp.length()) + "&" + vc_substr(ins, p3 - p5);
-                            ins = "+" + ins;
-                            bi = p3 - 1;
-                            vref = getVariation(data_pool, *insertionVariants, bi, ins);
-                        } else { // long MNP
-                            ins = "-" + to_string(ins.length()) + "^" + ins;
-                            bi = p3;
-                            vref = getVariation(data_pool, *nonInsertionVariants, p3, ins);
-							//printf("find deletion1599: %s : varsCount: %d\n", ins.c_str(), vref->varsCount);
-                        }
-                    } else {
-                        if (seq3.length() > ins.length()
-                                && !ismatch(seq3.substr( ins.length()), joinRef(ref, p5, p5 + seq3.length() - ins.length() + 2), 1)) {
-							//printf("p3>p5 continue 1\n");
-                            continue;
-                        }
-                        if (seq5.length() > ins.length()
-                                && !ismatch(seq5.substr( ins.length()), joinRef(ref, p3 - (seq5.length() - ins.length()) - 2, p3 - 1), -1)) {
-							//printf("p3>p5 continue 2\n");
-                            continue;
-                        }
+					if (p5 > p3) {
+						if (seq3.length() > ins.length()
+								&& !ismatch(seq3.substr(ins.length()), joinRef(ref, p5, p5 + seq3.length() - ins.length() + 2), 1)) {
+							continue;
+						}
+						if (seq5.length() > ins.length()
+								&& !ismatch(seq5.substr( ins.length()), joinRef(ref, p3 - (seq5.length() - ins.length()) - 2, p3 - 1), -1)) {
+							continue;
+						}
+						string tmp = joinRef(ref, p3, p5 - 1);
+						if (tmp.length() > ins.length()) { // deletion is longer
+							ins = to_string(p3 - p5) + "^" + ins;
+							bi = p3;
+							vref = getVariation(data_pool, *nonInsertionVariants, p3, ins);
+						} else if (tmp.length() < ins.length()) {
+							ins = vc_substr(ins, 0, ins.length() - tmp.length()) + "&" + vc_substr(ins, p3 - p5);
+							ins = "+" + ins;
+							bi = p3 - 1;
+							vref = getVariation(data_pool, *insertionVariants, bi, ins);
+						} else { // long MNP
+							ins = "-" + to_string(ins.length()) + "^" + ins;
+							bi = p3;
+							vref = getVariation(data_pool, *nonInsertionVariants, p3, ins);
+						}
+					} else {
+						if (seq3.length() > ins.length()
+								&& !ismatch(seq3.substr( ins.length()), joinRef(ref, p5, p5 + seq3.length() - ins.length() + 2), 1)) {
+							continue;
+						}
+						if (seq5.length() > ins.length()
+								&& !ismatch(seq5.substr( ins.length()), joinRef(ref, p3 - (seq5.length() - ins.length()) - 2, p3 - 1), -1)) {
+							continue;
+						}
 
-                        string tmp = "";
-                        if (ins.length() <= p3 - p5) { // Tandex duplication
-                            int rpt = 2;
-                            int tnr = 3;
-                            while (((p3 - p5 + ins.length()) / (double) tnr) / (double) ins.length() > 1) {
-                                if ((p3 - p5 + ins.length()) % tnr == 0) {
-                                    rpt++;
-                                }
-                                tnr++;
-                            }
-                            //TODO: maybe here in Perl we must cast position "to" to int?
-                            // -1 because joinRef works to the bound exactly
+						string tmp = "";
+						if (ins.length() <= p3 - p5) { // Tandex duplication
+							int rpt = 2;
+							int tnr = 3;
+							while (((p3 - p5 + ins.length()) / (double) tnr) / (double) ins.length() > 1) {
+								if ((p3 - p5 + ins.length()) % tnr == 0) {
+									rpt++;
+								}
+								tnr++;
+							}
+							//TODO: maybe here in Perl we must cast position "to" to int?
+							// -1 because joinRef works to the bound exactly
 							//printf("ins3: %s\n", ins.c_str());
-                            tmp += joinRef_double(ref, p5, (p5 + (p3 - p5 + ins.length()) / (double) rpt - ins.length()));
+							tmp += joinRef_double(ref, p5, (p5 + (p3 - p5 + ins.length()) / (double) rpt - ins.length()));
 
 							//printf("tmp: %s, p5: %d, p3: %d, param3: %f\n", tmp.c_str(), p5, p3, p5 + (p3 - p5 + ins.length()) / (double) rpt - ins.length());
 							ins = "+" + tmp + "" + ins;
 							//printf("ins4: %s\n", ins.c_str());
-                        } else {
-                            // -1 because joinRef works to the bound exactly
+						} else {
+							// -1 because joinRef works to the bound exactly
 							//printf("ins5: %s, tmp: %s\n", ins.c_str(), tmp.c_str());
-                            tmp += joinRef(ref, p5, p3 - 1);
+							tmp += joinRef(ref, p5, p3 - 1);
 							//printf("p5: %d, p3: %d, tmp: %s\n", p5, p3, tmp.c_str());
-                            if ((ins.length() - tmp.length()) % 2 == 0) {
-                                int tex = (ins.length() - tmp.length()) / 2;
-                                ins = (tmp + vc_substr(ins, 0, tex))==(vc_substr(ins, tex))
-                                        ? ("+" + vc_substr(ins, tex))
-                                        : "+" + tmp + "" + ins;
-                            } else {
-                                ins = "+" + tmp + "" + ins;
-                            }
+							if ((ins.length() - tmp.length()) % 2 == 0) {
+								int tex = (ins.length() - tmp.length()) / 2;
+								ins = (tmp + vc_substr(ins, 0, tex))==(vc_substr(ins, tex))
+									? ("+" + vc_substr(ins, tex))
+									: "+" + tmp + "" + ins;
+							} else {
+								ins = "+" + tmp + "" + ins;
+							}
 							//printf("ins6: %s\n", ins.c_str());
 						}
-                        //if (conf.y) {
-                        //    System.err.printf("Found lgins30: %s %s %s %s + %s\n", p3, p5, ins.length(), tmp, ins);
-                       // }
-                        bi = p5 - 1;
-                        vref = getVariation(data_pool, *insertionVariants, bi, ins);
-                    }
-                    sc3v->used = true;
-                    sc5v->used = true;
-                    vref->pstd = true;
-                    vref->qstd = true;
-                    (*refCoverage)[bi]+= sc5v->varsCount;
-                    if (conf->y) {
-                        //System.err.printf(" lgins30 Found: '%s' %s %s %s\n", ins, bi, bp3, bp5);
+						bi = p5 - 1;
+						vref = getVariation(data_pool, *insertionVariants, bi, ins);
+					}
+					sc3v->used = true;
+					sc5v->used = true;
+					vref->pstd = true;
+					vref->qstd = true;
+					(*refCoverage)[bi]+= sc5v->varsCount;
+					if (conf->y) {
+						//System.err.printf(" lgins30 Found: '%s' %s %s %s\n", ins, bi, bp3, bp5);
 						printf("lgins30 found: %s\n", ins.c_str());
-                    }
+					}
 
-                    if (ins[0] == '+') {
-                        Variation *mvref = getVariationMaybe(*nonInsertionVariants, bi, ref[bi]);
-                        adjCnt(vref, sc3v, mvref);
-                        adjCnt(vref, sc5v);
+					if (ins[0] == '+') {
+						Variation *mvref = getVariationMaybe(*nonInsertionVariants, bi, ref[bi]);
+						adjCnt(vref, sc3v, mvref);
+						adjCnt(vref, sc5v);
 						//printf("before: bams: %d, p3: %d, p5: %d, maxReadlength: %d, mvref count: %d, vref count: %d\n", bams.size(), p3, p5, maxReadLength, mvref->varsCount, vref->varsCount);
-                        if (bams.size() > 0 
-                                && p3 - p5 >= 5 && p3 - p5 < maxReadLength - 10
-                                && mvref != NULL && mvref->varsCount != 0
-                                && vref->varsCount > 2 * mvref->varsCount
-							    && noPassingReads(chr, p5, p3, bams)) {
-							//printf("adj once\n");
+						if (bams.size() > 0 
+								&& p3 - p5 >= 5 && p3 - p5 < maxReadLength - 10
+								&& mvref != NULL && mvref->varsCount != 0
+								&& vref->varsCount > 2 * mvref->varsCount
+								&& noPassingReads(chr, p5, p3, bams)) {
 							adjCnt(vref, mvref, mvref);
-                        }
-                        robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > tins;
-                        robin_hood::unordered_map<string, int> mapp;
-                        mapp[ins] = vref->varsCount;
-                        tins[bi] = mapp;
-                        realignins(tins);
-                    } else if (ins[0]=='-') {
-						//printf("find deletion1: %s : varsCount: %d\n", ins.c_str(), vref->varsCount);
-                        adjCnt(vref, sc3v, getVariationMaybe(*nonInsertionVariants, bi, ref[bi]));
-                        adjCnt(vref, sc5v);
-						//printf("find deletion2: %s : varsCount: %d\n", ins.c_str(), vref->varsCount);
-                        robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > tdel;
-                        robin_hood::unordered_map<string, int> mapp ;
-                        mapp[ins]= vref->varsCount;
-                        tdel[bi]= mapp;
-                        realigndel(NULL, tdel);
-						//printf("find deletion3: %s : varsCount: %d\n", ins.c_str(), vref->varsCount);
-                    } else {
-                        adjCnt(vref, sc3v);
-                        adjCnt(vref, sc5v);
-                    }
-                    break;
-                } catch(...){// (Exception exception) {
-                    //printExceptionAndContinue(exception, "variant", string.valueOf(lastPosition), region);
-                }
-            }
-        } catch(...){// (Exception exception) {
-			printf("there an expect in realignlgins30\n");
+						}
+						robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > tins;
+						robin_hood::unordered_map<string, int> mapp;
+						mapp[ins] = vref->varsCount;
+						tins[bi] = mapp;
+						realignins(tins);
+					} else if (ins[0]=='-') {
+						adjCnt(vref, sc3v, getVariationMaybe(*nonInsertionVariants, bi, ref[bi]));
+						adjCnt(vref, sc5v);
+						robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > tdel;
+						robin_hood::unordered_map<string, int> mapp ;
+						mapp[ins]= vref->varsCount;
+						tdel[bi]= mapp;
+						realigndel(NULL, tdel);
+					} else {
+						adjCnt(vref, sc3v);
+						adjCnt(vref, sc5v);
+					}
+					break;
+				} catch(...){// (Exception exception) {
+					//printExceptionAndContinue(exception, "variant", string.valueOf(lastPosition), region);
+				}
+			}
+		} catch(...){// (Exception exception) {
+			std::cerr << "there is an expect in realignlgins30\n" << std::endl;
 			exit(0);
-        }
+		}
 		//printf("-----------------split line end----------------\n");
 		//delete t5;
 		//exit(0);
-    }
+	}
 	//cout << "tmp5 size: " << tmp5.size() << "tmp3 size: " << tmp3.size() << "continue time: " << continue_times << endl;
 	//------delete vector tmp5----------//
 	for(SortPositionSclip* spc5: tmp5){
@@ -1835,360 +1390,14 @@ void VariationRealigner::realignlgins30() {
 }
 
 /**
- * Realign large insertions that are not present in alignment
- * @param svfdup list of DUP SVs in forward strand
- * @param svrdup list of DUP SVs in reverse strand
- */
-
-/**
-public void realignlgins(list<Sclip> svfdup,
-                         list<Sclip> svrdup)  {
-    unordered_map<int, char> ref = reference.referenceSequences;
-
-    list<SortPositionSclip> tmp = new Arraylist<>();
-    for (unordered_map.Entry<int, Sclip> ent5 : softClips5End.entryset()) {
-        int p = ent5.getKey();
-        if (p < region.start - CONF_EXTENSION
-                || p > region.end + CONF_EXTENSION) {
-            continue;
-        }
-        tmp.add(new SortPositionSclip(ent5.getKey(), ent5.getValue(), 0));
-    }
-    //sort by descending cnt
-    Collections.sort(tmp, COMP2);
-    int lastPosition = 0;
-    for (SortPositionSclip t : tmp) {
-        try {
-            int p = t.position;
-            lastPosition = p;
-            Sclip sc5v = t.softClip;
-            int cnt = t.softClip.varsCount;
-            if (cnt < conf.minr) {
-                break;
-            }
-            //already been used in
-            if (sc5v.used) {
-                continue;
-            }
-            string seq = findconseq(sc5v, 0);
-            if (seq.empty()) {
-                continue;
-            }
-            if (conf.y) {
-                System.err.println("  Working lgins: 5: " + p + " " + seq + " cnt: " + cnt);
-            }
-            if (seq.length() < 12) {
-                continue;
-            }
-
-            BaseInsertion tpl = findbi(seq, p, ref, -1, chr);
-            int bi = tpl.baseInsert;
-            string ins = tpl.insertionSequence;
-            string EXTRA = "";
-
-            if (bi == 0) {
-                //#next if ($SOFTP2SV{ $p } && $SOFTP2SV{ $p }->[0]->{ used });
-                if (islowcomplexseq(seq)) {
-                    continue;
-                }
-                Match match = findMatch(seq, reference, p, -1, CONF_SEED_1, 1);
-                bi = match.basePosition;
-                EXTRA = match.matchedSequence;
-                if (!(bi != 0 && bi - p > 15 && bi - p < CONF_SVMAXLEN)) {
-                    continue;
-                }
-
-                // For large insertions
-                if (bi > region.end) {
-                    //my ($tts, $tte) = ($bi - $RLEN <= $END ? $END + 1 : $bi - $RLEN, $bi + $RLEN);
-                    int tts = bi - maxReadLength;
-                    int tte = bi + maxReadLength;
-                    if (bi - maxReadLength <= region.end) {
-                        tts = region.end + 1;
-                    }
-                    Region modifiedRegion = Region.newModifiedRegion(region, tts, tte);
-                    if (!isLoaded(chr, tts, tte, reference)) {
-                        referenceResource.getReference(modifiedRegion, maxReadLength, reference);
-                    }
-                    Scope<InitialData> currentScope = new Scope<>(bam, modifiedRegion, reference, referenceResource, maxReadLength, splice,
-                            variantPrinter, new InitialData(nonInsertionVariants, insertionVariants, refCoverage, softClips3End, softClips5End));
-                    getMode().partialPipeline(currentScope, new DirectThreadExecutor());
-                }
-                if (bi - p > conf.SVMINLEN + 2 * CONF_SVFLANK) {
-                    ins = joinRef(ref, p, p + CONF_SVFLANK - 1);
-                    ins += "<dup" + (bi - p - 2 * CONF_SVFLANK + 1) + ">";
-                    ins += joinRefFor5Lgins(ref, bi - CONF_SVFLANK + 1, bi, seq, EXTRA);
-                } else {
-                    ins = joinRefFor5Lgins(ref, p, bi, seq, EXTRA);
-                }
-                ins += EXTRA;
-
-                Tuple.Tuple2<int, int> tp2 = markDUPSV(p, bi, Arrays.aslist(svfdup, svrdup), maxReadLength);
-                int clusters = tp2._1;
-                int pairs = tp2._2;
-                if (!refCoverage.count(p - 1) || (refCoverage.count(bi) && refCoverage.count(p - 1)
-                        && refCoverage.get(p - 1) < refCoverage.get(bi))) {
-                    if (refCoverage.count(bi)) {
-                        refCoverage.put(p - 1, refCoverage.get(bi));
-                    } else {
-                        refCoverage.put(p - 1, sc5v.varsCount);
-                    }
-                } else {
-                    if (sc5v.varsCount > refCoverage.get(p - 1)) {
-                        incCnt(refCoverage, p - 1, sc5v.varsCount);
-                    }
-                }
-
-                bi = p - 1;
-                Variationunordered_map.SV sv = getSV(nonInsertionVariants, bi);
-                sv.type = "DUP";
-                sv.pairs += pairs;
-                sv.splits += cnt;
-                sv.clusters += clusters;
-            }
-
-            if (conf.y) {
-                System.err.printf("  Found candidate lgins from 5: %s +%s %s %s\n", bi, ins, p, seq);
-            }
-            const Variation iref = getVariation(insertionVariants, bi, "+" + ins);
-            iref.pstd = true;
-            iref.qstd = true;
-            adjCnt(iref, sc5v);
-            bool rpflag = true; // A flag to indicate whether an insertion is a repeat
-            for (int i = 0; i < ins.length(); i++) {
-                if (!isEquals(ref.get(bi + 1 + i), ins.charAt(i))) {
-                    rpflag = false;
-                    break;
-                }
-            }
-
-            if (nonInsertionVariants.count(bi) && nonInsertionVariants.get(bi).sv == NULL) {
-                incCnt(refCoverage, bi, sc5v.varsCount);
-            }
-            int len = ins.length();
-            if (ins.indexOf('&') != -1) {
-                len--;
-            }
-            int seqLen = sc5v.seq.lastKey() + 1;
-            for (int ii = len + 1; ii < seqLen; ii++) {
-                int pii = bi - ii + len;
-                if (!sc5v.seq.count(ii)) {
-                    continue;
-                }
-                for (unordered_map.Entry<char, Variation> ent : sc5v.seq.get(ii).entryset()) {
-                    char tnt = ent.getKey();
-                    Variation tv = ent.getValue();
-                    Variation tvr = getVariation(nonInsertionVariants, pii, tnt.tostring());
-                    adjCnt(tvr, tv);
-                    tvr.pstd = true;
-                    tvr.qstd = true;
-                    incCnt(refCoverage, pii, tv.varsCount);
-                }
-            }
-            sc5v.used = bi + len != 0;
-
-            unordered_map<int, unordered_map<string, int> > tins = singletonunordered_map(bi, singletonunordered_map("+" + ins, iref.varsCount));
-            string newins = realignins(tins);
-            if (newins.empty()) {
-                newins = "+" + ins;
-            }
-            Variation mref = getVariationMaybe(nonInsertionVariants, bi, ref.get(bi));
-            Variation kref = getVariation(insertionVariants, bi, newins);
-
-            if (nonInsertionVariants.count(bi) && nonInsertionVariants.get(bi).sv != NULL) {
-                nonInsertionVariants.get(bi).sv.splits += kref.varsCount - tins.get(bi).get("+" + ins);
-            }
-            if (rpflag && bams.length > 0 && ins.length() >= 5
-                    && ins.length() < maxReadLength - 10
-                    && mref != NULL && mref.varsCount != 0
-                    && noPassingReads(chr, bi, bi + ins.length(), bams)
-                    && kref.varsCount > 2 * mref.varsCount) {
-                adjCnt(kref, mref, mref);
-            }
-        } catch (Exception exception) {
-            printExceptionAndContinue(exception, "variant", string.valueOf(lastPosition), region);
-        }
-    }
-
-    tmp = new Arraylist<>();
-    for (unordered_map.Entry<int, Sclip> ent3 : softClips3End.entryset()) {
-        int p = ent3.getKey();
-        if (p < region.start - CONF_EXTENSION
-                || p > region.end + CONF_EXTENSION) {
-            continue;
-        }
-        tmp.add(new SortPositionSclip(ent3.getKey(), ent3.getValue(), 0));
-    }
-    Collections.sort(tmp, COMP2);
-
-    for (SortPositionSclip t : tmp) {
-        try {
-            int p = t.position;
-            lastPosition = p;
-            const Sclip sc3v = t.softClip;
-            const int cnt = t.softClip.varsCount;
-            if (cnt < conf.minr) {
-                break;
-            }
-            if (sc3v.used) {
-                continue;
-            }
-            string seq = findconseq(sc3v, 0);
-            if (seq.empty()) {
-                continue;
-            }
-            if (conf.y) {
-                System.err.println("  Working lgins 3: " + p + " " + seq + " cnt: " + cnt);
-            }
-            if (seq.length() < 12) {
-                continue;
-            }
-
-            BaseInsertion tpl = findbi(seq, p, ref, 1, chr);
-            int bi = tpl.baseInsert;
-            string ins = tpl.insertionSequence;
-            string EXTRA = "";
-
-            if (bi == 0) {
-                // #next if ($SOFTP2SV{ $p } && $SOFTP2SV{ $p }->[0]->{ used });
-                if (islowcomplexseq(seq)) {
-                    continue;
-                }
-                Match match = findMatch(seq, reference, p, 1, CONF_SEED_1, 1);
-                bi = match.basePosition;
-                EXTRA = match.matchedSequence;
-                if (!(bi != 0 && p - bi > 15 && p - bi < CONF_SVMAXLEN)) {
-                    continue;
-                }
-
-                // For large insertions
-                if (bi < region.start) {
-                    //my ($tts, $tte) = ($bi - $RLEN, $bi + $RLEN >= $START ? $START - 1 : $bi + $RLEN);
-                    //getREF($chr, $tts, $tte, $REF, $RLEN) unless( isLoaded( $chr, $tts, $tte, $REF ) );
-                    //parseSAM($chr, $bi - $RLEN, $bi + $RLEN >= $START ? $START - 1 : $bi + $RLEN, $bams, $REF, $hash, $cov, $sclip5, $sclip3, 1);
-                    int tts = bi - maxReadLength;
-                    int tte = bi + maxReadLength;
-                    if (bi + maxReadLength >= region.start) {
-                        tte = region.start - 1;
-                    }
-                    Region modifiedRegion = Region.newModifiedRegion(region, tts, tte);
-                    if (!isLoaded(chr, tts, tte, reference)) {
-                        referenceResource.getReference(modifiedRegion, maxReadLength, reference);
-                    }
-                    Scope<InitialData> currentScope = new Scope<>(bam, modifiedRegion, reference, referenceResource, maxReadLength, splice,
-                            variantPrinter, new InitialData(nonInsertionVariants, insertionVariants, refCoverage, softClips3End, softClips5End));
-                    getMode().partialPipeline(currentScope, new DirectThreadExecutor());
-                }
-                int shift5 = 0;
-                while (ref.count(p - 1) && ref.count(bi - 1)
-                        && ref.get(p - 1).equals(ref.get(bi - 1))) {
-                    p--;
-                    bi--;
-                    shift5++;
-                }
-                if (p - bi > conf.SVMINLEN + 2 * CONF_SVFLANK) {
-                    ins = joinRefFor3Lgins(ref, bi, bi + CONF_SVFLANK - 1, shift5, seq, EXTRA);
-                    ins += "<dup" + (p - bi - 2 * CONF_SVFLANK) + ">";
-                    ins += joinRef(ref, p - CONF_SVFLANK, p - 1);
-                } else {
-                    ins = joinRefFor3Lgins(ref, bi, p - 1, shift5, seq, EXTRA);
-                }
-                ins += EXTRA;
-                Tuple.Tuple2<int, int> tp2 = markDUPSV(bi, p - 1, Arrays.aslist(svfdup, svrdup), maxReadLength);
-                int clusters = tp2._1;
-                int pairs = tp2._2;
-                bi = bi - 1;
-
-                Variationunordered_map.SV sv = getSV(nonInsertionVariants, bi);
-                sv.type = "DUP";
-                sv.pairs += pairs;
-                sv.splits += cnt;
-                sv.clusters += clusters;
-                if (!refCoverage.count(bi) || (refCoverage.count(p) && refCoverage.count(bi)
-                        && refCoverage.get(bi) < refCoverage.get(p))) {
-                    if (refCoverage.count(p)) {
-                        refCoverage.put(bi, refCoverage.get(p));
-                    } else {
-                        refCoverage.put(bi, sc3v.varsCount);
-                    }
-                } else {
-                    if (sc3v.varsCount > refCoverage.get(bi)) {
-                        incCnt(refCoverage, bi, sc3v.varsCount);
-                    }
-                }
-            }
-
-            if (conf.y) {
-                System.err.printf("  Found candidate lgins from 3: %s +%s %s %s\n", bi, ins, p, seq);
-            }
-
-            const Variation iref = getVariation(insertionVariants, bi, "+" + ins);
-            iref.pstd = true;
-            iref.qstd = true;
-            Variation lref = getVariationMaybe(nonInsertionVariants, bi, ref.get(bi));
-            if (p - bi > sc3v.meanPosition / cnt) {
-                lref = NULL;
-            }
-            adjCnt(iref, sc3v, lref);
-            bool rpflag = true;
-            for (int i = 0; i < ins.length(); i++) {
-                if (!isEquals(ref.get(bi + 1 + i), ins.charAt(i))) {
-                    rpflag = false;
-                    break;
-                }
-            }
-            // In perl it doesn't commented, but doesn't used
-            // const int offset = bi == be ? (p - bi - 1) : -(p + be - bi);
-            int len = ins.length();
-            if (ins.indexOf('&') != -1) {
-                len--;
-            }
-            int lenSeq = sc3v.seq.lastKey() + 1;
-            for (int ii = len; ii < lenSeq; ii++) {
-                int pii = p + ii - len;
-                unordered_map<char, Variation> map = sc3v.seq.get(ii);
-                if (map == NULL) {
-                    continue;
-                }
-                for (unordered_map.Entry<char, Variation> ent : map.entryset()) {
-                    char tnt = ent.getKey();
-                    Variation tv = ent.getValue();
-                    Variation vref = getVariation(nonInsertionVariants, pii, tnt.tostring());
-                    adjCnt(vref, tv);
-                    vref.pstd = true;
-                    vref.qstd = true;
-                    incCnt(refCoverage, pii, tv.varsCount);
-                }
-            }
-            sc3v.used = true;
-            unordered_map<int, unordered_map<string, int> > tins = singletonunordered_map(bi, singletonunordered_map("+" + ins, iref.varsCount));
-            realignins(tins);
-            if (nonInsertionVariants.count(bi) && nonInsertionVariants.get(bi).sv != NULL) {
-                nonInsertionVariants.get(bi).sv.splits += iref.varsCount - tins.get(bi).get("+" + ins);
-            }
-            Variation mref = getVariationMaybe(nonInsertionVariants, bi, ref.get(bi));
-            if (rpflag && bams.length > 0 && ins.length() >= 5 && ins.length() < maxReadLength - 10
-                    && mref != NULL && mref.varsCount != 0
-                    && noPassingReads(chr, bi, bi + ins.length(), bams)
-                    && iref.varsCount > 2 * mref.varsCount) {
-                adjCnt(iref, mref, mref);
-            }
-        } catch (Exception exception) {
-            printExceptionAndContinue(exception, "variant", string.valueOf(lastPosition), region);
-        }
-    }
-}
-*/
-
-/**
  * Fill the temp tuple structure from hash tables of insertion or deletions positions to description string
  * and counts of variation.
  * @param changes initial hash map
  * @return tuple of (position, descriptions string and variation count).
  */
 vector<SortPositionDescription*> VariationRealigner::fillAndSortTmp(robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > &changes) {
-    //TODO: perl here have non-deterministic results because of hash, maybe we need to
-    // make the sort in Perl more stringent (except simple sort b[2]<=>a[2]
+		//TODO: perl here have non-deterministic results because of hash, maybe we need to
+		// make the sort in Perl more stringent (except simple sort b[2]<=>a[2]
     vector<SortPositionDescription*> tmp;
     for (auto& entry : changes) {
         int position = entry.first;
@@ -2272,12 +1481,12 @@ inline bool cigar_has_element(uint32_t* cigar, int n_cigar, uint32_t dlenqr){
  * @return true if any read was found in chr:s-e
  */
 bool VariationRealigner::noPassingReads(string& chr, int start, int end, vector<string> bams) {
-    int cnt = 0;
-    int midcnt = 0; // Reads end in the middle
-    int dlen = end - start;
-    //string dlenqr = dlen + "D";
+	int cnt = 0;
+	int midcnt = 0; // Reads end in the middle
+	int dlen = end - start;
+	//string dlenqr = dlen + "D";
 	uint32_t dlenqr = (dlen << 4) | BAM_CDEL;
-    //Region* region = new Region(chr, start, end, "");
+	//Region* region = new Region(chr, start, end, "");
 	string region_string = chr + ":" + to_string(start) + "-" + to_string(end);
 	//vector<bamReader> bam_readers = bamReaders;
 	bam_hdr_t* header;
@@ -2286,9 +1495,9 @@ bool VariationRealigner::noPassingReads(string& chr, int start, int end, vector<
 	samFile* in;
 	bam1_t* record = bam_init1();
 	
-    //for (string bam : bams) {
-    for (bamReader bam : this->bamReaders) {
-        //try (SamView *reader = new SamView(bam, "0", region, conf.validationstringency)) {
+	//for (string bam : bams) {
+	for (bamReader bam : this->bamReaders) {
+		//try (SamView *reader = new SamView(bam, "0", region, conf.validationstringency)) {
 		header = bam.header;
 		idx = bam.idx;
 		in = bam.in;
@@ -2313,45 +1522,14 @@ bool VariationRealigner::noPassingReads(string& chr, int start, int end, vector<
 				midcnt++;
 			}
 		}
-		//printf("while end\n");
-		//try{
-		//	samFile* in = sam_open(bam.c_str(), "r");
-		//	if(in){
-		//		header = sam_hdr_read(in);
-		//		idx = sam_index_load(in, bam.c_str());
-		//		assert(idx != NULL);
-		//		iter = sam_itr_querys(idx, header, region_string.c_str());
-		//		int ret = 0;
-		//		uint32_t* cigar;
-		//		//printf("bam: %s, region: %s\n", bam.c_str(), region_string.c_str());
-		//		while( (ret = sam_itr_next(in, iter, record)) >= 0){
-		//			//if (record.getCigarstring().count(dlenqr))
-		//			cigar = bam_get_cigar(record);
-		//			if(cigar_has_element(cigar, record->core.n_cigar, dlenqr)){
-		//				continue;
-		//			}
-		//			int readStart = getAlignmentStart(record);
-		//			int readLengthIncludeMatchedAndDeleted = getAlignedLength(cigar, record->core.n_cigar);
-		//			int readEnd = readStart + readLengthIncludeMatchedAndDeleted;
-		//			if (readEnd > end + 2 && readStart < start - 2) {
-		//				cnt++;
-		//			}
-		//			if (readStart < start - 2 && readEnd > start && readEnd < end) {
-		//				midcnt++;
-		//			}
-		//		}
-		//	}
-		//}catch(...){
-		//	printf("there is an error in realigner reader!!");
-		//}
 	}
 	//bam_hdr_destroy(header);
 	//if(in) sam_close(in);
 	bam_destroy1(record);
 	hts_itr_destroy(iter);
-    if (conf->y) {
+	if (conf->y) {
 		printf("    Passing Read CNT: %d %s %d %d %d\n", cnt, chr.c_str(), start, end, midcnt);
-    }
+	}
 	return cnt <= 0 && midcnt + 1 > 0;
 }
 
