@@ -265,32 +265,19 @@ std::tuple<string, string> VarDictLauncher::getSampleNamesSomatic(Configuration 
 
 
 string setFastaFile(cmdline::parser& cmd) {
-        string fasta = cmd.get<string>('G');
-        if(!cmd.exist('G') || fasta == ""){ 
-        //if (fasta == null) {
-            printf("Reference file path wasn't set (option -G). Will be used the default fasta path.\n");
-            fasta = CONF_HG19;
-        } else {
-           fasta = fasta=="hg19" ? "19" : (fasta=="hg38" ? "38" : (fasta=="mm10"?"10":fasta));   
-		   /*
-		   switch (fasta) {
-                case "hg19":
-                    fasta = "19"; //CONF_HG19;
-                    break;
-                case "hg38":
-                    fasta = "38"; //CONF_HG38;
-                    break;
-                case "mm10":
-                    fasta = "10"; //CONF_MM10;
-                    break;
-            }
-			*/
-        }
-        return fasta;
+	string fasta = cmd.get<string>('G');
+	if(!cmd.exist('G') || fasta == ""){ 
+		//if (fasta == null) {
+		printf("Reference file path wasn't set (option -G). Will be used the default fasta path.\n");
+		fasta = CONF_HG19;
+	} else {
+		fasta = fasta=="hg19" ? "19" : (fasta=="hg38" ? "38" : (fasta=="mm10"?"10":fasta));   
+	}
+	return fasta;
 }
 
 Configuration* cmdParse(int argc, char* argv[]){
-    cmdline::parser cmd;
+		cmdline::parser cmd;
 
     // input/output
     cmd.add("help", 'H', "Print this help page");
@@ -419,18 +406,6 @@ Configuration* cmdParse(int argc, char* argv[]){
         int s_col = (cmd.exist('s')?-1:0) + cmd.get<int>('s');
         int e_col = (cmd.exist('e')?-1:0) + cmd.get<int>('e');
         int g_col = (cmd.exist('g')?-1:0) + cmd.get<int>('g');
-		//printf("get char c: %d assigned to: %d\n", cmd.get<int>('c'), c_col);
-		//printf("get char S: %d, assigned to: %d\n", cmd.get<int>('S'), S_col);
-		//printf("get char E: %d, assigned to: %d\n", cmd.get<int>('E'), E_col);
-		//printf("get char s: %d, assigned to: %d\n", cmd.get<int>('s'), s_col);
-		//printf("get char e: %d, assigned to: %d\n", cmd.get<int>('e'), e_col);
-		//printf("get char g: %d, assigned to: %d\n", cmd.get<int>('g'), g_col);
-        //int c_col = -1 + cmd.get<int>('c');
-        //int S_col = -1 + cmd.get<int>('S');
-        //int E_col = -1 + cmd.get<int>('E');
-        //int s_col = -1 + cmd.get<int>('s');
-        //int e_col = -1 + cmd.get<int>('e');
-        //int g_col = -1 + cmd.get<int>('g');
 
         if (cmd.exist('S') && !cmd.exist('s')) {
             s_col = S_col;
@@ -455,9 +430,9 @@ Configuration* cmdParse(int argc, char* argv[]){
         config->vext = cmd.get<int>('X');
         config->readPosFilter = cmd.get<int>('P');
         if (cmd.exist('Z')) {
-			config->isDownsampling = true;
-            config->downsampling = cmd.get<double>('Z');
-        }
+					  config->isDownsampling = true;
+						config->downsampling = cmd.get<double>('Z');
+				}
         config->qratio = cmd.get<double>('o');
         config->mapq = cmd.get<double>('O');
         config->lofreq = cmd.get<double>('V');
@@ -503,25 +478,24 @@ Configuration* cmdParse(int argc, char* argv[]){
             config->adaptor.insert(config->adaptor.end(), vc.begin(), vc.end());
         }
 
-        //if (cmd.exist("DP")) {
-        if (cmd.exist("out")) {
-			config->outFileName = cmd.get<string>("out");
-           // string defaultPrinter = cmd.get<string>("DP");
-           // if(defaultPrinter== "ERR") {
-           //     config->printerType = "PrinterType.ERR";
-		   // }else{
-		   // 	config->printerType = "PrinterType.OUT";
-           // }
-        }
+				//if (cmd.exist("DP")) {
+				if (cmd.exist("out")) {
+					config->outFileName = cmd.get<string>("out");
+					// string defaultPrinter = cmd.get<string>("DP");
+					// if(defaultPrinter== "ERR") {
+					//     config->printerType = "PrinterType.ERR";
+					// }else{
+					// 	config->printerType = "PrinterType.OUT";
+					// }
+				}
 
-        config->crisprCuttingSite = cmd.get<int>('J');
+				config->crisprCuttingSite = cmd.get<int>('J');
         config->crisprFilteringBp = cmd.get<int>('j' );
 
         config->monomerMsiFrequency = cmd.get<double>("mfreq");
         config->nonMonomerMsiFrequency = cmd.get<double>("nmfreq");
         return config;
 
-    //-----------------------------------end----------------------
 }
 
 int main_single(int argc, char* argv[]){
@@ -530,7 +504,7 @@ int main_single(int argc, char* argv[]){
 	//Configuration* conf = new Configuration();
 	//init_conf(conf);
 	VarDictLauncher launcher;
-	launcher.start(conf); //launcher 里面有segments变量存的是region信息
+	launcher.start(conf); //launcher 
 
 	//cout << "conf info: " << "1. thread: " << conf->threads << endl<< " 2. fasta: " << conf->fasta << " 3. bed: " << conf->bed << endl; 
 	/* decide the memo pool size*/
@@ -564,13 +538,13 @@ int main_single(int argc, char* argv[]){
 	}
 
 	delete conf;
+
+	return 0;
 }
 
 int main(int argc, char* argv[]){
 	double start_time = get_time();
-	for(int i = 0; i < 1; i++){
-		main_single(argc, argv);
-	}
+	main_single(argc, argv);
 	double end_time = get_time();
 	printf("total time: %f s \n", (end_time - start_time));
 	return 0;

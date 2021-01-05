@@ -422,8 +422,7 @@ public:
   }
 
   bool parse(int argc, const char * const argv[]){
-	  //std::cout << "====0===== " << argc << " -> " << argv[0] << std::endl;
-	errors.clear();
+		errors.clear();
     others.clear();
 
     if (argc<1){
@@ -597,7 +596,6 @@ private:
 	}
 
     if (!ok){
-		std::cerr << "not ok!" << std::endl;
       std::cerr<<error()<<std::endl<<usage();
       exit(1);
     }
