@@ -1,10 +1,10 @@
 
-* task [50%]
+* task [75%]
 	1. [X] python get numa number API 
-	2. [ ] implement ncpy, store c++ variant data to numpy.
+	2. [X] implement ncpy, store c++ variant data to numpy. 
+	   => use pandas.read_csv, 3 times faster
 	3. [ ] python re-distribute bed file
 	4. [X] python run rabbitvar exe file: python subprocess基本没有开销
-
 
 *note* 
 以前的rabbitvar对文件的读写是不连续的
