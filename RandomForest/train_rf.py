@@ -162,7 +162,7 @@ def train_rf(args):
         
         #--select 1/100 faslse data form fasle
         false = train[ train['label'] == 0 ]
-        false = false.sample(frac = 0.2)
+        #false = false.sample(frac = 0.2)
         truth = train[ train['label'] == 1]
         print("faslse number: {}, truth number: {}".format(len(false), len(truth)) )
         aug_data = shuffle(pd.concat([truth, false, truth, truth, truth, truth], axis = 0))
@@ -191,7 +191,7 @@ def train_rf(args):
         #--select frac faslse data form fasle
         false = train[ train['label'] == 0 ]
         #false = false.sample(frac = 0.05)
-        false = false.sample(frac = 0.5)
+        #false = false.sample(frac = 0.5)
         truth = train[ train['label'] == 1]
         print("faslse number: {}, truth number: {}".format(len(false), len(truth)*5 ) )
         aug_data = shuffle(pd.concat([truth, false, truth, truth, truth, truth], axis = 0))
@@ -203,17 +203,15 @@ def train_rf(args):
 
     print("data prepare done, start fiting ...")
     if args.pretrained_model == None:
-        clf = RandomForestClassifier(n_jobs=args.nthreads, max_depth=12, min_samples_leaf=50, 
-                                     class_weight = 'balanced',
-                                     n_estimators=50, max_features=None, verbose=1)
+        clf = RandomForestClassifier(n_jobs=args.nthreads, max_depth=20, min_samples_leaf=50, 
+                                     n_estimators=150, max_features=None, verbose=1)
     else:
         print("model {} exists!".format(args.pretrained_model))
         exit(-1)
         if not os.path.exists(args.pretrained_model):
             print("model {} not exists, create new one!".format(args.pretrained_model))
-            clf = RandomForestClassifier(n_jobs=args.nthreads, max_depth=12, min_samples_leaf=50, 
-                                         class_weight = 'balanced',
-                                         n_estimators=50, max_features=None, verbose=1)
+            clf = RandomForestClassifier(n_jobs=args.nthreads, max_depth=20, min_samples_leaf=50, 
+                                         n_estimators=150, max_features=None, verbose=1)
         else:
             print("loading model: ", args.pretrained_model)
             clf = joblib.load(args.pretrained_model)

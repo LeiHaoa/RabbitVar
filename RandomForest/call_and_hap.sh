@@ -7,33 +7,38 @@ datas=(
 		/home/old_home/haoz/workspace/FastVC/detection_result/somatic/train_set_10_21/FDSynthetic.notloose.txt
 		/home/old_home/haoz/workspace/FastVC/detection_result/NC_DATASET/NC_DATA_1.txt
 		/home/old_home/haoz/workspace/FastVC/detection_result/EA_DATASET/EA_DATA_1.txt
-		/home/old_home/haoz/workspace/FastVC/detection_result/dream_challenge/dreamc_syn3.txt
+		/home/old_home/haoz/workspace/FastVC/detection_result/dreamsim_0109/dreamsim_0109.txt
 )
 snv_truths=(
 		/home/old_home/haoz/workspace/data/FD/Truth/FDtruth_Data_2.snv.vcf \
 		/home/old_home/haoz/workspace/data/FD/trainingSet_10_21/synthetic_snvs.vcf \
 		/home/old_home/haoz/workspace/data/FD/Truth/NCTruth_Data_1.snv.vcf \
 		/home/old_home/haoz/workspace/data/FD/Truth/EATruth_Data_1.snv.vcf \
+		/home/old_home/haoz/workspace/data/NA12878/dreamsim_0109/synthetic_snvs.sorted.vcf
 )
 indel_truths=(
 		/home/old_home/haoz/workspace/data/FD/Truth/FDtruth_Data_2.indel.vcf \
 		/home/old_home/haoz/workspace/data/FD/trainingSet_10_21/synthetic_indels.leftAlign.vcf \
 		/home/old_home/haoz/workspace/data/FD/Truth/NCTruth_Data_1.indel.vcf \
 		/home/old_home/haoz/workspace/data/FD/Truth/EATruth_Data_1.indel.vcf \
+		/home/old_home/haoz/workspace/data/NA12878/dreamsim_0109/synthetic_indels.leftAlign.sorted.vcf
 )
 truths=(/home/old_home/haoz/workspace/VCTools/bcbio_nextgen/cancer-dream-syn3/input/synthetic_challenge_set3_tumor_20pctmasked_truth.vcf.gz)
 
 FLAG='tn'
-NUM=3
+NUM=1
 TYPE='snv'
-
+#INDEL_MODEL=./models/somIndel_notbalanced_nodownsample_5truth_positvlg0d2.pkl
+#SNV_MODEL=./models/somSNV_notbalanced_nodownsample_5truth_positvlg0d2.pkl
+INDEL_MODEL=./models/som_indel_0108.pkl
+SNV_MODEL=./models/som_snv_0108.pkl
 if [ ${FLAG} == "tn" ]; then
 
 if [ ${TYPE} == indel ]; then
 time python call_rf.py \
 	--in_file ${datas[${NUM}]}\
 	--var_type ${TYPE^^} \
-	--model ./models/somatic_indel_downsample0d5.pkl \
+	--model ${INDEL_MODEL} \
 	--out_file ./RandomForest_Filtered.txt
 
 cat ./RandomForest_Filtered.txt | /home/old_home/haoz/workspace/FastVC/scripts/var2vcf_paired.pl -A -f 0.01 > RandomForest_Filtered.vcf
@@ -51,7 +56,7 @@ elif [ ${TYPE} == snv ]; then
 time python call_rf.py \
 	--in_file ${datas[${NUM}]}\
 	--var_type ${TYPE^^} \
-	--model ./models/somatic_snv_downsample0d2.pkl \
+	--model ${SNV_MODEL} \
 	--out_file ./RandomForest_Filtered.txt
 
 cat ./RandomForest_Filtered.txt | /home/old_home/haoz/workspace/FastVC/scripts/var2vcf_paired.pl -A -f 0.01 > RandomForest_Filtered.vcf

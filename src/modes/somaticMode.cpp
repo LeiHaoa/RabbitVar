@@ -633,7 +633,7 @@ CombineAnalysisData SomaticMode::combineAnalysis(Variant* variant1, Variant* var
 	for(vector<bamReader>& bami : trs.bamReaders){
 		merged_bamReaders.insert(merged_bamReaders.end(), bami.begin(), bami.end());
 	}
-	//---我觉得传thread resource这个数据结构比价好。---------
+	//----thread resource maybe better--------
 	AlignedVarsData *tpl = one_region_run(region, conf, trs.data_pool, merged_bamReaders, splice)->data;
 
 	maxReadLength = tpl->maxReadLength;
