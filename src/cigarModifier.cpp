@@ -473,7 +473,9 @@ void CigarModifier::combineDigSDigM(smatch &matcher) {
 		while (rn + 1 < soft && isHasAndEquals(reference, position - rn - 2, querySequence, soft - rn - 2) &&
 			   queryQuality[soft - rn - 2] > CONF_LOWQUAL) {
 			rn++;
-			RN.emplace(reference.at(position - rn - 2));
+      if (reference.count(position - rn -2)){
+        RN.emplace(reference.at(position - rn - 2));
+      }
 		}
 		int rn_nt = RN.size();  // Don't adjust for homopolymers
 		if ((rn > 4 && rn_nt > 1) || isHasAndEquals(reference, position - 1, querySequence, soft - 1)) {
@@ -615,7 +617,9 @@ void CigarModifier::captureMisSoftlyMS(smatch& matcher) {
 		while (rn + 1 < soft && isHasAndEquals(reference, refoff + rn + 1, querySequence, rdoff + rn + 1) &&
 			   queryQuality[rdoff + rn + 1] > CONF_LOWQUAL) {
 			rn++;
-			RN.emplace(reference.at(refoff + rn + 1)); // 
+      if (reference.count(refoff + rn + 1)){
+        RN.emplace(reference.at(refoff + rn + 1)); // 
+      }
 		}
 		int rn_nt = RN.size(); // don't adjust if homopolymer
 		if (rn > 4 && rn_nt > 1) {

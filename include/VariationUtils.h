@@ -48,16 +48,25 @@ inline bool isHasAndEquals(int index, const REFTYPE &ref, int index2) {
 		return false;
 }
 
-inline bool isHasAndEquals(const REFTYPE &ref, int index1, string str, int index2) {
+inline bool isHasAndEquals(const REFTYPE &ref, int index1, string &str, int index2) {
 	REFTYPE::const_iterator ri;
 	if( (ri = ref.find(index1)) != ref.end()){
 		return ri->second == str[index2];
 	}
-    //if (index2 < 0) index2 = index2 + str.length();
-    //return refc.equals(str.charAt(index2));
+  //if (index2 < 0) index2 = index2 + str.length();
+  //return refc.equals(str.charAt(index2));
 	return false;
 }
 
+inline bool isHasAndEquals(const REFTYPE &ref, int index1, char* str, int index2) {
+	REFTYPE::const_iterator ri;
+	if( (ri = ref.find(index1)) != ref.end()){
+		return ri->second == str[index2];
+	}
+  //if (index2 < 0) index2 = index2 + str.length();
+   //return refc.equals(str.charAt(index2));
+	return false;
+}
 inline bool isHasAndNotEquals(char ch1, const REFTYPE &ref, int index) {
 	REFTYPE::const_iterator ri;
 	if( (ri = ref.find(index)) != ref.end() )
