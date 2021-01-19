@@ -65,8 +65,9 @@ def filterParm(parser):
 
 def rabbitvarParam(parser):
   parser.add_argument('--no_filter', help = "Do not perform filter step", action = "store_true")
-  parser.add_argument('--BIN', help = "the binary candidate variant detector", type=str, required = False, default = "./bin/FastVC")
-  pass
+  parser.add_argument('--BIN', help = "The binary candidate variant detector", type=str, required = False, default = "./bin/FastVC")
+  parser.add_argument('--vcf', help = "Out put formated VCF file path", type=str, default = "./variants.vcf")
+  parser.add_argument('--workspace', help = "workspce to store intermedite files", type=str, default = "./workspace")
 
 if __name__ == "__main__":
   import sys

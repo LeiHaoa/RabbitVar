@@ -1,3 +1,4 @@
+import os
 import joblib
 import numpy as np
 import pandas as pd
@@ -91,59 +92,84 @@ def write_header(fout):
 ##FORMAT=<ID=AF,Number=A,Type=Float,Description="Allele Frequency">
 ##FORMAT=<ID=RD,Number=2,Type=Integer,Description="Reference forward, reverse reads">
 ##FORMAT=<ID=ALD,Number=2,Type=Integer,Description="Variant forward, reverse reads">
-"""#.format(1,1,1,1,1,1,1,1,1,1)
+"""
   fout.write(header)
 
 def get_socks():
   for line in str(subprocess.check_output('lscpu')).split('\\n'):
     contex = line.split()
+    print(contex)
     if contex[0].strip() == 'NUMA':
-      return contex[-1]
-    else:
-      print("can not find NUMA struct, use default: 1")
-      return 1
+      return int(contex[-1])
+  print("can not find NUMA struct, use default: 1")
+  return 1
 
 def prepare_cmd(BIN, bed_file_name, out_file_name, param):
   cmd = list()
   if 'bed' in param:
     param['bed'] = bed_file_name
-  param['out'] == out_file_name
+  param['out'] = out_file_name
   cmd.append(BIN)
   for p, v in param.items():
     cmd.append("--" + p)
     cmd.append(v)
   
-  print('----------------------\n', cmd, '------------------------\n')
+  print('----------------------\n', cmd, '\n------------------------\n')
   return cmd
 
-def run_rabbitvar(BIN, param):
+def bed_save_to(regions, path):
+  with open(path, 'w') as f:
+    for line in regions:
+      f.write(str(line))
+
+def split_bed(beds, parts, workspace):
+  splited_info = []
+  stride = len(beds) // parts
+  print(stride)
+  for i in range(parts - 1):
+    print(i)
+    bed_path = os.path.join(workspace, "part{}.bed".format(i))
+    out_path = os.path.join(workspace, "out{}.txt".format(i))
+    bed_save_to(beds[(i)*stride:(i+1)*stride], bed_path)
+    splited_info.append((bed_path, out_path))
+  bed_save_to(beds[(parts - 1) * stride:], os.path.join(workspace, "part{}.bed".format(parts - 1)))
+  splited_info.append((os.path.join(workspace, "part{}.bed".format(parts - 1)),
+                       os.path.join(workspace, "out{}.txt".format(parts - 1)))
+                     )
+  print("split info: ", splited_info)
+  return splited_info
+
+def run_rabbitvar(BIN, workspace, param):
   socks = get_socks()
   print(socks)
-  socks = 1   #TODO:::::::::::::::::delete it
+  splited_info = list()
   if socks > 1:
     #re-distribure bed file
-    beds = pybedtools.example_bedtool(param['bed'])
-    sorted(beds)
-    nregions = len(beds)
+    #beds = pybedtools.example_bedtool(param['bed'])
+    #sorted(beds)
+    #print(type(beds))
+    beds = list()
+    with open(param['bed'], 'r') as f:
+      for line in f:
+        beds.append(f)
     #split_info:[(bed1, out1), (bed2, out2), ...]
-    splited_info = split_bed(beds) #split file according to numa
-    #beds[0:nregions//2].saveas('mini1.bed')
-    #beds[nregions//2: ].saveas('mini2.bed')
+    splited_info = split_bed(beds, socks, workspace) #split file according to numa
     ps = list()
     for i in range(int(socks)):
-      cmd = prepare_cmd(BIN, *splited_info[i], param)
-      ps.append(subprocess.Popen(cmd, stderr=subprocess.DEVNULL))
-
-      for p in ps:
-        p.wait()
+      cmd = prepare_cmd(BIN, splited_info[i][0], splited_info[i][1], param)
+      #ps.append(subprocess.Popen(cmd, stderr=subprocess.DEVNULL))
+      #for p in ps:
+        #p.wait()
   else:
     bed = param['bed'] if 'bed' in param else None
     out = param['out']
     cmd = prepare_cmd(BIN, bed, out, param)
     print(cmd)
+    splited_info.append((bed, out))
     #subprocess.Popen(cmd, stderr=subprocess.DEVNULL)
 
   print("now, all process run over!")
+  return splited_info
 
 def rf_filter(args, in_file):
   cr = list()
@@ -182,9 +208,6 @@ def rf_filter(args, in_file):
 
   return snv_result, indel_result
 
-def write_record(f, record):
-  pass
-  
 def my_predict(clf, data, scale):
     proba = clf.predict_proba(data)
     return np.asarray([1 if x > scale else 0 for x in proba[:,1]])
@@ -198,7 +221,7 @@ def format_record(record):
      adjaf2, nm2, sbf2, oddratio2, shift3, msi, msilen, lseq, rseq, seg, \
      status, vtype, sv1, duprate1, sv2, duprate2, pvalue, oddratio]  = record[:61]
   except ValueError:
-    print("invalide record: \n", record, "\n ---> ", len(record))
+    print("invalide record: \n", record, "\n record length ---> ", len(record))
     exit(-1)
   
   rd1 = rfwd1 + rrev1
@@ -221,7 +244,6 @@ def format_record(record):
   filters = "PASS"
   sample_nowhitespace = re.sub(r'\s', '_', sample)
 
-
   pinfo2_1 = "STATUS={};SAMPLE={};TYPE={};DP={};VD={};AF={:.6f};SHIFT3={};MSI={};MSILEN={};SSF={};SOR={};LSEQ={};RSEQ={}".format(status, sample_nowhitespace, vtype, dp1, vd1, af1, shift3, msi, msilen, pvalue, oddratio, lseq, rseq)
   pinfo2_2 = "{}:{}:{}:{}:{}:{}:{:.6f}:{}:{}:{}:{}:{}:{}:{}:{}:{}:{:.6f}:{:.6f}:{}".format(gt, dp1, vd1, str(vfwd1) + "," + str(vrev1), str(rfwd1)+","+str(rrev1), str(rd1)+","+str(vd1), af1, bias1, pmean1, pstd1, qual1, qstd1, sbf1, oddratio1, mapq1, sn1, hiaf1, adjaf1, nm1) 
   pinfo2_3 = "{}:{}:{}:{}:{}:{}:{:.6f}:{}:{}:{}:{}:{}:{}:{}:{}:{}:{:.6f}:{:.6f}:{}".format(gtm, dp2, vd2, str(vfwd2) + "," + str(vrev2), str(rfwd2)+","+str(rrev2), str(rd2)+","+str(vd2), af2, bias2, pmean2, pstd2, qual2, qstd2, sbf2, oddratio2, mapq2, sn2, hiaf2, adjaf2, nm2)
@@ -242,7 +264,8 @@ if __name__ == "__main__":
     if v:
       detector_param[k] = v
   print(detector_param)
-  run_rabbitvar(args.BIN, detector_param)
+  splited_info = run_rabbitvar(args.BIN, args.workspace, detector_param)
+  exit(0)
   #if keep_intermident:
   #  interm_file = 1
   #else:
@@ -251,18 +274,20 @@ if __name__ == "__main__":
 
   #tmp_file = "/home/old_home/haoz/workspace/FastVC/detection_result/FD_DATASET/demo.txt"
   #vcf_file = "./tmpresult.vcf"
+  vcf_file = args.vcf
   vcf = list()
-  snvs, indels = rf_filter(None, detector_param['out'])
-  print(type(snvs),type(indels))
-  vcf.append(snvs)
-  vcf.append(indels)
-  print(len(vcf), len(vcf[0]))
-  #write vcf file
-  with open(vcf_file, 'w') as f:
-    write_header(f)
-    tmp = "\t".join(["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "$sample"])
-    tmp += '\n'
-    f.write(tmp)
-    for pddata in vcf:
-      for i, record in pddata.iterrows():
-        f.write(format_record(record) + '\n')
+  for detector_out in splited_info:
+    snvs, indels = rf_filter(None, detector_out[1])
+    print(type(snvs),type(indels))
+    vcf.append(snvs)
+    vcf.append(indels)
+    print(len(vcf), len(vcf[0]))
+    #write vcf file
+    with open(vcf_file, 'w') as f:
+      write_header(f)
+      tmp = "\t".join(["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", args.Name]) #TODO what if user not specified a sample name???
+      tmp += '\n'
+      f.write(tmp)
+      for pddata in vcf:
+        for i, record in pddata.iterrows():
+          f.write(format_record(record) + '\n')
