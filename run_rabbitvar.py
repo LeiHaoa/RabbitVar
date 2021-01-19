@@ -151,7 +151,7 @@ def run_rabbitvar(BIN, workspace, param):
     beds = list()
     with open(param['bed'], 'r') as f:
       for line in f:
-        beds.append(f)
+        beds.append(line)
     #split_info:[(bed1, out1), (bed2, out2), ...]
     splited_info = split_bed(beds, socks, workspace) #split file according to numa
     ps = list()
