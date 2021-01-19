@@ -63,7 +63,9 @@ def detectorParam(parser):
 def filterParm(parser):
   parser.add_argument()
 
-def rabbitvarParam():
+def rabbitvarParam(parser):
+  parser.add_argument('--no_filter', help = "Do not perform filter step", action = "store_true")
+  parser.add_argument('--BIN', help = "the binary candidate variant detector", type=str, required = False, default = "./bin/FastVC")
   pass
 
 if __name__ == "__main__":
@@ -76,7 +78,6 @@ if __name__ == "__main__":
   for x in rabbitvar_parser._group_actions:
     print(x.dest, getattr(args, x.dest, None))
     #print(x.dest, x.metavar)
-  print('--------------------')
   arg_groups = dict()
   #for group in parser._action_groups:
   #  group_dict={a.dest:getattr(args,a.dest,None) for a in group._group_actions}

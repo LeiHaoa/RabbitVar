@@ -7,6 +7,7 @@ import subprocess
 import pybedtools
 import math
 import re
+from cmdparser import *
 
 som_features = [
     "Sample", "Gene", "Chr", "Start", "End", "Ref", "Alt",
@@ -102,80 +103,84 @@ def get_socks():
       print("can not find NUMA struct, use default: 1")
       return 1
 
-def prepare_cmd(bed_file_name, out_file_name):
-  cmd = '''{BIN} \
-  -i /home/old_home/haoz/workspace/data/NA12878/{BED} \
-  -G /home/old_home/haoz/workspace/data/hg38/hg38.fa \
-  -f 0.01 \
-  -N FD_T_2|FD_N_2 \
-  -b {FDDir}/FD_T2.sorted.bam|{FDDir}/FD_N2.sorted.bam  \
-  -c 1 -S 2  -E 3 -g 4   \
-  --th 20 --fisher \
-  --auto_resize \
-  --out {OUT} \
-  '''.format(BIN="/home/old_home/haoz/workspace/FastVC/build/FastVC",
-             BED=bed_file_name,
-             FDDir='/home/ssd',
-             OUT=out_file_name)
-  cmd = cmd.split()
+def prepare_cmd(BIN, bed_file_name, out_file_name, param):
+  cmd = list()
+  if 'bed' in param:
+    param['bed'] = bed_file_name
+  param['out'] == out_file_name
+  cmd.append(BIN)
+  for p, v in param.items():
+    cmd.append("--" + p)
+    cmd.append(v)
+  
+  print('----------------------\n', cmd, '------------------------\n')
   return cmd
 
-def run_rabbitvar():
+def run_rabbitvar(BIN, param):
   socks = get_socks()
   print(socks)
-  #re-distribure bed file
-  beds = pybedtools.example_bedtool('/home/old_home/haoz/workspace/data/NA12878/mini1.bed')
-  sorted(beds)
-  nregions = len(beds)
-  #beds[0:nregions//2].saveas('mini1.bed')
-  #beds[nregions//2: ].saveas('mini2.bed')
-  ps = list()
-  for i in range(int(socks)):
-    cmd = prepare_cmd('mini{}.bed'.format(i+1),
-                      'tmp{}.txt'.format(i+1))
-    ps.append(subprocess.Popen(cmd, stderr=subprocess.DEVNULL))
+  socks = 1   #TODO:::::::::::::::::delete it
+  if socks > 1:
+    #re-distribure bed file
+    beds = pybedtools.example_bedtool(param['bed'])
+    sorted(beds)
+    nregions = len(beds)
+    #split_info:[(bed1, out1), (bed2, out2), ...]
+    splited_info = split_bed(beds) #split file according to numa
+    #beds[0:nregions//2].saveas('mini1.bed')
+    #beds[nregions//2: ].saveas('mini2.bed')
+    ps = list()
+    for i in range(int(socks)):
+      cmd = prepare_cmd(BIN, *splited_info[i], param)
+      ps.append(subprocess.Popen(cmd, stderr=subprocess.DEVNULL))
 
-  for p in ps:
-      p.wait()
+      for p in ps:
+        p.wait()
+  else:
+    bed = param['bed'] if 'bed' in param else None
+    out = param['out']
+    cmd = prepare_cmd(BIN, bed, out, param)
+    print(cmd)
+    #subprocess.Popen(cmd, stderr=subprocess.DEVNULL)
 
   print("now, all process run over!")
 
 def rf_filter(args, in_file):
-    cr = list()
-    raw = list()
-    cr = pd.read_csv(in_file, delimiter = '\t', header = None, engine = 'c', skipinitialspace = True)
-    cr.columns = [*som_features, 'None'] #TODO: i should change the code of c++ to avoid the None colum
-    cr['VarLabel'] = cr['VarLabel'].map(varLabel_to_label)
-    cr['VarType'] = cr['VarType'].map(type_to_label)
-    #snv data process 
-    time_start = time.time()
-    snvs = cr[cr['VarType'] == 0]
-    inputs = snvs[[*som_selected_features, "VarLabel"]].to_numpy()
-    #clf = joblib.load(args.snv_model)
-    #scale = args.scale
-    clf = joblib.load("/home/old_home/haoz/workspace/FastVC/RandomForest/models/som_snv_0108.pkl")
-    scale = 0.2
-    snv_pred = my_predict(clf, inputs, scale)
-    snv_result = snvs.loc[snv_pred == 1]
-    time_end = time.time()
-    print("time processing snv: {} s".format(time_end - time_start))
-    
-    #indel data process
-    time_start = time.time()
-    indels = cr[cr['VarType'] != 0]
-    indels['RefLength'] = cr['Ref'].map(len)
-    indels['AltLength'] = cr['Alt'].map(len)
-    inputs = indels[["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel"]].to_numpy()
-    #clf = joblib.load(args.indel_model)
-    #scale = args.scale
-    clf = joblib.load("/home/old_home/haoz/workspace/FastVC/RandomForest/models/som_indel_0108.pkl")
-    scale = 0.2
-    indel_pred = my_predict(clf, inputs, scale)
-    indel_result = indels.loc[indel_pred == 1]
-    time_end = time.time()
-    print("time processing indel: {} s".format(time_end - time_start))
+  cr = list()
+  raw = list()
+  cr = pd.read_csv(in_file, delimiter = '\t', header = None, engine = 'c', skipinitialspace = True)
+  cr.columns = [*som_features, 'None'] #TODO: i should change the code of c++ to avoid the None colum
+  cr['VarLabel'] = cr['VarLabel'].map(varLabel_to_label)
+  cr['VarType'] = cr['VarType'].map(type_to_label)
+  #snv data process 
+  time_start = time.time()
+  snvs = cr[cr['VarType'] == 0]
+  inputs = snvs[[*som_selected_features, "VarLabel"]].to_numpy()
+  #clf = joblib.load(args.snv_model)
+  #scale = args.scale
+  clf = joblib.load("/home/old_home/haoz/workspace/FastVC/RandomForest/models/som_snv_0108.pkl")
+  scale = 0.2
+  snv_pred = my_predict(clf, inputs, scale)
+  snv_result = snvs.loc[snv_pred == 1]
+  time_end = time.time()
+  print("time processing snv: {} s".format(time_end - time_start))
+  
+  #indel data process
+  time_start = time.time()
+  indels = cr[cr['VarType'] != 0]
+  indels['RefLength'] = cr['Ref'].map(len)
+  indels['AltLength'] = cr['Alt'].map(len)
+  inputs = indels[["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel"]].to_numpy()
+  #clf = joblib.load(args.indel_model)
+  #scale = args.scale
+  clf = joblib.load("/home/old_home/haoz/workspace/FastVC/RandomForest/models/som_indel_0108.pkl")
+  scale = 0.2
+  indel_pred = my_predict(clf, inputs, scale)
+  indel_result = indels.loc[indel_pred == 1]
+  time_end = time.time()
+  print("time processing indel: {} s".format(time_end - time_start))
 
-    return snv_result, indel_result
+  return snv_result, indel_result
 
 def write_record(f, record):
   pass
@@ -224,17 +229,30 @@ def format_record(record):
   return "\t".join([pinfo1, filters, pinfo2])
 
 if __name__ == "__main__":
-  #run_rabbitvar()
+  parser = argparse.ArgumentParser(description = "rabbitvar")
+  detector_parser = parser.add_argument_group("detector_parser")
+  detectorParam(detector_parser)
+  rabbitvar_parser = parser.add_argument_group("rabbitvar_parser")
+  rabbitvarParam(rabbitvar_parser)
+  
+  args = parser.parse_args()
+  detector_param = {}
+  for x in detector_parser._group_actions:
+    k, v = x.dest, getattr(args, x.dest, None)
+    if v:
+      detector_param[k] = v
+  print(detector_param)
+  run_rabbitvar(args.BIN, detector_param)
   #if keep_intermident:
   #  interm_file = 1
   #else:
   #  for itf in os.path.join(tmpdir): # multi thread maybe better
   #    vcf.append(rf_filter(itf))
 
-  tmp_file = "/home/old_home/haoz/workspace/FastVC/detection_result/FD_DATASET/demo.txt"
-  vcf_file = "./tmpresult.vcf"
+  #tmp_file = "/home/old_home/haoz/workspace/FastVC/detection_result/FD_DATASET/demo.txt"
+  #vcf_file = "./tmpresult.vcf"
   vcf = list()
-  snvs, indels = rf_filter(None, tmp_file)
+  snvs, indels = rf_filter(None, detector_param['out'])
   print(type(snvs),type(indels))
   vcf.append(snvs)
   vcf.append(indels)
