@@ -171,7 +171,7 @@ def run_rabbitvar(BIN, workspace, param):
   print("now, all process run over!")
   return splited_info
 
-def rf_filter(args, in_file):
+def rf_filter(param, in_file):
   cr = list()
   raw = list()
   cr = pd.read_csv(in_file, delimiter = '\t', header = None, engine = 'c', skipinitialspace = True)
@@ -184,7 +184,7 @@ def rf_filter(args, in_file):
   inputs = snvs[[*som_selected_features, "VarLabel"]].to_numpy()
   #clf = joblib.load(args.snv_model)
   #scale = args.scale
-  clf = joblib.load("/home/old_home/haoz/workspace/FastVC/RandomForest/models/som_snv_0108.pkl")
+  clf = joblib.load(param['snvmod'])
   scale = 0.2
   snv_pred = my_predict(clf, inputs, scale)
   snv_result = snvs.loc[snv_pred == 1]
@@ -199,8 +199,8 @@ def rf_filter(args, in_file):
   inputs = indels[["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel"]].to_numpy()
   #clf = joblib.load(args.indel_model)
   #scale = args.scale
-  clf = joblib.load("/home/old_home/haoz/workspace/FastVC/RandomForest/models/som_indel_0108.pkl")
-  scale = 0.2
+  clf = joblib.load(param['indelmod'])
+  scale = param['scale']
   indel_pred = my_predict(clf, inputs, scale)
   indel_result = indels.loc[indel_pred == 1]
   time_end = time.time()
@@ -256,6 +256,8 @@ if __name__ == "__main__":
   detectorParam(detector_parser)
   rabbitvar_parser = parser.add_argument_group("rabbitvar_parser")
   rabbitvarParam(rabbitvar_parser)
+  filter_parser = parser.add_argument_group("filter_parser")
+  filterParm(filter_parser)
   
   args = parser.parse_args()
   detector_param = {}
@@ -265,19 +267,16 @@ if __name__ == "__main__":
       detector_param[k] = v
   print(detector_param)
   splited_info = run_rabbitvar(args.BIN, args.workspace, detector_param)
-  exit(0)
-  #if keep_intermident:
-  #  interm_file = 1
-  #else:
-  #  for itf in os.path.join(tmpdir): # multi thread maybe better
-  #    vcf.append(rf_filter(itf))
+  filter_param = {}
+  for x in filter_parser._group_actions:
+    k, v = x.dest, getattr(args, x.dest, None)
+    if v:
+      filter_param[k] = v
 
-  #tmp_file = "/home/old_home/haoz/workspace/FastVC/detection_result/FD_DATASET/demo.txt"
-  #vcf_file = "./tmpresult.vcf"
   vcf_file = args.vcf
   vcf = list()
   for detector_out in splited_info:
-    snvs, indels = rf_filter(None, detector_out[1])
+    snvs, indels = rf_filter(filter_param, detector_out[1])
     print(type(snvs),type(indels))
     vcf.append(snvs)
     vcf.append(indels)

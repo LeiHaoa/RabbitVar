@@ -61,7 +61,9 @@ def detectorParam(parser):
   parser.add_argument('--auto_resize', help = "Auto resize the bed region size for better performance")
 
 def filterParm(parser):
-  parser.add_argument()
+  parser.add_argument("--indelmod", help = "Indel filter path", type=str, required = False, default = "./RandomForest/models/som_snv_0108.pkl")
+  parser.add_argument("--snvmod", help = "Indel filter path", type=str, required = False, default = "./RandomForest/models/som_indel_0108.pkl")
+  parser.add_argument("--scale", help = "Scale to filter false positive", type=float, required = False, default = 0.2)
 
 def rabbitvarParam(parser):
   parser.add_argument('--no_filter', help = "Do not perform filter step", action = "store_true")
