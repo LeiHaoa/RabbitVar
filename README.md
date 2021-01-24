@@ -20,6 +20,8 @@ $ make -j4
 $ make install
 ```
 Then the binary file of RabbitVar will be installed as `bin/RabbitVar` if CMAKE_INSTALL_PREFIX not specified.
+
+
 ## Testing dataset
 
 ### B17NC
@@ -61,16 +63,33 @@ In RabbitVar, the following input are required:
     --out ./out.vcf
 ```
 
-## Train model
-You can train your own model in python and embbing in c++ codes by [Porter](https://github.com/nok/sklearn-porter)
-**install Poster according to porter github, **
+## Python3 script wapper (recommended)
+
+You can run RabbitVar with directly or using python script `run_rabbitvar.py`. `run_rabbitvar.py` provide a python3 script wapper to RabbitVar, a randomforest filter and formater.
+
+A simple example is: 
+
+``` python3
+run_rabbitvar.py \
+  --bin ./bin/FastVC
+  -R chr1:2829690-4918526  \
+  -G /home/data/hg38.fa \
+  -f 0.001 -N sample_name -b /home/data/CHM1_CHM13_2.bam \
+  -c 1 -S 2 -E 3 \
+  --indelmod ./RandomForest/models/som_indel_0108.pkl
+  --snvmod ./RandomForest/models/som_snv_0108.pkl
+  --vcf variants.vcf
+```
+
+
+; ## Train filter model
+; You can train your own model in python and embbing in c++ codes by [Porter](https://github.com/nok/sklearn-porter)
+; **install Poster according to porter github, **
 
 ``` bash
 cd RandomForest
 python3 make_data.py xxx
 python3 train_rf.py xxx
-porter uniform_somatic_indel0d05.pkl --c --to .
-
 ```
 
 **2. Format**
