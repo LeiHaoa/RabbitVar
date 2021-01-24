@@ -1,11 +1,12 @@
+#!/usr/bin/env python3
+import time 
 import os
 import joblib
-import numpy as np
+#import numpy as np
 import pandas as pd
-import time 
 import argparse
 import subprocess
-import pybedtools
+#import pybedtools
 import math
 import re
 from cmdparser import *
@@ -257,7 +258,7 @@ if __name__ == "__main__":
   rabbitvar_parser = parser.add_argument_group("rabbitvar_parser")
   rabbitvarParam(rabbitvar_parser)
   filter_parser = parser.add_argument_group("filter_parser")
-  filterParm(filter_parser)
+  filterParam(filter_parser)
   
   args = parser.parse_args()
   detector_param = {}
@@ -265,7 +266,7 @@ if __name__ == "__main__":
     k, v = x.dest, getattr(args, x.dest, None)
     if v:
       detector_param[k] = v
-  print(detector_param)
+  print("[INFO] detector paramters: ", detector_param)
   splited_info = run_rabbitvar(args.BIN, args.workspace, detector_param)
   filter_param = {}
   for x in filter_parser._group_actions:

@@ -1,4 +1,7 @@
 import argparse
+import os
+
+RABBITVAR_ABSPATH = os.path.abspath(".")
 
 def detectorParam(parser):
   #parser.add_argument('--help', '-H', help = "Print this help page")
@@ -60,34 +63,32 @@ def detectorParam(parser):
   parser.add_argument('--version', help = "Print FastVC version information")
   parser.add_argument('--auto_resize', help = "Auto resize the bed region size for better performance")
 
-def filterParm(parser):
-  parser.add_argument("--indelmod", help = "Indel filter path", type=str, required = False, default = "./RandomForest/models/som_snv_0108.pkl")
-  parser.add_argument("--snvmod", help = "Indel filter path", type=str, required = False, default = "./RandomForest/models/som_indel_0108.pkl")
+def filterParam(parser):
+  parser.add_argument("--indelmod", help = "Indel filter path", type=str, required = False, default = os.path.join(RABBITVAR_ABSPATH, "RandomForest/models/som_snv_0108.pkl"))
+  parser.add_argument("--snvmod", help = "Indel filter path", type=str, required = False, default = os.path.join(RABBITVAR_ABSPATH, "RandomForest/models/som_indel_0108.pkl"))
   parser.add_argument("--scale", help = "Scale to filter false positive", type=float, required = False, default = 0.2)
 
 def rabbitvarParam(parser):
   parser.add_argument('--no_filter', help = "Do not perform filter step", action = "store_true")
-  parser.add_argument('--BIN', help = "The binary candidate variant detector", type=str, required = False, default = "./bin/FastVC")
+  parser.add_argument('--BIN', help = "The binary candidate variant detector", type=str, required = False, default = os.path.join(RABBITVAR_ABSPATH, "bin/FastVC"))
   parser.add_argument('--vcf', help = "Out put formated VCF file path", type=str, default = "./variants.vcf")
   parser.add_argument('--workspace', help = "workspce to store intermedite files", type=str, default = "./workspace")
 
 if __name__ == "__main__":
   import sys
   parser = argparse.ArgumentParser(description = "rabbitvar")
+  detector_parser = parser.add_argument_group("detector_parser")
+  detectorParam(detector_parser)
   rabbitvar_parser = parser.add_argument_group("rabbitvar_parser")
-  detectorParam(rabbitvar_parser)
+  rabbitvarParam(rabbitvar_parser)
+  filter_parser = parser.add_argument_group("filter_parser")
+  filterParm(filter_parser)
   args = parser.parse_args()
   print('--------------------')
   for x in rabbitvar_parser._group_actions:
     print(x.dest, getattr(args, x.dest, None))
     #print(x.dest, x.metavar)
   arg_groups = dict()
-  #for group in parser._action_groups:
-  #  group_dict={a.dest:getattr(args,a.dest,None) for a in group._group_actions}
-  #  arg_groups[group.title]=argparse.Namespace(**group_dict)
-  #print(arg_groups)
-  #args = parser.parse_args() 
-  print(sys.argv[1:])
   for k, v in vars(args).items():
     if v is not None:
       print(k, v)
