@@ -153,9 +153,10 @@ def run_rabbitvar(BIN, workspace, param):
     splited_info = split_bed(beds, socks, workspace) #split file according to numa
     ps = list()
     for i in range(int(socks)):
-      cmd = prepare_cmd(BIN, splited_info[i][0], splited_info[i][1], param)
+      #cmd = prepare_cmd(BIN, splited_info[i][0], splited_info[i][1], param)
       #print(cmd)
-      ps.append(subprocess.Popen(cmd, stderr=subprocess.DEVNULL))
+      #ps.append(subprocess.Popen(cmd, stderr=subprocess.DEVNULL))
+      pass
     for p in ps:
       p.wait()
   else:
@@ -271,17 +272,20 @@ if __name__ == "__main__":
       filter_param[k] = '' if isinstance(v, bool) else str(v)
 
   vcf_file = args.vcf
-  vcf = list()
+  vcf = pd.DataFrame()
   for detector_out in splited_info:
     snvs, indels = rf_filter(filter_param, detector_out[1])
-    vcf.append(snvs)
-    vcf.append(indels)
-    #write vcf file
-    with open(vcf_file, 'w') as f:
-      write_header(f)
-      tmp = "\t".join(["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", args.Name]) #TODO what if user not specified a sample name???
-      tmp += '\n'
-      f.write(tmp)
-      for pddata in vcf:
-        for i, record in pddata.iterrows():
-          f.write(format_record(record) + '\n')
+    #vcf.append(snvs)
+    #vcf.append(indels)
+    vcf = pd.concat([vcf, snvs, indels])
+ 
+  #sort and write vcf file
+  vcf = vcf.sort_values(['Chr', 'Start'])
+  print(vcf.head())
+  with open(vcf_file, 'w') as f:
+    write_header(f)
+    tmp = "\t".join(["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", args.Name]) #TODO what if user not specified a sample name???
+    tmp += '\n'
+    f.write(tmp)
+    for i, record in vcf.iterrows():
+      f.write(format_record(record) + '\n')
