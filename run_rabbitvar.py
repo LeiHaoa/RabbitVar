@@ -2,7 +2,7 @@
 import time 
 import os
 import joblib
-#import numpy as np
+import numpy as np
 import pandas as pd
 import argparse
 import subprocess
@@ -99,7 +99,6 @@ def write_header(fout):
 def get_socks():
   for line in str(subprocess.check_output('lscpu')).split('\\n'):
     contex = line.split()
-    print(contex)
     if contex[0].strip() == 'NUMA':
       return int(contex[-1])
   print("can not find NUMA struct, use default: 1")
@@ -115,7 +114,6 @@ def prepare_cmd(BIN, bed_file_name, out_file_name, param):
     cmd.append("--" + p)
     cmd.append(v)
   
-  print('----------------------\n', cmd, '\n------------------------\n')
   return cmd
 
 def bed_save_to(regions, path):
@@ -126,9 +124,7 @@ def bed_save_to(regions, path):
 def split_bed(beds, parts, workspace):
   splited_info = []
   stride = len(beds) // parts
-  print(stride)
   for i in range(parts - 1):
-    print(i)
     bed_path = os.path.join(workspace, "part{}.bed".format(i))
     out_path = os.path.join(workspace, "out{}.txt".format(i))
     bed_save_to(beds[(i)*stride:(i+1)*stride], bed_path)
@@ -142,13 +138,13 @@ def split_bed(beds, parts, workspace):
 
 def run_rabbitvar(BIN, workspace, param):
   socks = get_socks()
-  print(socks)
   splited_info = list()
+  if not os.path.exists(workspace):
+    os.mkdir(workspace)
   if socks > 1:
     #re-distribure bed file
     #beds = pybedtools.example_bedtool(param['bed'])
     #sorted(beds)
-    #print(type(beds))
     beds = list()
     with open(param['bed'], 'r') as f:
       for line in f:
@@ -158,18 +154,19 @@ def run_rabbitvar(BIN, workspace, param):
     ps = list()
     for i in range(int(socks)):
       cmd = prepare_cmd(BIN, splited_info[i][0], splited_info[i][1], param)
-      #ps.append(subprocess.Popen(cmd, stderr=subprocess.DEVNULL))
-      #for p in ps:
-        #p.wait()
+      #print(cmd)
+      ps.append(subprocess.Popen(cmd, stderr=subprocess.DEVNULL))
+    for p in ps:
+      p.wait()
   else:
     bed = param['bed'] if 'bed' in param else None
     out = param['out']
     cmd = prepare_cmd(BIN, bed, out, param)
-    print(cmd)
+    #print(cmd)
     splited_info.append((bed, out))
-    #subprocess.Popen(cmd, stderr=subprocess.DEVNULL)
+    subprocess.Popen(cmd, stderr=subprocess.DEVNULL)
 
-  print("now, all process run over!")
+  print("All process run over!")
   return splited_info
 
 def rf_filter(param, in_file):
@@ -179,33 +176,32 @@ def rf_filter(param, in_file):
   cr.columns = [*som_features, 'None'] #TODO: i should change the code of c++ to avoid the None colum
   cr['VarLabel'] = cr['VarLabel'].map(varLabel_to_label)
   cr['VarType'] = cr['VarType'].map(type_to_label)
+  cr['RefLength'] = cr['Ref'].str.len()
+  cr['AltLength'] = cr['Alt'].str.len()
   #snv data process 
   time_start = time.time()
   snvs = cr[cr['VarType'] == 0]
   inputs = snvs[[*som_selected_features, "VarLabel"]].to_numpy()
-  #clf = joblib.load(args.snv_model)
-  #scale = args.scale
   clf = joblib.load(param['snvmod'])
-  scale = 0.2
+  clf.verbose = False
+  scale = float(param['snvscale'])
   snv_pred = my_predict(clf, inputs, scale)
   snv_result = snvs.loc[snv_pred == 1]
   time_end = time.time()
-  print("time processing snv: {} s".format(time_end - time_start))
+  #print("time filter snv: {} s".format(time_end - time_start))
   
   #indel data process
   time_start = time.time()
   indels = cr[cr['VarType'] != 0]
-  indels['RefLength'] = cr['Ref'].map(len)
-  indels['AltLength'] = cr['Alt'].map(len)
   inputs = indels[["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel"]].to_numpy()
   #clf = joblib.load(args.indel_model)
-  #scale = args.scale
+  scale = float(param['indelscale'])
   clf = joblib.load(param['indelmod'])
-  scale = param['scale']
+  clf.verbose = False
   indel_pred = my_predict(clf, inputs, scale)
   indel_result = indels.loc[indel_pred == 1]
   time_end = time.time()
-  print("time processing indel: {} s".format(time_end - time_start))
+  #print("time filter indel: {} s".format(time_end - time_start))
 
   return snv_result, indel_result
 
@@ -265,23 +261,21 @@ if __name__ == "__main__":
   for x in detector_parser._group_actions:
     k, v = x.dest, getattr(args, x.dest, None)
     if v:
-      detector_param[k] = v
+      detector_param[k] = '' if isinstance(v, bool) else str(v)
   print("[INFO] detector paramters: ", detector_param)
   splited_info = run_rabbitvar(args.BIN, args.workspace, detector_param)
   filter_param = {}
   for x in filter_parser._group_actions:
     k, v = x.dest, getattr(args, x.dest, None)
     if v:
-      filter_param[k] = v
+      filter_param[k] = '' if isinstance(v, bool) else str(v)
 
   vcf_file = args.vcf
   vcf = list()
   for detector_out in splited_info:
     snvs, indels = rf_filter(filter_param, detector_out[1])
-    print(type(snvs),type(indels))
     vcf.append(snvs)
     vcf.append(indels)
-    print(len(vcf), len(vcf[0]))
     #write vcf file
     with open(vcf_file, 'w') as f:
       write_header(f)
