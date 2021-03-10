@@ -3,7 +3,7 @@
 	1. [X] python get numa number API 
 	2. [X] implement ncpy, store c++ variant data to numpy. 
 	   => use pandas.read_csv, 3 times faster
-	3. [ ] python re-distribute bed file
+	3. [X] python re-distribute bed file
 	4. [X] python run rabbitvar exe file: python subprocess基本没有开销
 
 *note* 
