@@ -96,6 +96,8 @@ def call_rf(args):
                     continue
                 elif vartype == "INDEL" and items[fe2i["VarType"]] == "SNV":
                     continue
+                elif items[fe2i["VarLabel"]] == "Germline":
+                    continue
                 if vartype == 'SNV':
                     key, data = format_snv_data_item(items, True)
                 elif vartype == 'INDEL':
