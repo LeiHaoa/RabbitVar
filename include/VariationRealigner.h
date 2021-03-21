@@ -128,7 +128,7 @@ private:
 public:
 	void print_result(); //only for debug
 	VariationRealigner(Configuration* conf, dataPool* data_pool);
-	~VariationRealigner();
+	//~VariationRealigner();
 	Scope<RealignedVariationData> process(Scope<VariationData> &scope);
 	//void process(Scope<VariationData> &scope);
 
