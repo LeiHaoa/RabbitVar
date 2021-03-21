@@ -199,9 +199,8 @@ Scope<AlignedVarsData>* ToVarsBuilder::process(Scope<RealignedVariationData> &sc
 			//}
 			//---------pirnt vars over------------//
 		 } catch(...){// (Exception exception) {
-			 //printExceptionAndContinue(exception, "position", string.valueOf(lastPosition), region);
-			 cerr << "in ToVarsBuilder, error!!\n" << endl;
-			 exit(0);
+			 cerr << "in ToVarsBuilder, error," << " pos: " << lastPosition << region.chr << ":" << region.start << "-" << region.end << endl;
+			 //exit(0);
 		 }
 	}
 

@@ -62,6 +62,7 @@ VariationRealigner::VariationRealigner(Configuration* conf, dataPool* data_pool)
 	this->data_pool = data_pool;
 }
 
+/*
 VariationRealigner::~VariationRealigner(){
 	//free softClips5end
 	for(auto& sc5i: *softClips5End){
@@ -74,6 +75,7 @@ VariationRealigner::~VariationRealigner(){
 	}
 	//delete softClips3End;
 }
+*/
 
 void VariationRealigner::print_result(){
 	cout << "result infom: " << nonInsertionVariants->size() <<
@@ -497,294 +499,281 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, robin_hood::u
 	//		}
 	//	}
 	//}
-    robin_hood::unordered_map<int, char> &ref = reference->referenceSequences;
-    vector<string> *bams;
-    if (bamsParameter == NULL || bamsParameter->size() == 0) {
-        bams = NULL;
-    } else {
-        bams = bamsParameter;
-    }
-    // In perl it doesn't commented, but it doesn't used
-    // int longmm = 3; //Longest continued mismatches typical aligned at the end
-    vector<SortPositionDescription*> tmp = fillAndSortTmp(positionToDeletionCount);
-    int lastPosition = 0;
-    for (SortPositionDescription* tpl : tmp) {
-        try {
-            int p = tpl->position;
-            lastPosition = p;
-            string vn = tpl->descriptionstring;
-            int dcnt = tpl->count;
-            //if (conf.y) {
+	robin_hood::unordered_map<int, char> &ref = reference->referenceSequences;
+	vector<string> *bams;
+	if (bamsParameter == NULL || bamsParameter->size() == 0) {
+		bams = NULL;
+	} else {
+		bams = bamsParameter;
+	}
+	// In perl it doesn't commented, but it doesn't used
+	// int longmm = 3; //Longest continued mismatches typical aligned at the end
+	vector<SortPositionDescription*> tmp = fillAndSortTmp(positionToDeletionCount);
+	int lastPosition = 0;
+	for (SortPositionDescription* tpl : tmp) {
+		try {
+			int p = tpl->position;
+			lastPosition = p;
+			string vn = tpl->descriptionstring;
+			int dcnt = tpl->count;
+			//if (conf.y) {
 			//printf("  Realigndel for: %d %s %d cov: %d\n", p, vn.c_str(), dcnt, refCoverage[p]);
 			//}
-            Variation* vref = getVariation(data_pool, *nonInsertionVariants, p, vn);
-            int dellen = 0;
-            //----regex------regex_match(desc_string_of_insertion_segment, regex(BEGIN_ATGC_END)
-            smatch sm;
-            bool mtch = regex_search(vn, sm, conf->patterns->BEGIN_MINUS_NUMBER);
-            
-            if (mtch) {
-                dellen = atoi(sm[1].str().c_str());
-            }
-            mtch = regex_search(vn, sm, conf->patterns->UP_NUMBER_END);
-            if (mtch) {
-                dellen += atoi(sm[1].str().c_str());
-            }
-            string extrains = "";
-            string extra = "";
-            string inv5 = "";
-            string inv3 = "";
+			Variation* vref = getVariation(data_pool, *nonInsertionVariants, p, vn);
+			int dellen = 0;
+			//----regex------regex_match(desc_string_of_insertion_segment, regex(BEGIN_ATGC_END)
+			smatch sm;
+			bool mtch = regex_search(vn, sm, conf->patterns->BEGIN_MINUS_NUMBER);
+						
+			if (mtch) {
+				dellen = atoi(sm[1].str().c_str());
+			}
+			mtch = regex_search(vn, sm, conf->patterns->UP_NUMBER_END);
+			if (mtch) {
+				dellen += atoi(sm[1].str().c_str());
+			}
+			string extrains = "";
+			string extra = "";
+			string inv5 = "";
+			string inv3 = "";
 
-            if (regex_search(vn, sm, conf->patterns->MINUS_NUMBER_ATGNC_SV_ATGNC_END)) {
-                inv5 = sm[1];
-                inv3 = sm[2];
-            } else if (regex_search(vn, sm, conf->patterns->BEGIN_MINUS_NUMBER_ANY)) {
-                extra = regex_replace(sm[1].str(), regex("\\^|&|#"), "");
-                if (regex_search(vn, sm, conf->patterns->CARET_ATGNC)) {
-                    extrains = sm[1];
-                }
-            }
+			if (regex_search(vn, sm, conf->patterns->MINUS_NUMBER_ATGNC_SV_ATGNC_END)) {
+				inv5 = sm[1];
+				inv3 = sm[2];
+			} else if (regex_search(vn, sm, conf->patterns->BEGIN_MINUS_NUMBER_ANY)) {
+				extra = regex_replace(sm[1].str(), regex("\\^|&|#"), "");
+				if (regex_search(vn, sm, conf->patterns->CARET_ATGNC)) {
+					extrains = sm[1];
+				}
+			}
 
-            int wustart = (p - 200) > 1 ? (p - 200) : 1;
-            string wupseq = joinRef(ref, wustart, p - 1) + extra; // 5' flanking seq
-            if (!inv3.empty()) {
-                wupseq = inv3;
-            }
-            //------------------------chrLengths:instance().chrLengths();
-            int sanend = (conf->chrLengths.count(chr) && p + 200 > conf->chrLengths[chr])
-                    ? conf->chrLengths[chr]
-                    : p + 200;
+			int wustart = (p - 200) > 1 ? (p - 200) : 1;
+			string wupseq = joinRef(ref, wustart, p - 1) + extra; // 5' flanking seq
+			if (!inv3.empty()) {
+				wupseq = inv3;
+			}
+			int sanend = (conf->chrLengths.count(chr) && p + 200 > conf->chrLengths[chr])
+				? conf->chrLengths[chr]
+				: p + 200;
 
-            // 3' flanking seq
-            string sanpseq = extra + joinRef(ref, p + dellen + extra.length() - extrains.length(), sanend);
-            if (!inv5.empty()) {
-                sanpseq = inv5;
-           }
-            // mismatches, mismatch positions, 5 or 3 ends
-            MismatchResult* r3 = findMM3(ref, p, sanpseq);
-            MismatchResult* r5 = findMM5(ref, p + dellen + extra.length() - extrains.length() - 1, wupseq);
+			// 3' flanking seq
+			string sanpseq = extra + joinRef(ref, p + dellen + extra.length() - extrains.length(), sanend);
+			if (!inv5.empty()) {
+				sanpseq = inv5;
+			}
+			// mismatches, mismatch positions, 5 or 3 ends
+			MismatchResult* r3 = findMM3(ref, p, sanpseq);
+			MismatchResult* r5 = findMM5(ref, p + dellen + extra.length() - extrains.length() - 1, wupseq);
 
-            vector<Mismatch*> &mm3 = r3->mismatches;
+			vector<Mismatch*> &mm3 = r3->mismatches;
 			const int mm3_size = mm3.size();
-            vector<int> &sc3p = r3->scp;
-            int nm3 = r3->nm;
-            int misp3 = r3->misp;
-            string &misnt3 = r3->misnt;
+			vector<int> &sc3p = r3->scp;
+			int nm3 = r3->nm;
+			int misp3 = r3->misp;
+			string &misnt3 = r3->misnt;
 
-            vector<Mismatch*> &mm5 = r5->mismatches;
+			vector<Mismatch*> &mm5 = r5->mismatches;
 			const int mm5_size = mm5.size();
-            vector<int> &sc5p = r5->scp;
-            int nm5 = r5->nm;
-            int misp5 = r5->misp;
-            string &misnt5 = r5->misnt;
+			vector<int> &sc5p = r5->scp;
+			int nm5 = r5->nm;
+			int misp5 = r5->misp;
+			string &misnt5 = r5->misnt;
 
 			//delete r3;
 			//delete r5;
-            //if (conf.y) {
-            //    printf("  Mismatches: misp3: %s-%s misp5: %s-%s sclip3: %s sclip5: %s\n",
-            //            misp3, misnt3, misp5, misnt5, Utils.tostring(sc3p), Utils.tostring(sc5p));
-            //}
+			//if (conf.y) {
+			//    printf("  Mismatches: misp3: %s-%s misp5: %s-%s sclip3: %s sclip5: %s\n",
+			//            misp3, misnt3, misp5, misnt5, Utils.tostring(sc3p), Utils.tostring(sc5p));
+			//}
 
-            vector<Mismatch*> mmm(mm3); //$mmm
-            //vector<Mismatch*>& mmm = mm3; //$mmm
+			vector<Mismatch*> mmm(mm3); //$mmm
+			//vector<Mismatch*>& mmm = mm3; //$mmm
 			//TODO: 上面代码可以优化， r3 r5 没有必要存在， mm3 mm5可以直接用一个vector就可以了。
-            mmm.insert(mmm.end(), mm5.begin(), mm5.end());
-            for (Mismatch* mismatch : mmm) {
-                string mm = mismatch->mismatchSequence;
-                int mp = mismatch->mismatchPosition;
-                int me = mismatch->end;
-                if (mm.length() > 1) {
-                    //mm = mm[0] + "&" + mm.substr(1);
+			mmm.insert(mmm.end(), mm5.begin(), mm5.end());
+			for (Mismatch* mismatch : mmm) {
+				string mm = mismatch->mismatchSequence;
+				int mp = mismatch->mismatchPosition;
+				int me = mismatch->end;
+				if (mm.length() > 1) {
+					//mm = mm[0] + "&" + mm.substr(1);
 					mm.insert(1, 1, '&');
-                }
-                //---------------------------------
-                if (!nonInsertionVariants->count(mp)) {
-                    continue;
-                }
-                Variation* tv;
-                if ( !nonInsertionVariants->at(mp)->variation_map.count(mm)) {
+				}
+				//---------------------------------
+				if (!nonInsertionVariants->count(mp)) {
 					continue;
-                }
-                tv = nonInsertionVariants->at(mp)->variation_map[mm];
-                //----------------------------------
-                if (tv->varsCount == 0) {
-                    continue;
-                }
-                if (tv->meanQuality / tv->varsCount < conf->goodq) {
-                    continue;
-                }
+				}
+				Variation* tv;
+				if ( !nonInsertionVariants->at(mp)->variation_map.count(mm)) {
+					continue;
+				}
+				tv = nonInsertionVariants->at(mp)->variation_map[mm];
+				//----------------------------------
+				if (tv->varsCount == 0) {
+					continue;
+				}
+				if (tv->meanQuality / tv->varsCount < conf->goodq) {
+					continue;
+				}
 
-                if (tv->meanPosition / tv->varsCount > (me == 3 ? nm3 + 4 : nm5 + 4)) {
-                    continue;
-                }
-                if (tv->varsCount >= dcnt + dellen || tv->varsCount / dcnt >= 8) {
-                    continue;
-                }
-                //if (conf.y) {
-                //    printf("  Realigndel Adj: %s %s %s %s %s %s %s %s cov: %s\n",
-                //            mm, mp, me, nm3, nm5, p, tv.varsCount, tv.meanQuality, refCoverage.get(p));
-                //}
-                // Adjust ref cnt so that AF won't > 1
-                if (mp > p && me == 5) {
-                    double f = tv->meanPosition != 0 ? (mp - p) / (tv->meanPosition / (double) tv->varsCount) : 1;
-                    if (f > 1) {
-                        f = 1;
-                    }
-                    (*refCoverage)[p] += (int) (tv->varsCount * f);
-                    adjRefCnt(tv, getVariationMaybe(*nonInsertionVariants, p, ref[p]), dellen);
-                }
+				if (tv->meanPosition / tv->varsCount > (me == 3 ? nm3 + 4 : nm5 + 4)) {
+					continue;
+				}
+				if (tv->varsCount >= dcnt + dellen || tv->varsCount / dcnt >= 8) {
+					continue;
+				}
+				//if (conf.y) {
+				//    printf("  Realigndel Adj: %s %s %s %s %s %s %s %s cov: %s\n",
+				//            mm, mp, me, nm3, nm5, p, tv.varsCount, tv.meanQuality, refCoverage.get(p));
+				//}
+				// Adjust ref cnt so that AF won't > 1
+				if (mp > p && me == 5) {
+					double f = tv->meanPosition != 0 ? (mp - p) / (tv->meanPosition / (double) tv->varsCount) : 1;
+					if (f > 1) {
+						f = 1;
+					}
+					(*refCoverage)[p] += (int) (tv->varsCount * f);
+					adjRefCnt(tv, getVariationMaybe(*nonInsertionVariants, p, ref[p]), dellen);
+				}
 
-                if(mp > p && me == 3 && nonInsertionVariants->count(p) &&
-				   nonInsertionVariants->at(p)->variation_map.count(string(1, ref[p]))){
+				if(mp > p && me == 3 && nonInsertionVariants->count(p) &&
+					 nonInsertionVariants->at(p)->variation_map.count(string(1, ref[p]))){
 					Variation *lref = nonInsertionVariants->at(p)->variation_map[string(1,ref[p])];
 					adjCnt(vref, tv, lref);
 				}else{
 					adjCnt(vref, tv);
 				}
 				//if(q) adjCnt(vref, tv);       
-                /////////---??????------------------------------------------------------------------banlaz--------------
+				/////////---??????------------------------------------------------------------------banlaz--------------
 
-                nonInsertionVariants->at(mp)->variation_map.erase(mm);
-                if (nonInsertionVariants->at(mp)->variation_map.empty()) {
-                    nonInsertionVariants->erase(mp);
-                }
-                //if (conf.y) {
-                //    printf("  Realigndel AdjA: %s %s %s %s %s %s %s %s cov: %s\n",
-                //            mm, mp, me, nm3, nm5, p, tv.varsCount, tv.meanQuality, refCoverage.get(p));
-                //}
+				nonInsertionVariants->at(mp)->variation_map.erase(mm);
+				if (nonInsertionVariants->at(mp)->variation_map.empty()) {
+					nonInsertionVariants->erase(mp);
+				}
 				//printf("  Realigndel AdjA: %s %d %d %d %d %d %d %f cov: %d\n",
 				//	mm.c_str(), mp, me, nm3, nm5, p, tv->varsCount, tv->meanQuality, refCoverage[p]);
 				//delete mismatch;
-            }
+			}
 			//vector<Mismatch*>(mmm).swap(mmm); 
 
-            if (misp3 != 0 && mm3_size == 1 && nonInsertionVariants->count(misp3)
-				&& nonInsertionVariants->at(misp3)->variation_map.count(misnt3)
-				&& nonInsertionVariants->at(misp3)->variation_map[misnt3]->varsCount < dcnt) {
-                nonInsertionVariants->at(misp3)->variation_map.erase(misnt3);
-            }
-            if (misp5 != 0 && mm5_size == 1 && nonInsertionVariants->count(misp5)
-				&& nonInsertionVariants->at(misp5)->variation_map.count(misnt5)
-				&& nonInsertionVariants->at(misp5)->variation_map[misnt5]->varsCount < dcnt) {
-                nonInsertionVariants->at(misp5)->variation_map.erase(misnt5);
-            }
+			if (misp3 != 0 && mm3_size == 1 && nonInsertionVariants->count(misp3)
+					&& nonInsertionVariants->at(misp3)->variation_map.count(misnt3)
+					&& nonInsertionVariants->at(misp3)->variation_map[misnt3]->varsCount < dcnt) {
+				nonInsertionVariants->at(misp3)->variation_map.erase(misnt3);
+			}
+			if (misp5 != 0 && mm5_size == 1 && nonInsertionVariants->count(misp5)
+					&& nonInsertionVariants->at(misp5)->variation_map.count(misnt5)
+					&& nonInsertionVariants->at(misp5)->variation_map[misnt5]->varsCount < dcnt) {
+				nonInsertionVariants->at(misp5)->variation_map.erase(misnt5);
+			}
 
-            for (int sc5pp : sc5p) {
-                if (softClips5End->count(sc5pp) && !softClips5End->at(sc5pp)->used) {
-                    Sclip *tv = softClips5End->at(sc5pp);
-                    string seq = findconseq(tv, 0);
-                    //Make sure a couple of bogus mapping won't scoop up several fold soft-clip reads
-                    if (dcnt <= 2 && tv->varsCount / dcnt > 5) {
-                        continue;
-                    }
-                    //if (conf.y) {
-                    //    printf("  Realigndel 5: %s %s seq: '%s' Wuseq: %s cnt: %s %s %s %s cov: %s\n",
-                    //            p, sc5pp, seq, new string(wupseq).reverse(), tv.varsCount, dcnt, vn, p, refCoverage.get(p));
-					//}
+			for (int sc5pp : sc5p) {
+				if (softClips5End->count(sc5pp) && !softClips5End->at(sc5pp)->used) {
+					Sclip *tv = softClips5End->at(sc5pp);
+					string seq = findconseq(tv, 0);
+					//Make sure a couple of bogus mapping won't scoop up several fold soft-clip reads
+					if (dcnt <= 2 && tv->varsCount / dcnt > 5) {
+						continue;
+					}
 
 					if (seq != " " && ismatch(seq, wupseq, -1)) {
-                        if (sc5pp > p) {
-                            //incCnt(refCoverage, p, tv.varsCount);
-                            (*refCoverage)[p] += tv->varsCount;
-                        }
-                        adjCnt(vref, tv);
-                        softClips5End->at(sc5pp)->used = true;
-                        //if (conf.y) {
-                        //    printf("  Realigndel 5: %s %s %s %s %s %s %s %s used cov: %s\n",
-                        //            p, sc5pp, seq, new string(wupseq).reverse(), tv.varsCount, dcnt, vn, p, refCoverage.get(p));
-                        //}
-                    }
+						if (sc5pp > p) {
+							//incCnt(refCoverage, p, tv.varsCount);
+							(*refCoverage)[p] += tv->varsCount;
+						}
+						adjCnt(vref, tv);
+						softClips5End->at(sc5pp)->used = true;
+					}
 					//printf("  Realigndel 5: %d %d seq: '%s' Wuseq: %s cnt: %d %d %s %d cov: %d\n",
 					//	   p, sc5pp, seq.c_str(), wupseq.c_str(), tv->varsCount, dcnt, vn.c_str(), p, refCoverage[p]);
-                }
-            }
+				}
+			}
 
-            for (int sc3pp : sc3p) {
-                if (softClips3End->count(sc3pp) && !softClips3End->at(sc3pp)->used) {
-                    Sclip *tv = softClips3End->at(sc3pp);
-                    string seq = findconseq(tv, 0);
-                    //Make sure a couple of bogus mapping won't scoop up several fold soft-clip reads
-                    if (dcnt <= 2 && tv->varsCount / dcnt > 5) {
-                        continue;
-                    }
-                    //if (conf.y) {
-                    //    printf("  Realigndel 3: %s %s seq '%s' Sanseq: %s cnt: %s %s %s %s %s %s\n",
-                    //            p, sc3pp, seq, sanpseq, tv.varsCount, dcnt, vn, p, dellen, substr(sanpseq, sc3pp - p));
-                    //}
-                    if (seq != " " && ismatch(seq, vc_substr(sanpseq, sc3pp - p), 1)) {
-                        
-                        if (sc3pp <= p) {
-                            //incCnt(refCoverage, p, tv.varsCount);
-                            (*refCoverage)[p] += tv->varsCount;
-                        }
-                        Variation *lref = sc3pp <= p ? NULL : getVariationMaybe(*nonInsertionVariants, p, ref[p]);
+			for (int sc3pp : sc3p) {
+				if (softClips3End->count(sc3pp) && !softClips3End->at(sc3pp)->used) {
+					Sclip *tv = softClips3End->at(sc3pp);
+					string seq = findconseq(tv, 0);
+					//Make sure a couple of bogus mapping won't scoop up several fold soft-clip reads
+					if (dcnt <= 2 && tv->varsCount / dcnt > 5) {
+						continue;
+					}
+					//if (conf.y) {
+					//    printf("  Realigndel 3: %s %s seq '%s' Sanseq: %s cnt: %s %s %s %s %s %s\n",
+					//            p, sc3pp, seq, sanpseq, tv.varsCount, dcnt, vn, p, dellen, substr(sanpseq, sc3pp - p));
+					//}
+					if (seq != " " && ismatch(seq, vc_substr(sanpseq, sc3pp - p), 1)) {
+												
+						if (sc3pp <= p) {
+							//incCnt(refCoverage, p, tv.varsCount);
+							(*refCoverage)[p] += tv->varsCount;
+						}
+						Variation *lref = sc3pp <= p ? NULL : getVariationMaybe(*nonInsertionVariants, p, ref[p]);
 						//if(lref == NULL){
 						//	adjCnt(vref, tv);
 						//}else{
 						//	adjCnt(vref, tv, lref);
 						//}
 						adjCnt(vref, tv, lref);
-                        softClips3End->at(sc3pp)->used = true;
-                    }
+						softClips3End->at(sc3pp)->used = true;
+					}
 					//printf("  Realigndel 3: %d %d seq: '%s' Wuseq: %s cnt: %d %d %s %d cov: %d\n",
 					//	   p, sc3pp, seq.c_str(), sanpseq.c_str(), tv->varsCount, dcnt, vn.c_str(), p, refCoverage[p]);
-                }
-            }
-            // In perl it is commented too
-            // int pe = p + dellen + extra.length() + compm.length();
-            int pe = p + dellen + extra.length() - extrains.length();
-            Variation *h = getVariationMaybe(*nonInsertionVariants, p, ref[p]);
-            // taking the size of gap into account
-            if (bams != NULL && bams->size() > 0
-                    && pe - p >= 5
-                    && pe - p < maxReadLength - 10
-                    && h != NULL && h->varsCount != 0
-				    && vref->varsCount > 2 * h->varsCount * (1 - (pe - p) / (double) maxReadLength)
+				}
+			}
+			// In perl it is commented too
+			// int pe = p + dellen + extra.length() + compm.length();
+			int pe = p + dellen + extra.length() - extrains.length();
+			Variation *h = getVariationMaybe(*nonInsertionVariants, p, ref[p]);
+			// taking the size of gap into account
+			if (bams != NULL && bams->size() > 0
+					&& pe - p >= 5
+					&& pe - p < maxReadLength - 10
+					&& h != NULL && h->varsCount != 0
+					&& vref->varsCount > 2 * h->varsCount * (1 - (pe - p) / (double) maxReadLength)
 					&& noPassingReads(chr, p, pe, *bams)) {
-                adjCnt(vref, h, h);
-            }
+				adjCnt(vref, h, h);
+			}
 			delete r3;
 			delete r5;
-        } catch(...){// (Exception exception) {
-            //printExceptionAndContinue(exception, "variant", string.valueOf(lastPosition), region);
-			cerr << "realigndel error!!" << endl;
-        }
-    }
+		} catch(...){
+			//printExceptionAndContinue(exception, "variant", string.valueOf(lastPosition), region);
+			cerr << "realigndel error, " << "pos: " << lastPosition << region.chr << ":" << region.start << "-" << region.end << endl;
+		}
+	}
 
 	for (int i = tmp.size() - 1; i > 0; i--) {
 		try {
 			SortPositionDescription *tpl = tmp[i];
 			int p = tpl->position;
-            lastPosition = p;
-            string vn = tpl->descriptionstring;
-            if (nonInsertionVariants->count(p)==0) {
+			lastPosition = p;
+			string vn = tpl->descriptionstring;
+			if (nonInsertionVariants->count(p)==0) {
 				//printf("cont 1\n");
-                continue;
-            }
-            
-            if (nonInsertionVariants->at(p)->variation_map.count(vn)==0) {
+				continue;
+			}
+						
+			if (nonInsertionVariants->at(p)->variation_map.count(vn)==0) {
 				//printf("cont 2\n");
-                continue;
-            }
-            Variation *vref = nonInsertionVariants->at(p)->variation_map[vn];
-            smatch matcher;
-            if (regex_search(vn, matcher, conf->patterns->MINUS_NUMBER_AMP_ATGCs_END)) {
-                string tn = matcher[1];
-                if (nonInsertionVariants->at(p)->variation_map.count(tn)>0) {
-                	//cout<<"-------------nonInserVar[p]->vm.count(tn)" << " ------------"<<endl;
+				continue;
+			}
+			Variation *vref = nonInsertionVariants->at(p)->variation_map[vn];
+			smatch matcher;
+			if (regex_search(vn, matcher, conf->patterns->MINUS_NUMBER_AMP_ATGCs_END)) {
+				string tn = matcher[1];
+				if (nonInsertionVariants->at(p)->variation_map.count(tn)>0) {
+					//cout<<"-------------nonInserVar[p]->vm.count(tn)" << " ------------"<<endl;
 					Variation *tref = nonInsertionVariants->at(p)->variation_map[tn];
-                    if (vref->varsCount < tref->varsCount) {
-                        adjCnt(tref, vref);
-                        nonInsertionVariants->at(p)->variation_map.erase(vn);
-                    }
-                }
-            }
-        } catch(...){// (Exception exception) {
-            //printExceptionAndContinue(exception, "variant", string.valueOf(lastPosition), region);
+					if (vref->varsCount < tref->varsCount) {
+						adjCnt(tref, vref);
+						nonInsertionVariants->at(p)->variation_map.erase(vn);
+					}
+				}
+			}
+		} catch(...){// (Exception exception) {
+			//printExceptionAndContinue(exception, "variant", string.valueOf(lastPosition), region);
 			cerr << "an exception casued!!" << endl;
 			exit(0);
-        }
-    }
+		}
+	}
 
 	//----delete tmp-----//
 	//   vector<SortPositionDescription*> tmp = fillAndSortTmp(positionToDeletionCount);
@@ -792,392 +781,373 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, robin_hood::u
 		delete spd;
 	}
 	vector<SortPositionDescription*>(tmp).swap(tmp);
-	
-	//if(positionToDeletionCount.size() == 1){
-	//	for(auto& vm: positionToDeletionCount){
-	//		for(auto v: vm.second){
-	//			printf("deletion after process: %s, count: %d\n", v.first.c_str(), v.second);
-	//		}
-	//	}
-	//}
 }
 
-    /**
-     * Realign insertions
-     * @param positionToInsertionCount insertion variants count on positions
-     * @return insertion sequence
-     */
-    string VariationRealigner::realignins(robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > &positionToInsertionCount) {
-        robin_hood::unordered_map<int, char> &ref = reference->referenceSequences;
-        vector<SortPositionDescription*> tmp = fillAndSortTmp(positionToInsertionCount);
-		//cout << "tmp size: " << tmp.size() << endl;
-		//for(SortPositionDescription* tpl: tmp){
-		//	cout << "pos: " << tpl->position << " vn: " << tpl->descriptionstring << " count: " << tpl->count  << endl;
-		//}
-        string NEWINS = "";
-        int lastPosition = 0;
-        for (SortPositionDescription* tpl : tmp) {
-            try {
-                int position = tpl->position;
-                lastPosition = position;
-                string vn = tpl->descriptionstring;
-                int insertionCount = tpl->count;
-                //if (conf.y) {
-                //}
-                string insert1;
-                //Matcher mtch = BEGIN_PLUS_ATGC.matcher(vn);
-                smatch mtch;
-                if (regex_search(vn,mtch,conf->patterns->BEGIN_PLUS_ATGC)) {
-                    insert1 = mtch[1];
-                } else {
-                    continue;
-                }
-                string ins3 = "";
-                int inslen = insert1.length();
+/**
+ * Realign insertions
+ * @param positionToInsertionCount insertion variants count on positions
+ * @return insertion sequence
+ */
+string VariationRealigner::realignins(robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > &positionToInsertionCount) {
+	robin_hood::unordered_map<int, char> &ref = reference->referenceSequences;
+	vector<SortPositionDescription*> tmp = fillAndSortTmp(positionToInsertionCount);
+	//cout << "tmp size: " << tmp.size() << endl;
+	//for(SortPositionDescription* tpl: tmp){
+	//	cout << "pos: " << tpl->position << " vn: " << tpl->descriptionstring << " count: " << tpl->count  << endl;
+	//}
+	string NEWINS = "";
+	int lastPosition = 0;
+	for (SortPositionDescription* tpl : tmp) {
+		try {
+			int position = tpl->position;
+			lastPosition = position;
+			string vn = tpl->descriptionstring;
+			int insertionCount = tpl->count;
+			//if (conf.y) {
+			//}
+			string insert1;
+			//Matcher mtch = BEGIN_PLUS_ATGC.matcher(vn);
+			smatch mtch;
+			if (regex_search(vn,mtch,conf->patterns->BEGIN_PLUS_ATGC)) {
+				insert1 = mtch[1];
+			} else {
+				continue;
+			}
+			string ins3 = "";
+			int inslen = insert1.length();
 
-                
-                if (regex_search(vn,mtch,conf->patterns->DUP_NUM_ATGC)) {
-                    ins3 = mtch[2];
-                    inslen += atoi(mtch[1].str().c_str()) + ins3.length();
-                }
-                string extra = "";
-                //mtch = AMP_ATGC.matcher(vn);
-                if (regex_search(vn,mtch,conf->patterns->AMP_ATGC)) {
-                    extra = mtch[1];
-                }
-                string compm = ""; // the match part for a complex variant
-                //mtch = HASH_ATGC.matcher(vn);
-                if (regex_search(vn,mtch,conf->patterns->HASH_ATGC)) {
-                    compm = mtch[1];
-                }
+								
+			if (regex_search(vn,mtch,conf->patterns->DUP_NUM_ATGC)) {
+				ins3 = mtch[2];
+				inslen += atoi(mtch[1].str().c_str()) + ins3.length();
+			}
+			string extra = "";
+			//mtch = AMP_ATGC.matcher(vn);
+			if (regex_search(vn,mtch,conf->patterns->AMP_ATGC)) {
+				extra = mtch[1];
+			}
+			string compm = ""; // the match part for a complex variant
+			//mtch = HASH_ATGC.matcher(vn);
+			if (regex_search(vn,mtch,conf->patterns->HASH_ATGC)) {
+				compm = mtch[1];
+			}
 
-                // In perl it doesn't commented, but not used
-                string newins = ""; // the adjacent insertion
-               // mtch = CARET_ATGC_END.matcher(vn);
-                if (regex_search(vn,mtch,conf->patterns->CARET_ATGC_END)) {
-                    newins = mtch[1];
-                }
+			// In perl it doesn't commented, but not used
+			string newins = ""; // the adjacent insertion
+			// mtch = CARET_ATGC_END.matcher(vn);
+			if (regex_search(vn,mtch,conf->patterns->CARET_ATGC_END)) {
+				newins = mtch[1];
+			}
 
-                int newdel = 0; // the adjacent deletion
-                //mtch = UP_NUMBER_END.matcher(vn);
-                if (regex_search(vn,mtch,conf->patterns->UP_NUMBER_END)) {
-                    newdel = atoi(mtch[1].str().c_str());
-                }
-                string tn = vn;
-                replaceFirst_re(tn, "^\\+", "");
-                replaceFirst(tn, "&", "");
-                replaceFirst(tn, "#", "");
-                replaceFirst_re(tn, "\\^\\d+$", "");
-                replaceFirst_re(tn, "\\^", "");
+			int newdel = 0; // the adjacent deletion
+			//mtch = UP_NUMBER_END.matcher(vn);
+			if (regex_search(vn,mtch,conf->patterns->UP_NUMBER_END)) {
+				newdel = atoi(mtch[1].str().c_str());
+			}
+			string tn = vn;
+			replaceFirst_re(tn, "^\\+", "");
+			replaceFirst(tn, "&", "");
+			replaceFirst(tn, "#", "");
+			replaceFirst_re(tn, "\\^\\d+$", "");
+			replaceFirst_re(tn, "\\^", "");
 
-                int wustart = position - 150 > 1 ? (position - 150) : 1;
+			int wustart = position - 150 > 1 ? (position - 150) : 1;
 
-                string wupseq = joinRef(ref, wustart, position) + tn; // 5prime flanking seq
-				//printf("vn: %s, tn: %s, wupseq: %s\n", vn.c_str(), tn.c_str(), wupseq.c_str());
-				//printf("extra: %s, newins: %s, newdel: %d\n", extra.c_str(), newins.c_str(), newdel);
-            /*
-            5' flanking region is a region of DNA that is adjacent to the 5' end of the gene.
-            The 5' flanking region contains the promoter, and may contain enhancers or other protein binding sites.
-            It is the region of DNA that is not transcribed into RNA.
-             */
-                int sanend = position + vn.length() + 100;
-                if(conf->chrLengths.count(chr)){
-                    int tend = conf->chrLengths[chr]; 
-                    if (tend < sanend) {
-                        sanend = tend;
-                    }
-                }
-                
-                // 3prime flanking seq
-                string sanpseq = "";
-            /*
-            3' flanking region is a region of DNA which is NOT copied into the mature mRNA, but which is present adjacent
-            to 3' end of the gene. It was originally thought that the 3' flanking DNA was not transcribed at all,
-            but it was discovered to be transcribed into RNA, but quickly erased during processing of the primary
-            transcript to form the mature mRNA. The 3' flanking region often contains sequences which affect the
-            formation of the 3' end of the message. It may also contain enhancers or other sites to which proteins may bind.
-             */
-                MismatchResult *findmm3;
+			string wupseq = joinRef(ref, wustart, position) + tn; // 5prime flanking seq
+			//printf("vn: %s, tn: %s, wupseq: %s\n", vn.c_str(), tn.c_str(), wupseq.c_str());
+			//printf("extra: %s, newins: %s, newdel: %d\n", extra.c_str(), newins.c_str(), newdel);
+			/*
+				5' flanking region is a region of DNA that is adjacent to the 5' end of the gene.
+				The 5' flanking region contains the promoter, and may contain enhancers or other protein binding sites.
+				It is the region of DNA that is not transcribed into RNA.
+			*/
+			int sanend = position + vn.length() + 100;
+			if(conf->chrLengths.count(chr)){
+				int tend = conf->chrLengths[chr]; 
+				if (tend < sanend) {
+					sanend = tend;
+				}
+			}
+								
+			// 3prime flanking seq
+			string sanpseq = "";
+			/*
+				3' flanking region is a region of DNA which is NOT copied into the mature mRNA, but which is present adjacent
+				to 3' end of the gene. It was originally thought that the 3' flanking DNA was not transcribed at all,
+				but it was discovered to be transcribed into RNA, but quickly erased during processing of the primary
+				transcript to form the mature mRNA. The 3' flanking region often contains sequences which affect the
+				formation of the 3' end of the message. It may also contain enhancers or other sites to which proteins may bind.
+			*/
+			MismatchResult *findmm3;
 
-                if (!ins3.empty()) {
-                    int p3 = position + inslen - ins3.length() + CONF_SVFLANK;
-                    if (ins3.length() > CONF_SVFLANK) {
-                        sanpseq = vc_substr(ins3, CONF_SVFLANK - ins3.length());
-                    }
-                    sanpseq += joinRef(ref, position + 1, position + 101);
-                    findmm3 = findMM3(ref, p3 + 1, sanpseq);
-                } else {
-                    sanpseq = tn + joinRef(ref, position + extra.length() + 1 + compm.length() + newdel, sanend);
-                    findmm3 = findMM3(ref, position + 1, sanpseq);
-                }
+			if (!ins3.empty()) {
+				int p3 = position + inslen - ins3.length() + CONF_SVFLANK;
+				if (ins3.length() > CONF_SVFLANK) {
+					sanpseq = vc_substr(ins3, CONF_SVFLANK - ins3.length());
+				}
+				sanpseq += joinRef(ref, position + 1, position + 101);
+				findmm3 = findMM3(ref, p3 + 1, sanpseq);
+			} else {
+				sanpseq = tn + joinRef(ref, position + extra.length() + 1 + compm.length() + newdel, sanend);
+				findmm3 = findMM3(ref, position + 1, sanpseq);
+			}
 
-                // mismatches, mismatch positions, 5 or 3 ends
-                MismatchResult *findmm5 = findMM5(ref, position + extra.length() + compm.length() + newdel, wupseq);
+			// mismatches, mismatch positions, 5 or 3 ends
+			MismatchResult *findmm5 = findMM5(ref, position + extra.length() + compm.length() + newdel, wupseq);
 
-                vector<Mismatch*> &mm3 = findmm3->mismatches;
-				const int mm3_size = mm3.size();
-                vector<int> &sc3p = findmm3->scp;
-                int nm3 = findmm3->nm;
-                int misp3 = findmm3->misp;
-                string &misnt3 = findmm3->misnt;
+			vector<Mismatch*> &mm3 = findmm3->mismatches;
+			const int mm3_size = mm3.size();
+			vector<int> &sc3p = findmm3->scp;
+			int nm3 = findmm3->nm;
+			int misp3 = findmm3->misp;
+			string &misnt3 = findmm3->misnt;
 
-                vector<Mismatch*> &mm5 = findmm5->mismatches;
-				const int mm5_size = mm5.size();
-                vector<int> &sc5p = findmm5->scp;
-                int nm5 = findmm5->nm;
-                int misp5 = findmm5->misp;
-                string& misnt5 = findmm5->misnt;
+			vector<Mismatch*> &mm5 = findmm5->mismatches;
+			const int mm5_size = mm5.size();
+			vector<int> &sc5p = findmm5->scp;
+			int nm5 = findmm5->nm;
+			int misp5 = findmm5->misp;
+			string& misnt5 = findmm5->misnt;
 
 
-                vector<Mismatch*> mmm = mm3;
-                //vector<Mismatch*>& mmm = mm3;
-                mmm.insert(mmm.end(), mm5.begin(), mm5.end());
-				//printf("mm3 size: %d, mm5 size: %d\n", mm3.size(), mm5.size());
-                Variation* vref = getVariation(data_pool, *insertionVariants, position, vn);
-                for (Mismatch* mismatch : mmm) {
-                    // $mm mismatch nucleotide
-                    string mismatchBases = mismatch->mismatchSequence;
-                    // $mp start position of clip that contains mm
-                    int mismatchPosition = mismatch->mismatchPosition;
-                    // $me end (3 or 5)
-                    int mismatchEnd = mismatch->end;
+			vector<Mismatch*> mmm = mm3;
+			//vector<Mismatch*>& mmm = mm3;
+			mmm.insert(mmm.end(), mm5.begin(), mm5.end());
+			//printf("mm3 size: %d, mm5 size: %d\n", mm3.size(), mm5.size());
+			Variation* vref = getVariation(data_pool, *insertionVariants, position, vn);
+			for (Mismatch* mismatch : mmm) {
+				// $mm mismatch nucleotide
+				string mismatchBases = mismatch->mismatchSequence;
+				// $mp start position of clip that contains mm
+				int mismatchPosition = mismatch->mismatchPosition;
+				// $me end (3 or 5)
+				int mismatchEnd = mismatch->end;
 
-                    if (mismatchBases.length() > 1) {
-                        //mismatchBases = mismatchBases[0] + "&" + mismatchBases.substr(1);
-                        mismatchBases = string(1,mismatchBases[0]) + "&" + mismatchBases.substr(1);
-                    }
+				if (mismatchBases.length() > 1) {
+					//mismatchBases = mismatchBases[0] + "&" + mismatchBases.substr(1);
+					mismatchBases = string(1,mismatchBases[0]) + "&" + mismatchBases.substr(1);
+				}
 
-                    if (!nonInsertionVariants->count(mismatchPosition)) {
-                        continue;
-                    }
+				if (!nonInsertionVariants->count(mismatchPosition)) {
+					continue;
+				}
 
-                    
-                    if (!nonInsertionVariants->at(mismatchPosition)->variation_map.count(mismatchBases)) {
-                        continue;
-                    }
-                    Variation* variation = nonInsertionVariants->at(mismatchPosition)->variation_map[mismatchBases];
-                    if (variation->varsCount == 0) {
-                        continue;
-                    }
-                    if (variation->meanQuality / variation->varsCount < conf->goodq) {
-                        continue;
-                    }
-                    if (variation->meanPosition / variation->varsCount > (mismatchEnd == 3 ? nm3 + 4 : nm5 + 4)) { // opt_k;
-                        continue;
-                    }
-                    if (variation->varsCount >= insertionCount + insert1.length() || variation->varsCount / insertionCount >= 8) {
-                        continue;
-                    }
-                    //if (conf.y) {
-                    //    System.err.printf("    insMM: %s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-                    //            mismatchBases, mismatchPosition, mismatchEnd, nm3, nm5, vn, insertionCount, variation->varsCount, variation->meanQuality, variation->meanPosition, refCoverage.get(position));
-                    //}
-                    // Adjust ref cnt so that AF won't > 1
-                    if (mismatchPosition > position && mismatchEnd == 5) {
-                        (*refCoverage)[position]+=variation->varsCount;
-                    }
+										
+				if (!nonInsertionVariants->at(mismatchPosition)->variation_map.count(mismatchBases)) {
+					continue;
+				}
+				Variation* variation = nonInsertionVariants->at(mismatchPosition)->variation_map[mismatchBases];
+				if (variation->varsCount == 0) {
+					continue;
+				}
+				if (variation->meanQuality / variation->varsCount < conf->goodq) {
+					continue;
+				}
+				if (variation->meanPosition / variation->varsCount > (mismatchEnd == 3 ? nm3 + 4 : nm5 + 4)) { // opt_k;
+					continue;
+				}
+				if (variation->varsCount >= insertionCount + insert1.length() || variation->varsCount / insertionCount >= 8) {
+					continue;
+				}
+				// Adjust ref cnt so that AF won't > 1
+				if (mismatchPosition > position && mismatchEnd == 5) {
+					(*refCoverage)[position]+=variation->varsCount;
+				}
 
-                    Variation *lref = NULL;
-                    if (mismatchPosition > position && mismatchEnd == 3 &&
-                            nonInsertionVariants->count(position) &&
-                            ref.count(position) &&
+				Variation *lref = NULL;
+				if (mismatchPosition > position && mismatchEnd == 3 &&
+						nonInsertionVariants->count(position) &&
+						ref.count(position) &&
 						nonInsertionVariants->at(position)->variation_map.count(string(1,ref[position]) ) ) {
 
-                        lref = nonInsertionVariants->at(position)->variation_map[string(1, ref[position]) ];
-                    	adjCnt(vref, variation, lref);
-                    }else{
-						adjCnt(vref,variation);
-					}
-					//printf("erase1: mismatchPositon: %d, mismatchBases: %s\n", mismatchPosition, mismatchBases.c_str());
-                    nonInsertionVariants->at(mismatchPosition)->variation_map.erase(mismatchBases);
-                    if (nonInsertionVariants->at(mismatchPosition)->variation_map.empty()) {
-						//printf("erase2: mismatchPositon: %d\n", mismatchPosition);
-                        nonInsertionVariants->erase(mismatchPosition);
-                    }
-					//delete mismatch;
-                }
-				//vector<Mismatch*>(mmm).swap(mmm);
-                if (misp3 != 0 && mm3_size == 1 && nonInsertionVariants->count(misp3)
+					lref = nonInsertionVariants->at(position)->variation_map[string(1, ref[position]) ];
+					adjCnt(vref, variation, lref);
+				}else{
+					adjCnt(vref,variation);
+				}
+				//printf("erase1: mismatchPositon: %d, mismatchBases: %s\n", mismatchPosition, mismatchBases.c_str());
+				nonInsertionVariants->at(mismatchPosition)->variation_map.erase(mismatchBases);
+				if (nonInsertionVariants->at(mismatchPosition)->variation_map.empty()) {
+					//printf("erase2: mismatchPositon: %d\n", mismatchPosition);
+					nonInsertionVariants->erase(mismatchPosition);
+				}
+				//delete mismatch;
+			}
+			//vector<Mismatch*>(mmm).swap(mmm);
+			if (misp3 != 0 && mm3_size == 1 && nonInsertionVariants->count(misp3)
 					&& nonInsertionVariants->at(misp3)->variation_map.count(misnt3)
 					&& nonInsertionVariants->at(misp3)->variation_map.at(misnt3)->varsCount < insertionCount) {
-					//printf("erase3: mismatchPositon: %d, mismatchBases: %s\n", misp3, misnt3.c_str());
-                    nonInsertionVariants->at(misp3)->variation_map.erase(misnt3);
-                }
-                if (misp5 != 0 && mm5_size == 1 && nonInsertionVariants->count(misp5)
+				//printf("erase3: mismatchPositon: %d, mismatchBases: %s\n", misp3, misnt3.c_str());
+				nonInsertionVariants->at(misp3)->variation_map.erase(misnt3);
+			}
+			if (misp5 != 0 && mm5_size == 1 && nonInsertionVariants->count(misp5)
 					&& nonInsertionVariants->at(misp5)->variation_map.count(misnt5)
 					&& nonInsertionVariants->at(misp5)->variation_map.at(misnt5)->varsCount < insertionCount) {
-					//printf("erase4: mismatchPositon: %d, mismatchBases: %s\n", misp5, misnt5.c_str());
-                    nonInsertionVariants->at(misp5)->variation_map.erase(misnt5);
-                }
-                for (int sc5pp : sc5p) {
-                    if(!softClips5End->count(sc5pp)){
-                        continue;
-                    }
-                    Sclip* tv = softClips5End->at(sc5pp);
-                    if (!tv->used) {
-                        string seq = findconseq(tv, 0);
-                        //if (conf.y) {
-                        //   printf("    ins5: %s %s %s %s VN: %s iCnt: %s vCnt: %s\n", position, sc5pp, seq, wupseq, vn, insertionCount, tv.varsCount);
-                        //}
-                        if (seq != " " && ismatch(seq, wupseq, -1)) {
-                            //if (conf.y) {
-                            //    printf("      ins5: %s %s %s %s VN: %s iCnt: %s cCnt: %s used\n", position, sc5pp, seq, wupseq, vn, insertionCount, tv.varsCount);
-                            //}
-                            if (sc5pp > position) {
-                                (*refCoverage)[position]+= tv->varsCount;
-                            }
-                            adjCnt(vref, tv);
-                            tv->used = true;
+				//printf("erase4: mismatchPositon: %d, mismatchBases: %s\n", misp5, misnt5.c_str());
+				nonInsertionVariants->at(misp5)->variation_map.erase(misnt5);
+			}
+			for (int sc5pp : sc5p) {
+				if(!softClips5End->count(sc5pp)){
+					continue;
+				}
+				Sclip* tv = softClips5End->at(sc5pp);
+				if (!tv->used) {
+					string seq = findconseq(tv, 0);
+					if (seq != " " && ismatch(seq, wupseq, -1)) {
+						if (sc5pp > position) {
+							(*refCoverage)[position]+= tv->varsCount;
+						}
+						adjCnt(vref, tv);
+						tv->used = true;
 
-                            //To find a case and implement later
-                            if (insert1.length() + 1 == vn.length() && sc5pp <= position) {
-                                // Not commented in perl, created for special case
-                                // System.err.printf(" %s %s\n", sc5pp, p);
-                            }
-                        }
-                    }
-                }
-                for (int sc3pp : sc3p) {
-                    if (!softClips3End->count(sc3pp)){
-                        continue;
-                    }
-                    Sclip* tv = softClips3End->at(sc3pp);  
-                    //if (conf.y) {
-                    //   printf("    33: %s %s VN: '%s'  3' seq: ^%s^\n", position, sc3pp, vn, sanpseq);
-                    //}
-                    if ( !tv->used) {
-                        string seq = findconseq(tv, 0);
-                        //if (conf.y) {
-                        //   printf("    ins3: %s %s %s %s VN: %s iCnt: %s vCnt: %s\n", position, sc3pp, seq, sanpseq, vn, insertionCount, tv.varsCount);
-                        //}
-                        string mseq = !ins3.empty() ? sanpseq : vc_substr(sanpseq, sc3pp - position - 1);
-                        if (seq != " " && ismatch(seq, mseq, 1)) {
-                            //if (conf.y) {
-                            //   printf("      ins3: %s %s %s VN: %s iCnt: %s vCnt: %s used\n", position, sc3pp, seq, vn, insertionCount, tv.varsCount);
-                            //}
-                            if (sc3pp <= position || insert1.length() > tv->meanPosition / tv->varsCount) {
-                                (*refCoverage)[position]+=tv->varsCount;
-                            }
-                            Variation *lref = NULL;
-                            if (sc3pp > position &&
-                                    nonInsertionVariants->count(position) &&
-                                    ref.count(position) &&
+						//To find a case and implement later
+						if (insert1.length() + 1 == vn.length() && sc5pp <= position) {
+							// Not commented in perl, created for special case
+							// System.err.printf(" %s %s\n", sc5pp, p);
+						}
+					}
+				}
+			}
+			for (int sc3pp : sc3p) {
+				if (!softClips3End->count(sc3pp)){
+					continue;
+				}
+				Sclip* tv = softClips3End->at(sc3pp);  
+				//if (conf.y) {
+				//   printf("    33: %s %s VN: '%s'  3' seq: ^%s^\n", position, sc3pp, vn, sanpseq);
+				//}
+				if ( !tv->used) {
+					string seq = findconseq(tv, 0);
+					//if (conf.y) {
+					//   printf("    ins3: %s %s %s %s VN: %s iCnt: %s vCnt: %s\n", position, sc3pp, seq, sanpseq, vn, insertionCount, tv.varsCount);
+					//}
+					string mseq = !ins3.empty() ? sanpseq : vc_substr(sanpseq, sc3pp - position - 1);
+					if (seq != " " && ismatch(seq, mseq, 1)) {
+						//if (conf.y) {
+						//   printf("      ins3: %s %s %s VN: %s iCnt: %s vCnt: %s used\n", position, sc3pp, seq, vn, insertionCount, tv.varsCount);
+						//}
+						if (sc3pp <= position || insert1.length() > tv->meanPosition / tv->varsCount) {
+							(*refCoverage)[position]+=tv->varsCount;
+						}
+						Variation *lref = NULL;
+						if (sc3pp > position &&
+								nonInsertionVariants->count(position) &&
+								ref.count(position) &&
 								nonInsertionVariants->at(position)->variation_map.count(string(1,ref[position]))) {
 
-                                lref = nonInsertionVariants->at(position)->variation_map[string(1,ref[position])];
-                            }
-                            if (insert1.length() > tv->meanPosition / tv->varsCount) {
-                                lref = NULL;
-                            }
-                            adjCnt(vref, tv, lref);
-                            tv->used = true;
-                            if (insert1.length() + 1 == vn.length() && insert1.length() > maxReadLength
-                                    && sc3pp >= position + 1 + insert1.length()) {
-                                int flag = 0;
-                                int offset = (sc3pp - position - 1) % insert1.length();
-                                string tvn = vn;
-                                for (int seqi = 0; seqi < seq.length() && seqi + offset < insert1.length(); seqi++) {
-                                    if (vc_substr(seq,seqi, 1)!=(vc_substr(insert1, seqi + offset, 1))) {
-                                        flag++;
-                                        int shift = seqi + offset + 1;
-                                        tvn = tvn.substr(0, shift) + vc_substr(seq ,seqi, 1) + tvn.substr(shift + 1);
-                                    }
-                                }
-                                if (flag > 0) {
-                                    Variation *variation = insertionVariants->at(position)->variation_map[vn];
-                                    insertionVariants->at(position)->variation_map[tvn]=variation;
-                                    insertionVariants->at(position)->variation_map.erase(vn);
-                                    NEWINS = tvn;
-                                }
-                            }
-                        }
-                }
-            }
-            int first3 = sc3p[0];
-            int first5 = sc5p[0];
-            if (!sc3p.empty() && !sc5p.empty()
-                    && first3 > first5 + 3
-                    && first3 - first5 < maxReadLength * 0.75) {
-                if (ref.count(position) && nonInsertionVariants->count(position)
-					&& nonInsertionVariants->at(position)->variation_map.count(string(1,ref[position]))) {
-                    adjRefFactor(nonInsertionVariants->at(position)->variation_map.at(string(1,ref[position])), (first3 - first5 - 1) / (double) maxReadLength);
-                }
-                adjRefFactor(vref, -(first3 - first5 - 1) / (double) maxReadLength);
-            }
+							lref = nonInsertionVariants->at(position)->variation_map[string(1,ref[position])];
+						}
+						if (insert1.length() > tv->meanPosition / tv->varsCount) {
+							lref = NULL;
+						}
+						adjCnt(vref, tv, lref);
+						tv->used = true;
+						if (insert1.length() + 1 == vn.length() && insert1.length() > maxReadLength
+								&& sc3pp >= position + 1 + insert1.length()) {
+							int flag = 0;
+							int offset = (sc3pp - position - 1) % insert1.length();
+							string tvn = vn;
+							for (int seqi = 0; seqi < seq.length() && seqi + offset < insert1.length(); seqi++) {
+								if (vc_substr(seq,seqi, 1)!=(vc_substr(insert1, seqi + offset, 1))) {
+									flag++;
+									int shift = seqi + offset + 1;
+									tvn = tvn.substr(0, shift) + vc_substr(seq ,seqi, 1) + tvn.substr(shift + 1);
+								}
+							}
+							if (flag > 0) {
+								Variation *variation = insertionVariants->at(position)->variation_map[vn];
+								insertionVariants->at(position)->variation_map[tvn]=variation;
+								insertionVariants->at(position)->variation_map.erase(vn);
+								NEWINS = tvn;
+							}
+						}
+					}
+				}
+			}
+			int first3 = sc3p[0];
+			int first5 = sc5p[0];
+			if (!sc3p.empty() && !sc5p.empty()
+					&& first3 > first5 + 3
+					&& first3 - first5 < maxReadLength * 0.75) {
+				if (ref.count(position) && nonInsertionVariants->count(position)
+						&& nonInsertionVariants->at(position)->variation_map.count(string(1,ref[position]))) {
+					adjRefFactor(nonInsertionVariants->at(position)->variation_map.at(string(1,ref[position])), (first3 - first5 - 1) / (double) maxReadLength);
+				}
+				adjRefFactor(vref, -(first3 - first5 - 1) / (double) maxReadLength);
+			}
 			delete findmm3;
 			delete findmm5;
-		} catch(...){// (Exception exception) {
-            //printExceptionAndContinue(exception, "variant", string.valueOf(lastPosition), region);
-			cerr << "there is an error in realignins!!\n" << endl;
-			exit(0);
-        }
+		} catch(...){
+			cerr << "there is an error in realignins, " << "pos: " << lastPosition << region.chr << ":" << region.start << "-" << region.end << endl;
+			//exit(0);
+		}
 	}
 
-    for (int i = tmp.size() - 1; i > 0; i--) {
-        try {
-            SortPositionDescription* tpl = tmp[i];
-            int p = tpl->position;
-            lastPosition = p;
-            string vn = tpl->descriptionstring;
-            if (!insertionVariants->count(p)) {
-                continue;
-            }
+	for (int i = tmp.size() - 1; i > 0; i--) {
+		try {
+			SortPositionDescription* tpl = tmp[i];
+			int p = tpl->position;
+			lastPosition = p;
+			string vn = tpl->descriptionstring;
+			if (!insertionVariants->count(p)) {
+				continue;
+			}
 
-            
-            if (!insertionVariants->at(p)->variation_map.count(vn)) {
-                continue;
-            }
-            Variation* vref = insertionVariants->at(p)->variation_map.at(vn);
-            //Matcher mtch = ATGSs_AMP_ATGSs_END.matcher(vn);
-            smatch mtch;
-            if(regex_search(vn, mtch, conf->patterns->ATGSs_AMP_ATGSs_END)) {
-                string tn = mtch[1];
-                
-                if(insertionVariants->at(p)->variation_map.count(tn)) {
-                    Variation *tref = insertionVariants->at(p)->variation_map.at(tn);
-                    if (vref->varsCount < tref->varsCount) {
-                        adjCnt(tref, vref, getVariationMaybe(*nonInsertionVariants, p, ref[p]));
-                        insertionVariants->at(p)->variation_map.erase(vn);
-                    }
-                }
-            }
+						
+			if (!insertionVariants->at(p)->variation_map.count(vn)) {
+				continue;
+			}
+			Variation* vref = insertionVariants->at(p)->variation_map.at(vn);
+			//Matcher mtch = ATGSs_AMP_ATGSs_END.matcher(vn);
+			smatch mtch;
+			if(regex_search(vn, mtch, conf->patterns->ATGSs_AMP_ATGSs_END)) {
+				string tn = mtch[1];
+								
+				if(insertionVariants->at(p)->variation_map.count(tn)) {
+					Variation *tref = insertionVariants->at(p)->variation_map.at(tn);
+					if (vref->varsCount < tref->varsCount) {
+						adjCnt(tref, vref, getVariationMaybe(*nonInsertionVariants, p, ref[p]));
+						insertionVariants->at(p)->variation_map.erase(vn);
+					}
+				}
+			}
 			delete tpl;
 		} catch(...) {//(Exception exception) {
 			//printExceptionAndContinue(exception, "variant", string.valueOf(lastPosition), region);
-        }
+		}
 	}
-    return NEWINS;
+	return NEWINS;
 }
 
 /**
  * This will try to realign large insertions (typically larger than 30bp)
  */
 void VariationRealigner::realignlgins30() {
-    robin_hood::unordered_map<int, char> ref = reference->referenceSequences;
+		robin_hood::unordered_map<int, char> ref = reference->referenceSequences;
 
-    vector<SortPositionSclip*> tmp5;
-    for (auto& ent5 : *softClips5End) {
-        //ent5: (position, soft clipping 5' variant)
-        int p = ent5.first;
-        if (p < region.start - CONF_EXTENSION
-                || p > region.end + CONF_EXTENSION) {
-            continue;
-        }
-        tmp5.emplace_back(new SortPositionSclip(ent5.first, ent5.second, ent5.second->varsCount));
-    }
-    sort(tmp5.begin(), tmp5.end(), COMP3);
+		vector<SortPositionSclip*> tmp5;
+		for (auto& ent5 : *softClips5End) {
+				//ent5: (position, soft clipping 5' variant)
+				int p = ent5.first;
+				if (p < region.start - CONF_EXTENSION
+								|| p > region.end + CONF_EXTENSION) {
+						continue;
+				}
+				tmp5.emplace_back(new SortPositionSclip(ent5.first, ent5.second, ent5.second->varsCount));
+		}
+		sort(tmp5.begin(), tmp5.end(), COMP3);
 
-    vector<SortPositionSclip*> tmp3 ;
-    for (auto& ent3 : *softClips3End) {
-        int p = ent3.first;
-        if (p < region.start - CONF_EXTENSION
-                || p > region.end + CONF_EXTENSION) {
-            continue;
-        }
-        tmp3.emplace_back(new SortPositionSclip(ent3.first, ent3.second, ent3.second->varsCount));
-    }
-    sort(tmp3.begin(), tmp3.end(), COMP3);
-    int lastPosition = 0;
+		vector<SortPositionSclip*> tmp3 ;
+		for (auto& ent3 : *softClips3End) {
+				int p = ent3.first;
+				if (p < region.start - CONF_EXTENSION
+								|| p > region.end + CONF_EXTENSION) {
+						continue;
+				}
+				tmp3.emplace_back(new SortPositionSclip(ent3.first, ent3.second, ent3.second->varsCount));
+		}
+		sort(tmp3.begin(), tmp3.end(), COMP3);
+		int lastPosition = 0;
 	int continue_times = 0;
 	//printf("haoz--------------m5 size: %d, m3 size: %d------------\n", tmp5.size(), tmp3.size());
 	for (SortPositionSclip* t5 : tmp5) {
