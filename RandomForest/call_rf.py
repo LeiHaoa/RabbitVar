@@ -110,7 +110,6 @@ def call_rf(args):
     print("time of load data to cr: {} s".format(cr_end - cr_start) )
     
     cr_start = time.time()
-    #clf = joblib.load("/home/old_home/haoz/workspace/FastVC/RandomForest/models/ramdom_forest_model_somatic_test0d02.pkl")
     clf = joblib.load(args.model)
     cr_end = time.time()
     print("time of load model: {} s".format(cr_end - cr_start) )
