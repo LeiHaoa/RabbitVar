@@ -235,17 +235,21 @@ def train_rf(args):
         if args.tsv == None:
             data = pd.DataFrame(cr, columns=["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel", "label"])
             data[data.columns[:-2]] = data[data.columns[:-2]].apply(pd.to_numeric)
-            #data["label"] = data["label"].astype('category')
             data[data.columns] = data[data.columns].apply(pd.to_numeric)
         else:
-            data = get_data_fromcsv(args.tsv, ["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel", "label"], vtype = 'SNV')
+            data = get_data_fromcsv(args.tsv, ["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel", "label"], vtype = 'INDEL')
 
+        print("before hard filter: {} data".format(len(data)))
         data = hard_filter(data)
+        print("after hard filter: {} data".format(len(data)))
+        data['is_train'] = np.random.uniform(0, 1, len(data)) <= 0.9
+        train, test = data[data['is_train'] == True], data[data['is_train'] == False]
         #--- data prepare ----#
-        false = data[ data['label'] == 0 ]
-        truth = data[ data['label'] == 1 ]
+        false = train[train['label'] == 0 ]
+        truth = train[train['label'] == 1 ]
         print("faslse number: {}, truth number: {}".format(len(false), len(truth)) )
         aug_data = shuffle(pd.concat([truth, false, truth, truth], axis = 0))
+        train_set = aug_data[aug_data.columns[:-2]].to_numpy()
         y = aug_data["label"]#.to_numpy()
         print(len(aug_data), len(y))
 
@@ -264,10 +268,15 @@ def train_rf(args):
             print("loading model: ", args.pretrained_model)
             clf = joblib.load(args.pretrained_model)
 
-    clf.fit(aug_data, y)
+    clf.fit(train_set, y)
     
     joblib.dump(clf, args.out_model, compress=9)
-    print("store model done")
+    print("store model done, now testing...")
+    test_set = test[test.columns[:-2]].to_numpy()
+    ytest = test['label']
+    ypred = clf.predict(test_set)
+    print("Accuracy score", sklearn.metrics.accuracy_score(ytest, ypred))
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description = "train your network")

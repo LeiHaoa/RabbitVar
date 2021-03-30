@@ -26,9 +26,9 @@ indel_truths=(
 truths=(/home/old_home/haoz/workspace/VCTools/bcbio_nextgen/cancer-dream-syn3/input/synthetic_challenge_set3_tumor_20pctmasked_truth.vcf.gz)
 
 FLAG='tn'
-NUM=1
+NUM=0
 TYPE='indel'
-INDEL_MODEL=./models/som_indel_0309_nogerm.pkl
+INDEL_MODEL=./models/som_indel_0329.pkl
 SNV_MODEL=./models/som_snv_0206.pkl
 #INDEL_MODEL=./models/som_indel_0123.pkl
 #SNV_MODEL=./models/som_snv_0123.pkl
@@ -38,7 +38,7 @@ if [ ${TYPE} == indel ]; then
 time python call_rf.py \
 	--in_file ${datas[${NUM}]}\
 	--var_type ${TYPE^^} \
-  --scale 0.2 \
+  --scale 0.5 \
 	--model ${INDEL_MODEL} \
 	--out_file ./RandomForest_Filtered.txt
 
