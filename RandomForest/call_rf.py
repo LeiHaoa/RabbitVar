@@ -5,32 +5,12 @@ import time
 import argparse
 import subprocess
 
-som_features = [
-    "Sample", "Gene", "Chr", "Start", "End", "Ref", "Alt",
-    "Var1Depth", "Var1AltDepth", "Var1RefFwdReads", "Var1RefRevReads", "Var1AltFwdReads", "Var1AltRevReads", "Var1Genotype", "Var1AF",
-    "Var1Bias", "Var1PMean", "Var1PStd", "Var1QMean", "Var1QStd", "Var1MQ", "Var1Sig_Noise", "Var1HiAF", "Var1ExtraAF", "Var1NM", "Var1Pvalue", "Var1Oddr",
-    "Var2Depth", "Var2AltDepth", "Var2RefFwdReads", "Var2RefRevReads", "Var2AltFwdReads", "Var2AltRevReads", "Var2Genotype", "Var2AF",
-    "Var2Bias", "Var2PMean", "Var2PStd", "Var2QMean", "Var2QStd", "Var2MQ", "Var2Sig_Noise", "Var2HiAF", "Var2ExtraAF", "Var2NM", "Var2Pvalue", "Var2Oddr",
-    "shift3", "MSI", "MSI_NT", "5pFlankSeq", "3pFlankSeq", "Seg", "VarLabel", "VarType",
-    "Duprate1", "SV_info1", "Duprate2", "SV_info2", "Pvalue", "Oddratio"
-    ]
-som_features_to_index = {
-    "Sample":0, "Gene":1, "Chr":2, "Start":3, "End":4, "Ref":5, "Alt":6,
-    "Var1Depth":7, "Var1AltDepth":8, "Var1RefFwdReads":9, "Var1RefRevReads":10, "Var1AltFwdReads":11, "Var1AltRevReads":12, "Var1Genotype":13, "Var1AF":14,
-    "Var1Bias":15, "Var1PMean":16, "Var1PStd":17, "Var1QMean":18, "Var1QStd":19, "Var1MQ":20, "Var1Sig_Noise":21, "Var1HiAF":22, "Var1ExtraAF":23, "Var1NM":24, "Var1Pvalue":25, "Var1Oddr":26,
-    "Var2Depth":27, "Var2AltDepth":28, "Var2RefFwdReads":29, "Var2RefRevReads":30, "Var2AltFwdReads":31, "Var2AltRevReads":32, "Var2Genotype":33, "Var2AF":34,
-    "Var2Bias":35, "Var2PMean":36, "Var2PStd":37, "Var2QMean":38, "Var2QStd":39, "Var2MQ":40, "Var2Sig_Noise":41, "Var2HiAF":42, "Var2ExtraAF":43, "Var2NM":44, "Var2Pvalue":45, "Var2Oddr":46,
-    "shift3":47, "MSI":48, "MSI_NT":49, "5pFlankSeq":50, "3pFlankSeq":51, "Seg":52, "VarLabel":53, "VarType":54,
-    "Duprate1":55, "SV_info1":56, "Duprate2":57, "SV_info2":58, "Pvalue":59, "Oddratio":60
-    }
-som_selected_features = [
-    "Var1Depth", "Var1AltDepth", "Var1RefFwdReads", "Var1RefRevReads", "Var1AltFwdReads", "Var1AltRevReads", "Var1AF",
-    "Var1PMean", "Var1PStd", "Var1QMean", "Var1QStd", "Var1MQ", "Var1Sig_Noise", "Var1HiAF", "Var1ExtraAF", "Var1NM", "Var1Pvalue", "Var1Oddr",
-    "Var2Depth", "Var2AltDepth", "Var2RefFwdReads", "Var2RefRevReads", "Var2AltFwdReads", "Var2AltRevReads", "Var2AF",
-    "Var2PMean", "Var2PStd", "Var2QMean", "Var2QStd", "Var2MQ", "Var2Sig_Noise", "Var2HiAF", "Var2ExtraAF", "Var2NM", "Var2Pvalue", "Var2Oddr",
-    "shift3", "MSI", "MSI_NT",
-    "Pvalue", "Oddratio"
-    ]
+import sys
+import os
+sys.path.append(os.path.join(os.getcwd(), '../utils'))
+from features import *
+from datautil import hard_filter_keeporg
+
 SOM_SNV_FEATURES=len(som_selected_features) + 1
 SOM_INDEL_FEATURES = SOM_SNV_FEATURES + 3
 
@@ -56,7 +36,6 @@ def format_snv_data_item(jri, fisher):
         exit(-1)
     return key, data
 
-
 def format_indel_data_item(jri, fisher):
     if not fisher:
         print("not support to train if you not run rabbitvar without --fiser!!")
@@ -68,7 +47,7 @@ def format_indel_data_item(jri, fisher):
     data.append(len(jri[6]))
     data.append(type_to_label[jri[fe2i["VarType"]]])
     for sf in fvc_sf:
-        data.append(jri[fe2i[sf]])
+        data.append(float(jri[fe2i[sf]]))
     data.append(varLabel_to_label[jri[fe2i["VarLabel"]]])#varlabel
     #data.append(jri[fe2i["VarLabel"]])
     if len(data) != SOM_INDEL_FEATURES:
@@ -115,30 +94,30 @@ def call_rf(args):
     print("time of load model: {} s".format(cr_end - cr_start) )
 
     cr_start = time.time()
-    data = np.asfarray(cr)
+    #data = np.asfarray(cr)
+    data = pd.DataFrame(cr)
+    data.columns = ["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel"]
     cr_end = time.time()
     print("time of np.asaray: {} s".format(cr_end - cr_start) )
     
+    #--hardfilter--#
+    print("before hard filter: {} data".format(len(data)))
+    data = hard_filter_keeporg(data)
+    print("after hard filter: {} data".format(len(data)))
+
     cr_start = time.time()
     #pred = clf.predict(data)
     scale = args.scale
-    pred = my_predict(clf, data, scale)
+    pred = my_predict(clf, data[data.columns[:-1]], scale)
+    data['pred'] = pred
     cr_end = time.time()
     print("length {} - {}".format(len(data), len(pred)))
-    #i = int(0)
-    #with open('./models/result_demo.txt', 'w') as f:
-    #    for pi in pred:
-    #        f.write(','.join([str(x) for x in data[i]]) + '\n')
-    #        f.write(":" + str(pi) + "\n")
-    #        i+=1
-    #print("write input over")
-    #exit(0)    
     print("time of pred: {} s".format(cr_end - cr_start) )
 
     cr_start = time.time()
     with open(args.out_file, 'w') as f:
         for i in range(len(pred)):
-            if pred[i] == 1:
+            if pred[i] == 1 and data['hard_flag'][i] == 0:
                 f.write(str(i) + ":"+str(raw[i]))
     cr_end = time.time()
     print("time of write: {} s".format(cr_end - cr_start) )
