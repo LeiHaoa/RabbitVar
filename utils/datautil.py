@@ -90,7 +90,6 @@ def get_data_fromtxt(fvc_result_path, vtype = 'SNV'):
         exit(-1)
 
 def get_data_fromcsv(data_path, header, vtype = 'SNV'):
-  print(data_path, header, len(header))
   data = pd.read_csv(data_path, header=None)
   if vtype.upper() == 'INDEL':
     data.columns = header
@@ -105,7 +104,7 @@ def hard_filter(data):
                               | (data['Var1QMean'] <= 20)
                               | (data['Var1NM'] >= 6)
                               | (data['Var1NM'] < 0)
-                              | ((data['VarLabel'] != 3) & (data['VarLabel'] != 4)))]
+                              | ((data['VarLabel'] != 3) & (data['VarLabel'] != 4) & (data['VarLabel'] != 5)))]
   return hard_filtered_data
 
 def hard_filter_keeporg(data):
@@ -114,6 +113,5 @@ def hard_filter_keeporg(data):
                               | (data['Var1QMean'] <= 20)
                               | (data['Var1NM'] >= 6)
                               | (data['Var1NM'] < 0)
-                              | ((data['VarLabel'] != 3) & (data['VarLabel'] != 4)))
-  print(data['hard_flag'])
+                              | ((data['VarLabel'] != 3) & (data['VarLabel'] != 4)) & (data['VarLabel'] != 5))
   return data

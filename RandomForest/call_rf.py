@@ -29,7 +29,7 @@ def format_snv_data_item(jri, fisher):
     # key is chrom:pos like "chr1:131022:A:T"
     key = jri[2] + ":" + jri[3] + ":" + jri[5] + ":" + jri[6] #TODO: case sensitive
     for sf in fvc_sf:
-        data.append(jri[fe2i[sf]])
+        data.append(float(jri[fe2i[sf]]))
     data.append(varLabel_to_label[jri[fe2i["VarLabel"]]])#varlabel
     if len(data) != SOM_SNV_FEATURES:
         print("fvc data length error: \n", len(data), data, " ori\n", jri)
@@ -97,7 +97,10 @@ def call_rf(args):
     cr_start = time.time()
     #data = np.asfarray(cr)
     data = pd.DataFrame(cr)
-    data.columns = ["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel"]
+    if vartype == 'INDEL':
+        data.columns = ["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel"]
+    else:
+        data.columns = [*som_selected_features, "VarLabel"]
     cr_end = time.time()
     print("time of np.asaray: {} s".format(cr_end - cr_start) )
     
@@ -119,7 +122,8 @@ def call_rf(args):
     with open(args.out_file, 'w') as f:
         for i in range(len(pred)):
             if pred[i] == 1 and data['hard_flag'][i] == 0:
-                f.write(str(i) + ":"+str(raw[i]))
+                #if data['hard_flag'][i] == 0:
+                f.write(str(raw[i]))
     cr_end = time.time()
     print("time of write: {} s".format(cr_end - cr_start) )
 
