@@ -104,6 +104,7 @@ def hard_filter(data):
   hard_filtered_data = data[~((data['Var1AF'] < 0.01)
                               | (data['Var1QMean'] <= 20)
                               | (data['Var1NM'] >= 6)
+                              | (data['Var1NM'] < 0)
                               | ((data['VarLabel'] != 3) & (data['VarLabel'] != 4)))]
   return hard_filtered_data
 
@@ -112,6 +113,7 @@ def hard_filter_keeporg(data):
   data['hard_flag'] = ((data['Var1AF'] < 0.01)
                               | (data['Var1QMean'] <= 20)
                               | (data['Var1NM'] >= 6)
+                              | (data['Var1NM'] < 0)
                               | ((data['VarLabel'] != 3) & (data['VarLabel'] != 4)))
   print(data['hard_flag'])
   return data

@@ -217,7 +217,7 @@ def format_record(record):
      adjaf1, nm1, sbf1, oddratio1, dp2, vd2, rfwd2, rrev2, vfwd2, vrev2, \
      gt2, af2, bias2, pmean2, pstd2, qual2, qstd2, mapq2, sn2, hiaf2, \
      adjaf2, nm2, sbf2, oddratio2, shift3, msi, msilen, lseq, rseq, seg, \
-     status, vtype, sv1, duprate1, sv2, duprate2, pvalue, oddratio]  = record[:61]
+     status, vtype, duprate1, sv1, duprate2, sv2, pvalue, oddratio]  = record[:61]
   except ValueError:
     print("invalide record: \n", record, "\n record length ---> ", len(record))
     exit(-1)
