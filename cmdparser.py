@@ -61,13 +61,13 @@ def detectorParam(parser):
   parser.add_argument('--out', help = "The out put file path. Default: ./out.txt", type=str, required = True, default = "./out.txt")
   parser.add_argument('--bed', '-i', help = "The region file to be processed", type=str, required = False)
   parser.add_argument('--version', help = "Print FastVC version information", action = 'version', version='1.1')
-  parser.add_argument('--auto_resize', help = "Auto resize the bed region size for better performance", action = 'store_false')
+  parser.add_argument('--auto_resize', help = "Auto resize the bed region size for better performance", action = 'store_true')
 
 def filterParam(parser):
-  parser.add_argument("--indelmod", help = "Indel filter path", type=str, required = False, default = os.path.join(RABBITVAR_ABSPATH, "RandomForest/models/som_snv_0108.pkl"))
-  parser.add_argument("--snvmod", help = "Indel filter path", type=str, required = False, default = os.path.join(RABBITVAR_ABSPATH, "RandomForest/models/som_indel_0108.pkl"))
+  parser.add_argument("--indelmod", help = "Indel filter path", type=str, required = False, default = os.path.join(RABBITVAR_ABSPATH, "RandomForest/models/som_indel_0527.pkl"))
+  parser.add_argument("--snvmod", help = "Indel filter path", type=str, required = False, default = os.path.join(RABBITVAR_ABSPATH, "RandomForest/models/som_snv_0206.pkl"))
   parser.add_argument("--snvscale", help = "Scale to filter SNV false positive", type=float, required = False, default = 0.2)
-  parser.add_argument("--indelscale", help = "Scale to filter InDel false positive", type=float, required = False, default = 0.2)
+  parser.add_argument("--indelscale", help = "Scale to filter InDel false positive", type=float, required = False, default = 0.5)
 
 def rabbitvarParam(parser):
   parser.add_argument('--no_filter', help = "Do not perform filter step", action = "store_true")
@@ -75,7 +75,7 @@ def rabbitvarParam(parser):
   parser.add_argument('--vcf', help = "Out put formated VCF file path", type=str, default = "./variants.vcf")
   parser.add_argument('--workspace', help = "workspce to store intermedite files", type=str, default = "./workspace")
 
-if __name__ == "__main__":
+if __name__ == "__main__": #test
   import sys
   parser = argparse.ArgumentParser(description = "rabbitvar")
   detector_parser = parser.add_argument_group("detector_parser")

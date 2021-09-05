@@ -7,7 +7,7 @@ import subprocess
 
 import sys
 import os
-sys.path.append(os.path.join(os.getcwd(), '../utils'))
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../utils'))
 from features import *
 from datautil import hard_filter_keeporg
 

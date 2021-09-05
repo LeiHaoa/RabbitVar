@@ -3,7 +3,7 @@
 ################################################################ 
 import math
 import re
-from .Global import label_to_varLabel, label_to_types
+from Global import label_to_varLabel, label_to_types
 
 def write_header(fout):
   header = """\

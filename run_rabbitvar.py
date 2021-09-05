@@ -10,35 +10,17 @@ import subprocess
 import math
 import re
 from cmdparser import *
-from utils.vcf_writer import *
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), './utils'))
+from vcf_writer import *
+import features
+from datautil import *
 
-som_features = [
-    "Sample", "Gene", "Chr", "Start", "End", "Ref", "Alt",
-    "Var1Depth", "Var1AltDepth", "Var1RefFwdReads", "Var1RefRevReads", "Var1AltFwdReads", "Var1AltRevReads", "Var1Genotype", "Var1AF",
-    "Var1Bias", "Var1PMean", "Var1PStd", "Var1QMean", "Var1QStd", "Var1MQ", "Var1Sig_Noise", "Var1HiAF", "Var1ExtraAF", "Var1NM", "Var1Pvalue", "Var1Oddr",
-    "Var2Depth", "Var2AltDepth", "Var2RefFwdReads", "Var2RefRevReads", "Var2AltFwdReads", "Var2AltRevReads", "Var2Genotype", "Var2AF",
-    "Var2Bias", "Var2PMean", "Var2PStd", "Var2QMean", "Var2QStd", "Var2MQ", "Var2Sig_Noise", "Var2HiAF", "Var2ExtraAF", "Var2NM", "Var2Pvalue", "Var2Oddr",
-    "shift3", "MSI", "MSI_NT", "5pFlankSeq", "3pFlankSeq", "Seg", "VarLabel", "VarType",
-    "Duprate1", "SV_info1", "Duprate2", "SV_info2", "Pvalue", "Oddratio"
-    ]
-som_features_to_index = {
-    "Sample":0, "Gene":1, "Chr":2, "Start":3, "End":4, "Ref":5, "Alt":6,
-    "Var1Depth":7, "Var1AltDepth":8, "Var1RefFwdReads":9, "Var1RefRevReads":10, "Var1AltFwdReads":11, "Var1AltRevReads":12, "Var1Genotype":13, "Var1AF":14,
-    "Var1Bias":15, "Var1PMean":16, "Var1PStd":17, "Var1QMean":18, "Var1QStd":19, "Var1MQ":20, "Var1Sig_Noise":21, "Var1HiAF":22, "Var1ExtraAF":23, "Var1NM":24, "Var1Pvalue":25, "Var1Oddr":26,
-    "Var2Depth":27, "Var2AltDepth":28, "Var2RefFwdReads":29, "Var2RefRevReads":30, "Var2AltFwdReads":31, "Var2AltRevReads":32, "Var2Genotype":33, "Var2AF":34,
-    "Var2Bias":35, "Var2PMean":36, "Var2PStd":37, "Var2QMean":38, "Var2QStd":39, "Var2MQ":40, "Var2Sig_Noise":41, "Var2HiAF":42, "Var2ExtraAF":43, "Var2NM":44, "Var2Pvalue":45, "Var2Oddr":46,
-    "shift3":47, "MSI":48, "MSI_NT":49, "5pFlankSeq":50, "3pFlankSeq":51, "Seg":52, "VarLabel":53, "VarType":54,
-    "Duprate1":55, "SV_info1":56, "Duprate2":57, "SV_info2":58, "Pvalue":59, "Oddratio":60
-    }
-som_selected_features = [
-    "Var1Depth", "Var1AltDepth", "Var1RefFwdReads", "Var1RefRevReads", "Var1AltFwdReads", "Var1AltRevReads", "Var1AF",
-    "Var1PMean", "Var1PStd", "Var1QMean", "Var1QStd", "Var1MQ", "Var1Sig_Noise", "Var1HiAF", "Var1ExtraAF", "Var1NM", "Var1Pvalue", "Var1Oddr",
-    "Var2Depth", "Var2AltDepth", "Var2RefFwdReads", "Var2RefRevReads", "Var2AltFwdReads", "Var2AltRevReads", "Var2AF",
-    "Var2PMean", "Var2PStd", "Var2QMean", "Var2QStd", "Var2MQ", "Var2Sig_Noise", "Var2HiAF", "Var2ExtraAF", "Var2NM", "Var2Pvalue", "Var2Oddr",
-    "shift3", "MSI", "MSI_NT",
-    "Pvalue", "Oddratio"
-    ]
-SOM_SNV_FEATURES=len(som_selected_features) + 1
+fe2i = features.som_features_to_index
+fvc_sf = features.som_selected_features
+
+SOM_SNV_FEATURES=len(fvc_sf) + 1
 SOM_INDEL_FEATURES = SOM_SNV_FEATURES + 3
 
 type_to_label = {"SNV": 0, "Deletion": 1, "Insertion": 2, "Complex": 3, "MNV":3}
@@ -46,8 +28,6 @@ varLabel_to_label = {
     "Germline":0, "StrongLOH":1, "LikelyLOH":2, "StrongSomatic":3,
     "LikelySomatic":4, "AFDiff":5, "SampleSpecific":6
 }
-fe2i = som_features_to_index
-fvc_sf = som_selected_features
 
 def get_socks():
   for line in str(subprocess.check_output('lscpu')).split('\\n'):
@@ -104,12 +84,15 @@ def run_rabbitvar(BIN, workspace, param):
         beds.append(line)
     #split_info:[(bed1, out1), (bed2, out2), ...]
     splited_info = split_bed(beds, socks, workspace) #split file according to numa
+    return splited_info
     ps = list()
     for i in range(int(socks)):
       cmd = prepare_cmd(BIN, splited_info[i][0], splited_info[i][1], param)
-      #print(cmd)
-      ps.append(subprocess.Popen(cmd, stderr=subprocess.DEVNULL))
-      pass
+      print(cmd)
+      try:
+        ps.append(subprocess.Popen(cmd, stderr=subprocess.STDOUT))
+      except subprocess.CalledProcessError as e:
+        print("an error occured while runing cmd {}, error: {}".format(' '.join(cmd), e.output))
     for p in ps:
       p.wait()
   else:
@@ -118,7 +101,7 @@ def run_rabbitvar(BIN, workspace, param):
     cmd = prepare_cmd(BIN, bed, out, param)
     #print(cmd)
     splited_info.append((bed, out))
-    subprocess.Popen(cmd, stderr=subprocess.DEVNULL)
+    subprocess.Popen(cmd, stderr=subprocess.STDOUT)
 
   print("All process run over!")
   return splited_info
@@ -127,11 +110,14 @@ def rf_filter(param, in_file):
   cr = list()
   raw = list()
   cr = pd.read_csv(in_file, delimiter = '\t', header = None, engine = 'c', skipinitialspace = True)
-  cr.columns = [*som_features, 'None'] #TODO: i should change the code of c++ to avoid the None colum
+  cr.columns = [*features.som_features, 'None'] #TODO: i should change the code of c++ to avoid the None colum
   cr['VarLabel'] = cr['VarLabel'].map(varLabel_to_label)
   cr['VarType'] = cr['VarType'].map(type_to_label)
   cr['RefLength'] = cr['Ref'].str.len()
   cr['AltLength'] = cr['Alt'].str.len()
+  #hard filter
+  cr = hard_filter(cr)
+
   #snv data process 
   time_start = time.time()
   snvs = cr[cr['VarType'] == 0]
@@ -142,11 +128,12 @@ def rf_filter(param, in_file):
   snv_pred = my_predict(clf, inputs, scale)
   snv_result = snvs.loc[snv_pred == 1]
   time_end = time.time()
-  #print("time filter snv: {} s".format(time_end - time_start))
+  print("time filter snv: {} s".format(time_end - time_start))
   
   #indel data process
   time_start = time.time()
   indels = cr[cr['VarType'] != 0]
+  iii = ["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel"]
   inputs = indels[["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel"]].to_numpy()
   #clf = joblib.load(args.indel_model)
   scale = float(param['indelscale'])
@@ -155,13 +142,13 @@ def rf_filter(param, in_file):
   indel_pred = my_predict(clf, inputs, scale)
   indel_result = indels.loc[indel_pred == 1]
   time_end = time.time()
-  #print("time filter indel: {} s".format(time_end - time_start))
+  print("time filter indel: {} s".format(time_end - time_start))
 
   return snv_result, indel_result
 
 def my_predict(clf, data, scale):
-    proba = clf.predict_proba(data)
-    return np.asarray([1 if x > scale else 0 for x in proba[:,1]])
+  proba = clf.predict_proba(data)
+  return np.asarray([1 if x > scale else 0 for x in proba[:,1]])
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description = "rabbitvar")
@@ -183,11 +170,11 @@ if __name__ == "__main__":
   filter_param = {}
   for x in filter_parser._group_actions:
     k, v = x.dest, getattr(args, x.dest, None)
+    #print('filter parser:', k, v)
     if v:
       filter_param[k] = '' if isinstance(v, bool) else str(v)
 
   vcf_file = args.vcf
-  #vcf = pd.DataFrame()
   vcf_list = []
   for detector_out in splited_info:
     vcf_list.extend(rf_filter(filter_param, detector_out[1]))
