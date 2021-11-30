@@ -66,7 +66,7 @@ def detectorParam(parser):
 def filterParam(parser):
   parser.add_argument("--indelmod", help = "Indel filter path", type=str, required = False, default = os.path.join(RABBITVAR_ABSPATH, "RandomForest/models/som_indel_0527.pkl"))
   parser.add_argument("--snvmod", help = "Indel filter path", type=str, required = False, default = os.path.join(RABBITVAR_ABSPATH, "RandomForest/models/som_snv_0206.pkl"))
-  parser.add_argument("--snvscale", help = "Scale to filter SNV false positive", type=float, required = False, default = 0.2)
+  parser.add_argument("--snvscale", help = "Scale to filter SNV false positive", type=float, required = False, default = 0.5)
   parser.add_argument("--indelscale", help = "Scale to filter InDel false positive", type=float, required = False, default = 0.5)
 
 def rabbitvarParam(parser):
@@ -83,7 +83,7 @@ if __name__ == "__main__": #test
   rabbitvar_parser = parser.add_argument_group("rabbitvar_parser")
   rabbitvarParam(rabbitvar_parser)
   filter_parser = parser.add_argument_group("filter_parser")
-  filterParm(filter_parser)
+  filterParam(filter_parser)
   args = parser.parse_args()
   print('--------------------')
   for x in rabbitvar_parser._group_actions:

@@ -84,7 +84,6 @@ def run_rabbitvar(BIN, workspace, param):
         beds.append(line)
     #split_info:[(bed1, out1), (bed2, out2), ...]
     splited_info = split_bed(beds, socks, workspace) #split file according to numa
-    return splited_info
     ps = list()
     for i in range(int(socks)):
       cmd = prepare_cmd(BIN, splited_info[i][0], splited_info[i][1], param)
@@ -170,7 +169,7 @@ if __name__ == "__main__":
   filter_param = {}
   for x in filter_parser._group_actions:
     k, v = x.dest, getattr(args, x.dest, None)
-    #print('filter parser:', k, v)
+    print('filter parser:', k, v)
     if v:
       filter_param[k] = '' if isinstance(v, bool) else str(v)
 
