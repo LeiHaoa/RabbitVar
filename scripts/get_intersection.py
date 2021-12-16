@@ -108,18 +108,22 @@ def main():
   for c in callers:
     mc2v[c] = get_variant_set(mc2f[c])
 
+  #header = ''
   for i in callers:
+    #header += padding(i)
     line = padding(i)
     base = len(mc2v[i])
     for j in callers:
       if i == j: 
-        line += "{}\t".format(len(mc2v[i]) / base) 
+        line += "{:.3f}\t".format(len(mc2v[i]) / base) 
         continue
       #print("length of caller {} and {} set: {} {}".format(i, j, len(mc2v[i]), len(mc2v[j])))
-      line += str(get_intersection_num(mc2v[i], mc2v[j]) / base)
+      line += str( "{:.3f}".format(get_intersection_num(mc2v[i], mc2v[j]) / base) )
       line += '\t'
     line += '\n'
     print(line)
+
+  #print(header)
 
 if __name__ == "__main__":
   main()
