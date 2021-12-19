@@ -1311,8 +1311,8 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
 					 uint8_t* queryQuality, int numberOfMismatches, bool direction, int position,
 					 int readLengthIncludeMatchingAndInsertions, int ci){
 	
-    if((n_cigar > ci && bam_cigar_op(cigar[ci+1]) == BAM_CREF_SKIP)
-	   || (ci > 1 && bam_cigar_op(cigar[ci-1]) == BAM_CREF_SKIP)){ //skipIndelNextoIntron function
+    if((n_cigar > ci+1 && bam_cigar_op(cigar[ci+1]) == BAM_CREF_SKIP)
+	   || (ci > 0 && bam_cigar_op(cigar[ci-1]) == BAM_CREF_SKIP)){ //skipIndelNextoIntron function
         readPositionIncludingSoftClipped += cigar_element_length;
         return ci;
     }
