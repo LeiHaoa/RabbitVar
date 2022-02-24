@@ -78,7 +78,8 @@ void RecordPreprocessor::makeReference(string fa_file_path){
 }	
 
 string getMateReferenceName(bam_hdr_t* header, bam1_t* record) {
-  if (record->core.flag & BAM_FPAIRED) {
+  //printf("debug: record->core.mtid: %d, paried flag: %x\n", record->core.mtid, record->core.flag & BAM_FPAIRED);
+  if (! (record->core.flag & BAM_FPAIRED) ) {
     return "*";
   }
 

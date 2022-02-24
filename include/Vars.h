@@ -11,36 +11,36 @@
  * Variants for position
  */
 class Vars {
-    /**
-     * Reference variant
-     */
-    public:
-		Variant* referenceVariant = NULL;
+  /**
+   * Reference variant
+   */
+  public:
+    Variant* referenceVariant = NULL;
 
     /**
      * List of all variants except reference variant
      */
-    	vector<Variant*> variants;
+    vector<Variant*> variants;
 
     /**
      * Map of all variants except reference variant.
      * Key - variant description string, value - variant
      */
-    	robin_hood::unordered_map<string, Variant*> varDescriptionStringToVariants;
+    robin_hood::unordered_map<string, Variant*> varDescriptionStringToVariants;
 
-    	string sv = "";
+    string sv = "";
 
-		~Vars(){
-			if(referenceVariant) delete referenceVariant;
-			for(Variant* v: variants){
-				delete v;
-			}
-			//for(auto& vstv: varDescriptionStringToVariants){
-			//	delete vstv.second;
-			//}
-			//if(referenceVariant)
-			//	delete referenceVariant;
-		}
+    ~Vars(){
+      if(referenceVariant) delete referenceVariant;
+      for(Variant* v: variants){
+        delete v;
+      }
+      //for(auto& vstv: varDescriptionStringToVariants){
+      //	delete vstv.second;
+      //}
+      //if(referenceVariant)
+      //	delete referenceVariant;
+    }
 };
 
 #endif

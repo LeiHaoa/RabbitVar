@@ -25,12 +25,12 @@ inline double get_time(){
  * @return generated substring
  */
 inline string vc_substr(string &str, int idx) {
-    if (idx >= 0) {
-        return str.substr(idx);
-    } else {
-		if (str.length() + idx < 0) return "";
-        return str.substr(str.length() + idx);
-    }
+  if (idx >= 0) {
+    return str.substr(idx);
+  } else {
+    if (str.length() + idx < 0) return "";
+    return str.substr(str.length() + idx);
+  }
 }
 
 /**
@@ -42,18 +42,18 @@ inline string vc_substr(string &str, int idx) {
  * @return generated substring
  */
 inline string vc_substr(const string &str, int begin, int len) {
-    if (begin < 0) {
-        begin = str.length() + begin;
-    }
-    if (len > 0) {
-        return str.substr(begin, len);
-    } else if (len == 0) {
-        return "";
-    } else {
-        len = str.length() + len - begin;
-		if(len < 0) return "";
-        return str.substr(begin, len);
-    }
+  if (begin < 0) {
+    begin = str.length() + begin;
+  }
+  if (len > 0) {
+    return str.substr(begin, len);
+  } else if (len == 0) {
+    return "";
+  } else {
+    len = str.length() + len - begin;
+    if(len < 0) return "";
+    return str.substr(begin, len);
+  }
 }
 
 inline bool starts_with(string& s, string t){
@@ -90,26 +90,26 @@ inline vector<string> ssplit(const string& str, const string& delim) {
 */
 std::vector<std::string> inline ssplit(const std::string &source, const std::string delimiter, bool keepEmpty = false)
 {
-    std::vector<std::string> results;
+  std::vector<std::string> results;
 
-    size_t prev = 0;
-    size_t next = 0;
+  size_t prev = 0;
+  size_t next = 0;
 
-    while ((next = source.find_first_of(delimiter, prev)) != std::string::npos)
+  while ((next = source.find_first_of(delimiter, prev)) != std::string::npos)
+  {
+    if (keepEmpty || (next - prev != 0))
     {
-        if (keepEmpty || (next - prev != 0))
-        {
-            results.push_back(source.substr(prev, next - prev));
-        }
-        prev = next + 1;
+      results.push_back(source.substr(prev, next - prev));
     }
+    prev = next + 1;
+  }
 
-    if (prev < source.size())
-    {
-        results.push_back(source.substr(prev));
-    }
+  if (prev < source.size())
+  {
+    results.push_back(source.substr(prev));
+  }
 
-    return results;
+  return results;
 }
 
 inline string complement(string& forward){
@@ -162,40 +162,40 @@ inline string erase_all_char(string str, char from){
 	return str;
 }
 
-    /**
-     * Method finds character on specified index in string. If index is negative, it counts index from right end of string.
-     * @param str string where to search character
-     * @param index position in sequence
-     * @return founded character on specified position
-     */
+/**
+ * Method finds character on specified index in string. If index is negative, it counts index from right end of string.
+ * @param str string where to search character
+ * @param index position in sequence
+ * @return founded character on specified position
+ */
 inline char charAt(string str, int index) {
-        if (index < 0) {
-            int i = str.length() + index;
-            if (i < 0)
-                return (char)-1; //
-            return str[i];
-        }
-        return str[index];
+  if (index < 0) {
+    int i = str.length() + index;
+    if (i < 0)
+      return (char)-1; //
+    return str[i];
+  }
+  return str[index];
 };
 
 inline double roundHalfEven(string bit, double value) {
-        //return Double.parseDouble(new DecimalFormat(pattern).format(value));
-		return value;
+  //return Double.parseDouble(new DecimalFormat(pattern).format(value));
+  return value;
 }
 
 inline int globalFindAndSum(regex &pattern, string& str){
-	int result = 0;
-	smatch sm;
-	//while(regex_search(str, sm, pattern)){
-	//	result += std::stoi(sm.str(1));
-	//}
-	string::const_iterator searchStart( str.cbegin() );
-	while ( regex_search( searchStart, str.cend(), sm, pattern) )
-    {
-        result += std::stoi(sm.str(1));
-        searchStart = sm.suffix().first;
-    }
-	return result;
+  int result = 0;
+  smatch sm;
+  //while(regex_search(str, sm, pattern)){
+  //	result += std::stoi(sm.str(1));
+  //}
+  string::const_iterator searchStart( str.cbegin() );
+  while ( regex_search( searchStart, str.cend(), sm, pattern) )
+  {
+    result += std::stoi(sm.str(1));
+    searchStart = sm.suffix().first;
+  }
+  return result;
 }
 
 

@@ -401,137 +401,138 @@ inline bool islowcomplexseq(string &seq) {
  * @return consensus sequence
  */
 inline string findconseq(Sclip *softClip, int dir) {
-    //if (softClip->sequence != NULL) {
-	//printf("findconseq: %d - %d - %s\n", softClip->nt.size(), dir,  softClip->sequence.c_str());
-	//for(auto& nve : softClip->nt){
-    //    unordered_map<char, int> nv = nve.second;
-	//	for(auto& ent : nv){
-	//		printf("%c", ent.first);
-	//	}
-	//	printf("|");
-	//}
-	//printf("\n");
-	//========================================
-	if (softClip->sequence != "") {
-		//printf("return for sequence != empty: %s\n", softClip->sequence.c_str());
-        return softClip->sequence;
-    }
+  //if (softClip->sequence != NULL) {
+  //printf("findconseq: %d - %d - %s\n", softClip->nt.size(), dir,  softClip->sequence.c_str());
+  //for(auto& nve : softClip->nt){
+  //    unordered_map<char, int> nv = nve.second;
+  //	for(auto& ent : nv){
+  //		printf("%c", ent.first);
+  //	}
+  //	printf("|");
+  //}
+  //printf("\n");
+  //========================================
+  if (softClip->sequence != "") {
+    //printf("return for sequence != empty: %s\n", softClip->sequence.c_str());
+    return softClip->sequence;
+  }
 
-    int total = 0;
-    int match = 0;
-    string seqq;
-    bool flag = false;
-    for (auto& nve : softClip->nt) {
-        int positionInSclip = nve.first;
-        robin_hood::unordered_map<char, int> nv = nve.second;
-        int maxCount = 0; //$max
-        double maxQuality = 0; //$maxq
-        char chosenBase = 0; //$mnt
-        int totalCount = 0; //$tt
-        for (auto& ent : nv) {
-            char currentBase = ent.first; //$nt
-            int currentCount = ent.second; //$ncnt
-            totalCount += currentCount;
-			//printf("current: %c, ==> currentCount: %d, maxCount: %d, currentQuality: %f, maxQuality: %f\n", currentBase, currentCount, maxCount, softClip->seq[positionInSclip][currentBase]->meanQuality, maxQuality);
-			if (currentCount > maxCount || (softClip->seq.count(positionInSclip) && softClip->seq[positionInSclip].count(currentBase)
-                    && softClip->seq[positionInSclip][currentBase]->meanQuality > maxQuality)) {
-				//printf("current changeto: %c, ==> currentCount: %d, maxCount: %d, currentQuality: %f, maxQuality: %f\n", currentBase, currentCount, maxCount, softClip->seq[positionInSclip][currentBase]->meanQuality, maxQuality);
-				maxCount = currentCount;
-                chosenBase = currentBase;
-                maxQuality = softClip->seq[positionInSclip][currentBase]->meanQuality;
-            }
-        }
-        if (positionInSclip == 3 && softClip->nt.size() >= 6 && totalCount/(double)softClip->varsCount < 0.2 && totalCount <= 2) {
-			//printf("break1\n");
-            break;
-        }
-        if ((totalCount - maxCount > 2 || maxCount <= totalCount - maxCount) && maxCount / (double)totalCount < 0.8) {
-            if (flag) {
-				//printf("break2\n");
-                break;
-            }
-            flag = true;
-        }
-        total += totalCount;
-        match += maxCount;
-        if (chosenBase != 0) {
-			//printf("%c\n", chosenBase);
-            seqq+=chosenBase;
-        }
+  int total = 0;
+  int match = 0;
+  string seqq;
+  bool flag = false;
+  for (auto& nve : softClip->nt) {
+    int positionInSclip = nve.first;
+    robin_hood::unordered_map<char, int> nv = nve.second;
+    int maxCount = 0; //$max
+    double maxQuality = 0; //$maxq
+    char chosenBase = 0; //$mnt
+    int totalCount = 0; //$tt
+    for (auto& ent : nv) {
+      char currentBase = ent.first; //$nt
+      int currentCount = ent.second; //$ncnt
+      totalCount += currentCount;
+      //printf("current: %c, ==> currentCount: %d, maxCount: %d, currentQuality: %f, maxQuality: %f\n", currentBase, currentCount, maxCount, softClip->seq[positionInSclip][currentBase]->meanQuality, maxQuality);
+      if (currentCount > maxCount || (softClip->seq.count(positionInSclip) && softClip->seq[positionInSclip].count(currentBase)
+            && softClip->seq[positionInSclip][currentBase]->meanQuality > maxQuality)) {
+        //printf("current changeto: %c, ==> currentCount: %d, maxCount: %d, currentQuality: %f, maxQuality: %f\n", currentBase, currentCount, maxCount, softClip->seq[positionInSclip][currentBase]->meanQuality, maxQuality);
+        maxCount = currentCount;
+        chosenBase = currentBase;
+        maxQuality = softClip->seq[positionInSclip][currentBase]->meanQuality;
+      }
     }
-    string SEQ;
-    int ntSize = softClip->nt.size();
-	//printf("seq1: %s\n", seqq.c_str());
-	//printf("total: %d, match: %d, seqqlent: %d, ntSize: %d\n", total, match, seqq.length(), ntSize);
-    if (total != 0
-            && match / (double)total > 0.9
-            && seqq.length() / 1.5 > ntSize - seqq.length()
-            && (seqq.length() / (double)ntSize > 0.8
-            || ntSize - seqq.length() < 10
-            || seqq.length() > 25)) {
-        SEQ = seqq;
-    } else {
-		//printf("set SEQ to empty/blank\n");
-        SEQ = " ";
+    if (positionInSclip == 3 && softClip->nt.size() >= 6 && totalCount/(double)softClip->varsCount < 0.2 && totalCount <= 2) {
+      //printf("break1\n");
+      break;
     }
+    if ((totalCount - maxCount > 2 || maxCount <= totalCount - maxCount) && maxCount / (double)totalCount < 0.8) {
+      if (flag) {
+        //printf("break2\n");
+        break;
+      }
+      flag = true;
+    }
+    total += totalCount;
+    match += maxCount;
+    if (chosenBase != 0) {
+      //printf("%c\n", chosenBase);
+      seqq+=chosenBase;
+    }
+  }
+  string SEQ;
+  int ntSize = softClip->nt.size();
+  //printf("seq1: %s\n", seqq.c_str());
+  //printf("total: %d, match: %d, seqqlent: %d, ntSize: %d\n", total, match, seqq.length(), ntSize);
+  if (total != 0
+      && match / (double)total > 0.9
+      && seqq.length() / 1.5 > ntSize - seqq.length()
+      && (seqq.length() / (double)ntSize > 0.8
+          || ntSize - seqq.length() < 10
+          || seqq.length() > 25)) 
+  {
+    SEQ = seqq;
+  } else {
+    //printf("set SEQ to empty/blank\n");
+    SEQ = " ";
+  }
 
-    //if (!SEQ.empty() && SEQ.length() > Configuration.SEED_2) {
-	//printf("SEQ2: %s\n", SEQ.c_str());
-	if (!SEQ.empty() && SEQ.length() > CONF_SEED_2) {
-        bool mm1 = regex_search(SEQ, regex("^.AAAAAAA"));
-        bool mm2 = regex_search(SEQ, regex("^.TTTTTTT"));
-		//printf("SEQ3: %s\n", SEQ.c_str());
-        if (mm1 || mm2) {
-            softClip->used = true;
-        }
-        if (islowcomplexseq(SEQ)) {
-            softClip->used = true;
-        }
+  //if (!SEQ.empty() && SEQ.length() > Configuration.SEED_2) {
+  //printf("SEQ2: %s\n", SEQ.c_str());
+  if (!SEQ.empty() && SEQ.length() > CONF_SEED_2) {
+    bool mm1 = regex_search(SEQ, regex("^.AAAAAAA"));
+    bool mm2 = regex_search(SEQ, regex("^.TTTTTTT"));
+    //printf("SEQ3: %s\n", SEQ.c_str());
+    if (mm1 || mm2) {
+      softClip->used = true;
     }
-    //-------------------------TODO:instance?
-    /*
-    if (!SEQ.empty() && SEQ.length() >= Configuration.ADSEED) {
-        if ( dir == 3 ) { // 3'
-            if (instance().adaptorForward.count(SEQ.substr(0, Configuration.ADSEED))) {
-                SEQ = "";
-            }
-        } else if ( dir == 5 ) { // 5'
-            if (instance().adaptorReverse.count(reverse(SEQ.substr(0, Configuration.ADSEED)))) {
-                SEQ = "";
-            }
-        }
+    if (islowcomplexseq(SEQ)) {
+      softClip->used = true;
     }
-    */
-    softClip->sequence = SEQ;
+  }
+  //-------------------------TODO:instance?
+  /*
+     if (!SEQ.empty() && SEQ.length() >= Configuration.ADSEED) {
+     if ( dir == 3 ) { // 3'
+     if (instance().adaptorForward.count(SEQ.substr(0, Configuration.ADSEED))) {
+     SEQ = "";
+     }
+     } else if ( dir == 5 ) { // 5'
+     if (instance().adaptorReverse.count(reverse(SEQ.substr(0, Configuration.ADSEED)))) {
+     SEQ = "";
+     }
+     }
+     }
+   */
+  softClip->sequence = SEQ;
 
-    return SEQ;
+  return SEQ;
 }
 
 inline int strandBias(int forwardCount, int reverseCount, Configuration* conf){
-    if(forwardCount + reverseCount <= 12){
-        return forwardCount * reverseCount >0 ?2:0;
-    }
+  if(forwardCount + reverseCount <= 12){
+    return forwardCount * reverseCount >0 ?2:0;
+  }
 
-    return (forwardCount / (double)(forwardCount + reverseCount) >= conf->bias
-                  && reverseCount / (double)(forwardCount + reverseCount) >= conf->bias
-                  && forwardCount >= conf->minBiasReads
-                  && reverseCount >= conf->minBiasReads) ? 2 : 1;
+  return (forwardCount / (double)(forwardCount + reverseCount) >= conf->bias
+      && reverseCount / (double)(forwardCount + reverseCount) >= conf->bias
+      && forwardCount >= conf->minBiasReads
+      && reverseCount >= conf->minBiasReads) ? 2 : 1;
 
 }
 
 inline Vars* getOrPutVars(robin_hood::unordered_map<int, Vars*> &mapv, int position){
-    //Vars *vars = mapv[position];
-    //mapv[position] = vars;
-    //return vars;
-	Vars *vars;
-	robin_hood::unordered_map<int, Vars*>::iterator itr;
-	if((itr = mapv.find(position)) != mapv.end()){
-		vars = itr->second;
-	}else{
-		vars = new Vars();
-		mapv[position] = vars;
-	}
-	return vars;
+  //Vars *vars = mapv[position];
+  //mapv[position] = vars;
+  //return vars;
+  Vars *vars;
+  robin_hood::unordered_map<int, Vars*>::iterator itr;
+  if((itr = mapv.find(position)) != mapv.end()){
+    vars = itr->second;
+  }else{
+    vars = new Vars();
+    mapv[position] = vars;
+  }
+  return vars;
 }
 
 //-----------------about htslib operation----------------------
@@ -560,69 +561,70 @@ inline int getAlignedLength(uint32_t* cigar, int n_cigar){
 //-----------------about cigar operation----------------------
 
 inline string get_cigar_string(uint32_t* cigar, int n_cigar){
-	string ss;
-	for(int i = 0; i < n_cigar; i++){
-		ss += to_string(bam_cigar_oplen(cigar[i])) + bam_cigar_opchr(cigar[i]);
-	}
-	//printf("counter is : --> %d, cigar: %s\n", count, ss.c_str());
-	return ss;
+  string ss;
+  for(int i = 0; i < n_cigar; i++){
+    ss += to_string(bam_cigar_oplen(cigar[i])) + bam_cigar_opchr(cigar[i]);
+  }
+  //printf("counter is : --> %d, cigar: %s\n", count, ss.c_str());
+  return ss;
 }
 inline int cigar_chr2op(char chr){
-    int op = 0;
-    switch(chr){
+  int op = 0;
+  switch(chr){
     case 'M':
-        op = BAM_CMATCH;
-        break;
+      op = BAM_CMATCH;
+      break;
     case 'I':
-        op = BAM_CINS;
-        break;
+      op = BAM_CINS;
+      break;
     case 'D':
-        op = BAM_CDEL;
-        break;
+      op = BAM_CDEL;
+      break;
     case 'N':
-        op = BAM_CREF_SKIP;
-        break;
+      op = BAM_CREF_SKIP;
+      break;
     case 'S':
-        op = BAM_CSOFT_CLIP;
-        break;
+      op = BAM_CSOFT_CLIP;
+      break;
     case 'H':
-        op = BAM_CHARD_CLIP;
-        break;
+      op = BAM_CHARD_CLIP;
+      break;
     case 'P':
-        op = BAM_CPAD;
-        break;
+      op = BAM_CPAD;
+      break;
     case '=':
-        op = BAM_CEQUAL;
-        break;
+      op = BAM_CEQUAL;
+      break;
     case 'X':
-        op = BAM_CDIFF;
-        break;
+      op = BAM_CDIFF;
+      break;
     case 'B':
-        op = BAM_CBACK;
-        break;
-    }
-    return op;
+      op = BAM_CBACK;
+      break;
+  }
+  return op;
 }
+
 inline bool cigarstr_2cigar(string &cigstr, uint32_t* cigar, int &n_cigar){
-    n_cigar = 0;
-    size_t po = 0;
-    int num;
-    int op;
-    uint32_t cigar_elem;
-    while(!cigstr.empty()){
-        num = stoi(cigstr, &po);
-		if(num < 0) {
-			cout << "neg number: " << num << endl;
-			return false;
-		}
-        cigar_elem = num << BAM_CIGAR_SHIFT;
-        op = cigar_chr2op(cigstr[po]);
-        cigar_elem = cigar_elem | op;
-        //cout << "pos: " << po << " num: " << num  << " op: " << op << endl;
-        cigstr = cigstr.substr(++po);
-        cigar[n_cigar] = cigar_elem;
-        n_cigar++;
+  n_cigar = 0;
+  size_t po = 0;
+  int num;
+  int op;
+  uint32_t cigar_elem;
+  while(!cigstr.empty()){
+    num = stoi(cigstr, &po);
+    if(num < 0) {
+      cout << "neg number: " << num << endl;
+      return false;
     }
-	return true;
+    cigar_elem = num << BAM_CIGAR_SHIFT;
+    op = cigar_chr2op(cigstr[po]);
+    cigar_elem = cigar_elem | op;
+    //cout << "pos: " << po << " num: " << num  << " op: " << op << endl;
+    cigstr = cigstr.substr(++po);
+    cigar[n_cigar] = cigar_elem;
+    n_cigar++;
+  }
+  return true;
 }
 #endif
