@@ -81,7 +81,11 @@ def format_record(record):
   mapq2 = f'{mapq2:.0}'
   qual = int(math.log(vd1)/math.log(2) * qual1) if vd1 > vd2  else int(math.log(vd2)/math.log(2) * qual2)
 
-  pinfo1 = "\t".join([chrt, str(start), ".", ref, alt, str(qual)])
+  try: 
+    pinfo1 = "\t".join([str(chrt), str(start), ".", ref, alt, str(qual)])
+  except:
+    print("wrong data: ", chrt, start, ref, alt, qual, "\n", record)
+    exit(-1)
   filters = "PASS"
   sample_nowhitespace = re.sub(r'\s', '_', sample)
 

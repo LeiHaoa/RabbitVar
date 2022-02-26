@@ -48,8 +48,8 @@ static void get_char_form_seq(uint8_t seq, char* cc){
 int getInsertionDeletionLength(uint32_t* cigar, int n_cigar){
 	int length = 0;
 	for(int i = 0; i < n_cigar; i++){
-		if(bam_cigar_op(cigar[i]) == 1 ||
-		   bam_cigar_op(cigar[i]) == 2){
+		if(bam_cigar_op(cigar[i]) == BAM_CINS ||
+		   bam_cigar_op(cigar[i]) == BAM_CDEL){
 			length += bam_cigar_oplen(cigar[i]);
 		}
 	}
@@ -58,7 +58,7 @@ int getInsertionDeletionLength(uint32_t* cigar, int n_cigar){
 int getMatchInsertionLength(uint32_t* cigar, int n_cigar){
 	int length = 0;
 	for(int c_i = 0; c_i < n_cigar; c_i++){
-		if(bam_cigar_op(cigar[c_i]) == 0 || bam_cigar_op(cigar[c_i]) == 1){
+		if(bam_cigar_op(cigar[c_i]) == BAM_CMATCH || bam_cigar_op(cigar[c_i]) == BAM_CINS){
 			length += bam_cigar_oplen(cigar[c_i]);	
 		}
 	}
@@ -67,8 +67,8 @@ int getMatchInsertionLength(uint32_t* cigar, int n_cigar){
 int getSoftClippedLength(uint32_t* cigar, int n_cigar){
 	int length = 0;
 	for(int c_i = 0; c_i < n_cigar; c_i++){
-		if(bam_cigar_op(cigar[c_i]) == 0 || bam_cigar_op(cigar[c_i]) == 1
-		   || bam_cigar_op(cigar[c_i]) == 4){
+		if(bam_cigar_op(cigar[c_i]) == BAM_CMATCH || bam_cigar_op(cigar[c_i]) == BAM_CINS
+		   || bam_cigar_op(cigar[c_i]) == BAM_CSOFT_CLIP){
 			length += bam_cigar_oplen(cigar[c_i]);	
 		}
 	}
@@ -165,7 +165,7 @@ bool CigarParser::isNextInsertion(int n_cigar, int ci) {
 	//      && cigar.getCigarElement(ci + 1).getOperator() == CigarOperator.I;
 	return conf->performLocalRealignment &&
 		n_cigar > ci + 1 &&
-		bam_cigar_op(cigar[ci+1]) == 1;
+		bam_cigar_op(cigar[ci+1]) == BAM_CINS;
  		
 }
 bool getSecondOfPairFlag(bam1_t *record){
@@ -582,8 +582,8 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 		discordantCount++;
 	}
 	//Ignore reads that are softclipped at both ends and both greater than 10 bp
-	if(bam_cigar_op(cigar[0]) == 4 && bam_cigar_oplen(cigar[0]) >= 10
-	   && bam_cigar_op(cigar[n_cigar-1]) == 4 && bam_cigar_oplen(cigar[n_cigar-1]) >= 10){
+	if(bam_cigar_op(cigar[0]) == BAM_CSOFT_CLIP && bam_cigar_oplen(cigar[0]) >= 10
+	   && bam_cigar_op(cigar[n_cigar-1]) == BAM_CSOFT_CLIP && bam_cigar_oplen(cigar[n_cigar-1]) >= 10){
 		//cout << "return for S at both ends" << endl;
 		return;
 	}
@@ -638,8 +638,8 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 		//funcinline:getCigarOperator(cigar, ci);
 		int c_operator = bam_cigar_op(icigar);
 		cigar_element_length = bam_cigar_oplen(icigar);
-		if((ci == 0 || ci == n_cigar - 1) && c_operator == 1){
-			c_operator = 4;
+		if((ci == 0 || ci == n_cigar - 1) && c_operator == BAM_CINS){
+			c_operator = BAM_CSOFT_CLIP;
 		}
 		//printf("cigar: %c - %d\n",bam_cigar_opchr(icigar), cigar_element_length);
 		//cout << "including: " << readPositionIncludingSoftClipped << endl;
@@ -814,7 +814,7 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 
 				// if cigar has insertion two segments ahead
 				//if(ifTwoInsertionAhead(ci)) {
-				if(n_cigar > ci + 1 && bam_cigar_op(cigar[ci+1]) == 1) {
+				if(n_cigar > ci + 1 && bam_cigar_op(cigar[ci+1]) == BAM_CINS) {
 					//append '^' + next-next segment sequence
 					s += "^" + string(seq, readPositionIncludingSoftClipped+1, bam_cigar_oplen(cigar[ci + 1]));					
 					// loop over next-next segment
@@ -1088,7 +1088,7 @@ void CigarParser::addVariationForDeletion(uint8_t mappingQuality, int nm, bool d
 
 bool CigarParser::isNextAfterNumMatched( int ci, int number) {
 		return n_cigar > ci + number
-			&& bam_cigar_op(bam_get_cigar(record)[ci+1]) == 0;
+			&& bam_cigar_op(bam_get_cigar(record)[ci+1]) == BAM_CMATCH;
 }
 
 
@@ -1347,11 +1347,11 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
 					   quality_segment_count, mLen, indelLen, begin, true);
 		//add length of next segment to both multoffs and multoffp
 		//add length of next-next segment to multoffp (for insertion) or to multoffs (for deletion)
-		multoffs += mLen + (bam_cigar_op(cigar[ci+2]) == 2 ? indelLen : 0);
-		multoffp += mLen + (bam_cigar_op(cigar[ci+2]) == 1 ? indelLen : 0);
+		multoffs += mLen + (bam_cigar_op(cigar[ci+2]) == BAM_CDEL ? indelLen : 0);
+		multoffp += mLen + (bam_cigar_op(cigar[ci+2]) == BAM_CINS ? indelLen : 0);
 
 		int ci6 = n_cigar > ci + 3 ? bam_cigar_oplen(cigar[ci+3]) : 0;
-		if(ci6 != 0 && bam_cigar_op(cigar[ci+3]) == 0){
+		if(ci6 != 0 && bam_cigar_op(cigar[ci+3]) == BAM_CMATCH){
 			const Offset& tpl = findOffset(start + multoffs,
 									readPositionIncludingSoftClipped + cigar_element_length + multoffp,
 									ci6, querySequence, queryQuality, ref, (*refCoverage));
@@ -1501,8 +1501,8 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
 			1). looking at second segment in CIGAR string
 			2). first segment is a soft-clipping or a hard-clipping
 		*/
-		if (ci == 1 && (bam_cigar_op(cigar[0]) == 4
-										|| bam_cigar_op(cigar[0]) == 5)) { // if cigar[0] operator is S or H
+		if (ci == 1 && (bam_cigar_op(cigar[0]) == BAM_CSOFT_CLIP
+										|| bam_cigar_op(cigar[0]) == BAM_CHARD_CLIP)) { // if cigar[0] operator is S or H
 			//Add one more variant corresponding to base at start - 1 to hash
 			//[haoz:] bookmark here
 			Variation* ttref = getVariation(data_pool, *nonInsertionVariants, insertion_pointion, string(1, ref[insertion_pointion]));
@@ -1577,8 +1577,8 @@ int CigarParser::process_deletion(char* querySequence, uint8_t mappingQuality, r
 					   quality_segment_count, mLen, indelLen, begin, false);
 		//add length of next segment to both multoffs and multoffp
 		//add length of next-next segment to multoffp (for insertion) or to multoffs (for deletion)
-		multoffs += mLen + (bam_cigar_op(cigar[ci+2]) == 2 ? indelLen : 0);
-		multoffp += mLen + (bam_cigar_op(cigar[ci+2]) == 1 ? indelLen : 0);
+		multoffs += mLen + (bam_cigar_op(cigar[ci+2]) == BAM_CDEL ? indelLen : 0);
+		multoffp += mLen + (bam_cigar_op(cigar[ci+2]) == BAM_CINS ? indelLen : 0);
 		if(isNextAfterNumMatched(ci, 3)){
 			int vsn = 0;
 			int tn = readPositionIncludingSoftClipped + multoffp;
@@ -1780,7 +1780,7 @@ void CigarParser::appendSegments(char* querySequence, uint8_t* queryQuality, int
 	//descStringOfElement.append('^').append(bam_cigar_op(cigar[ci+2]) == 1
 	//        ? string(querySequence, begin + mLen, indelLen)
 	//        : indelLen);
-	if(bam_cigar_op(cigar[ci+2]) == 1 ){
+	if(bam_cigar_op(cigar[ci+2]) == BAM_CINS ){
 		descstream << "^" << string(querySequence, begin + mLen, indelLen);
 	}else{
 		descstream << "^" << indelLen;
@@ -1796,7 +1796,7 @@ void CigarParser::appendSegments(char* querySequence, uint8_t* queryQuality, int
 		//qsstream << (bam_cigar_op(cigar[ci+2]) == 1
 		//			 ? string((char*)queryQuality, begin + mLen, indelLen)
 		//			 : string(1,queryQuality[begin + mLen]));
-		if(bam_cigar_op(cigar[ci+2]) == 1){
+		if(bam_cigar_op(cigar[ci+2]) == BAM_CINS){
 			for(int i = begin+mLen; i < begin+mLen+indelLen; i++){
 				quality_segment_sum += queryQuality[i];
 			}
@@ -1810,7 +1810,7 @@ void CigarParser::appendSegments(char* querySequence, uint8_t* queryQuality, int
 		//qsstream << (bam_cigar_op(cigar[ci+2]) == 1
 		//			 ? string((char*)queryQuality, begin + mLen, indelLen)
 		//			 : "");
-		if(bam_cigar_op(cigar[ci+2]) == 1){
+		if(bam_cigar_op(cigar[ci+2]) == BAM_CINS){
 			for(int i = begin+mLen; i < begin+mLen+indelLen; i++){
 				quality_segment_sum += queryQuality[i];
 			}
@@ -1823,11 +1823,11 @@ void CigarParser::appendSegments(char* querySequence, uint8_t* queryQuality, int
 bool CigarParser::isInsertionOrDeletionWithNextMatched(int ci) {
     return conf->performLocalRealignment && n_cigar > ci+2
 		&& bam_cigar_oplen(cigar[ci + 1]) <= conf->vext
-		&& bam_cigar_op(cigar[ci + 1]) == 0 // ci+1 == M
-		&& (bam_cigar_op(cigar[ci + 2]) == 1 // ci+2 == I
-			|| bam_cigar_op(cigar[ci + 2]) == 2) // ci+2 == D
-		&& bam_cigar_op(cigar[ci + 3]) != 1 // != I
-		&& bam_cigar_op(cigar[ci + 3]) != 2 ; // != D;
+		&& bam_cigar_op(cigar[ci + 1]) == BAM_CMATCH // ci+1 == M
+		&& (bam_cigar_op(cigar[ci + 2]) == BAM_CINS // ci+2 == I
+			|| bam_cigar_op(cigar[ci + 2]) == BAM_CDEL) // ci+2 == D
+		&& bam_cigar_op(cigar[ci + 3]) != BAM_CINS // != I
+		&& bam_cigar_op(cigar[ci + 3]) != BAM_CDEL ; // != D;
 }
 
 bool CigarParser::isCloserThenVextAndGoodBase(char* querySequence, robin_hood::unordered_map<int, char> ref, uint8_t* queryQuality, int ci, int i, string ss, int CigarOperator){
@@ -1843,7 +1843,7 @@ bool CigarParser::isCloserThenVextAndGoodBase(char* querySequence, robin_hood::u
 
 bool CigarParser::isNextMatched(int ci){
 	return conf->performLocalRealignment && n_cigar > ci+1
-		&& bam_cigar_op(cigar[ci+1]) == 0;
+		&& bam_cigar_op(cigar[ci+1]) == BAM_CMATCH;
 }
 //TODO
 bool CigarParser::skipSitesOutRegionOfInterest() {

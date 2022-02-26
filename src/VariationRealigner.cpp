@@ -342,15 +342,15 @@ void VariationRealigner::adjustMNP() {
 
       const string vn = tpl->descriptionstring;
 
-      if (nonInsertionVariants->count(position)==0) {
+      if (!nonInsertionVariants->count(position)) {
         continue;
       }
       robin_hood::unordered_map<string, Variation*> varsOnPosition = nonInsertionVariants->at(position)->variation_map;
 
-      if (varsOnPosition.count(vn)==0) { // The variant is likely already been used by indel realignment
+      if (!varsOnPosition.count(vn)) { // The variant is likely already been used by indel realignment
         continue;
       }
-      Variation *vref = varsOnPosition[vn];
+      Variation *vref = varsOnPosition.at(vn);
 
       string mnt = vn;
       replaceFirst(mnt, "&", "");
@@ -368,7 +368,7 @@ void VariationRealigner::adjustMNP() {
         {
           //Variation *tref = varsOnPosition[left];
           if (varsOnPosition.count(left)) {
-            Variation *tref = varsOnPosition[left];
+            Variation *tref = varsOnPosition.at(left);
             if (tref->varsCount <= 0) {
               continue;
             }
