@@ -106,10 +106,11 @@ def run_rabbitvar(BIN, workspace, param):
   return splited_info
 
 def rf_filter(param, in_file):
-  cr = list()
-  raw = list()
-  cr = pd.read_csv(in_file, delimiter = '\t', header = None, engine = 'c', skipinitialspace = True)
-  cr.columns = [*features.som_features, 'None'] #TODO: i should change the code of c++ to avoid the None colum
+  #cr = list()
+  #raw = list()
+  #cr = pd.read_csv(in_file, delimiter = '\t', header = None, engine = 'c', skipinitialspace = True)
+  #cr.columns = [*features.som_features, 'None']#TODO: i should change the code of c++ to avoid the None colum
+  get_data_fromtxt(in_file, 'ALL')
   cr['VarLabel'] = cr['VarLabel'].map(varLabel_to_label)
   cr['VarType'] = cr['VarType'].map(type_to_label)
   cr['RefLength'] = cr['Ref'].str.len()

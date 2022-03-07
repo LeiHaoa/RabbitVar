@@ -10,8 +10,7 @@ features_to_index = {
     "VarsCountOnReverse" : 12,
     "genotype" : 13,
     "frequency" : 14,
-    "strandbiasflag" : 15,
-    "meanPosition" : 16,
+    "strandbiasflag" : 15, "meanPosition" : 16,
     "pstd" : 17,
     "meanQuality" : 18,
     "qstd" : 19, 
@@ -111,6 +110,7 @@ som_features_to_index = {
     "shift3":47, "MSI":48, "MSI_NT":49, "5pFlankSeq":50, "3pFlankSeq":51, "Seg":52, "VarLabel":53, "VarType":54,
     "Duprate1":55, "SV_info1":56, "Duprate2":57, "SV_info2":58, "Pvalue":59, "Oddratio":60
     }
+
 som_selected_features = [
     "Var1Depth", "Var1AltDepth", "Var1RefFwdReads", "Var1RefRevReads", "Var1AltFwdReads", "Var1AltRevReads", "Var1AF",
     "Var1PMean", "Var1PStd", "Var1QMean", "Var1QStd", "Var1MQ", "Var1Sig_Noise", "Var1HiAF", "Var1ExtraAF", "Var1NM", "Var1Pvalue", "Var1Oddr",
@@ -120,10 +120,11 @@ som_selected_features = [
     "Pvalue", "Oddratio"
     ]
 
-#som_selected_features = [
-#    "Var1Depth", "Var1AltDepth", "Var1RefFwdReads",  "Var1AltFwdReads", "Var1AF",
-#    "Var1PMean", "Var1PStd", "Var1QMean", "Var1QStd", "Var1MQ", "Var1Sig_Noise", "Var1HiAF", "Var1NM", 
-#    "Var2Depth", "Var2AltDepth", "Var2RefFwdReads", "Var2AltFwdReads", "Var2AF",
-#    "Var2PMean", "Var2PStd", "Var2QMean", "Var2QStd", "Var2MQ", "Var2Sig_Noise", "Var2HiAF", "Var2NM", 
-#    "Pvalue", "Oddratio"
-#    ]
+som_rf_input_features = [
+    "Var1DepthFreq", "Var1AltFreq", "Var1RefFwdFreq", "Var1AltFwdFreq",  "Var1AF",
+    "Var1PMean", "Var1PStd", "Var1QMean", "Var1QStd", "Var1MQ", "Var1Sig_Noise", "Var1HiAF", "Var1ExtraAF", "Var1NM", "Var1Pvalue", "Var1Oddr",
+    "Var2DepthFreq", "Var2AltFreq", "Var2RefFwdFreq", "Var2AltFwdFreq",  "Var2AF",
+    "Var2PMean", "Var2PStd", "Var2QMean", "Var2QStd", "Var2MQ", "Var2Sig_Noise", "Var2HiAF", "Var2ExtraAF", "Var2NM", "Var2Pvalue", "Var2Oddr",
+    "shift3", "MSI", "MSI_NT",
+    "Pvalue", "Oddratio"
+    ]
