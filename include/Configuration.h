@@ -112,7 +112,7 @@ class Configuration {
     /**
      * Path to bed file with regions
      */
-    string bed;
+    string bed = "";
     /**
      * The number of nucleotide to extend for each segment
      */

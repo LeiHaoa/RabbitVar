@@ -16,8 +16,9 @@ public:
   void start(Configuration *config);
   void initResources(Configuration *conf);
   std::tuple<string, bool, vector<string> > readBedFile(Configuration *conf);
+  std::tuple<string, bool, vector<string>> get_wgs_region(Configuration *conf);
   void readChr(string bam, robin_hood::unordered_map<string, int> &chrs);
   std::tuple<string, string> getSampleNames(Configuration *conf);
   std::tuple<string, string> getSampleNamesSomatic(Configuration *conf);
-};
+  };
 #endif
