@@ -4,13 +4,12 @@ import os
 RABBITVAR_ABSPATH = os.path.dirname(__file__)
 
 def detectorParam(parser):
-  #parser.add_argument('--help', '-H', help = "Print this help page")
   parser.add_argument('--pileup', '-p', help = "Do pileup regardless of the frequency", action = "store_true")
-  parser.add_argument('--Chr_name', '-C', help = "Indicate the chromosome names are just numbers, such as 1, 2, not chr1, chr2 (deprecated)", action = "store_true")
-  parser.add_argument('--debug', '-D', help = "Debug mode.  Will print some error messages and append full genotype at the end.", action = "store_true")
+  ## parser.add_argument('--Chr_name', '-C', help = "Indicate the chromosome names are just numbers, such as 1, 2, not chr1, chr2 (deprecated)", action = "store_true")
+  ## parser.add_argument('--debug', '-D', help = "Debug mode.  Will print some error messages and append full genotype at the end.", action = "store_true")
   parser.add_argument('--dedup', '-t', help = "Indicate to remove duplicated reads.  Only one pair with same start positions will be kept", action = "store_true")
   parser.add_argument('--3-prime', '-3', help = "Indicate to move indels to 3-prime if alternative alignment can be achieved.", action = "store_true")
-  parser.add_argument('--calcu_Ns', '-K', help = "Include Ns in the total depth calculation", action = "store_true")
+  ## parser.add_argument('--calcu_Ns', '-K', help = "Include Ns in the total depth calculation", action = "store_true")
   parser.add_argument('--uni', '-u', help = "Indicate unique mode, which when mate pairs overlap, the overlapping part will be counted only once using forward read only.", action = "store_true")
   parser.add_argument('--UN', help = "Indicate unique mode, which when mate pairs overlap, the overlapping part will be counted only once using first read only.", action = "store_true")
   #parser.add_argument('--chimeric', help = "Indicate to turn off chimeric reads filtering.")
@@ -52,7 +51,7 @@ def detectorParam(parser):
   parser.add_argument('--freq', '-V', help = "The lowest frequency in the normal sample allowed for a putative somatic mutation.   Defaults to 0.05", type=float, required = False)
   parser.add_argument('--allele_fre', '-f', help = "The threshold for allele frequency, default: 0.01", type=float, required = False)
   parser.add_argument('--downsample', '-Z', help = "For downsampling fraction.  e.g. 0.7 means roughly 70 percnet downsampling.  Default: No downsampling. Use with caution.  The downsampling will be random and non-reproducible.", type=float, required = False)
-  parser.add_argument('--VS', help = "How strict to be when reading a SAM or BAM. STRICT	- throw an exception if something looks wrong. LENIENT	- Emit warnings but keep going if possible. SILENT	- Like LENIENT, only don't emit warning messages.  Default: LENIENT", type=str, required = False)
+  #parser.add_argument('--VS', help = "How strict to be when reading a SAM or BAM. STRICT	- throw an exception if something looks wrong. LENIENT	- Emit warnings but keep going if possible. SILENT	- Like LENIENT, only don't emit warning messages.  Default: LENIENT", type=str, required = False)
   parser.add_argument('--adaptor', help = "Filter adaptor sequences so that they aren't used in realignment. Multiple adaptors can be supplied by setting them with comma, like: --adaptor ACGTTGCTC,ACGGGGTCTC,ACGCGGCTAG .", type=str, required = False)
   parser.add_argument('--crispr', '-J', help = "The genomic position that CRISPR/Cas9 suppose to cut, typically 3bp from the PAM NGG site and  within the guide.  For CRISPR mode only.  It will adjust the variants (mostly In-Del) start and end sites to as close to this location as possible,if there are alternatives. The option should only be used for CRISPR mode.", type=int, required = False)
   parser.add_argument('--CRISPR_fbp', '-j', help = "In CRISPR mode, the minimum amount in bp that a read needs to overlap with cutting site.  If a read does not meet the criteria, it will not be used for variant calling, since it is likely just a partially amplified PCR.  Default: not set, or no filtering", type=int, required = False)
@@ -64,8 +63,8 @@ def detectorParam(parser):
   parser.add_argument('--auto_resize', help = "Auto resize the bed region size for better performance", action = 'store_true')
 
 def filterParam(parser):
-  parser.add_argument("--indelmod", help = "Indel filter path", type=str, required = False, default = os.path.join(RABBITVAR_ABSPATH, "RandomForest/models/som_indel_0527.pkl"))
-  parser.add_argument("--snvmod", help = "Indel filter path", type=str, required = False, default = os.path.join(RABBITVAR_ABSPATH, "RandomForest/models/som_snv_0206.pkl"))
+  parser.add_argument("--indelmod", help = "Indel RandomForest filter path", type=str, required = False, default = os.path.join(RABBITVAR_ABSPATH, "RandomForest/models/som_indel_0527.pkl"))
+  parser.add_argument("--snvmod", help = "SNV RandomForest filter path", type=str, required = False, default = os.path.join(RABBITVAR_ABSPATH, "RandomForest/models/som_snv_0206.pkl"))
   parser.add_argument("--snvscale", help = "Scale to filter SNV false positive", type=float, required = False, default = 0.5)
   parser.add_argument("--indelscale", help = "Scale to filter InDel false positive", type=float, required = False, default = 0.5)
 
