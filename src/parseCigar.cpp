@@ -612,18 +612,17 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 		return;
 	}
 	
-	bool mate_direction = (record->core.flag & 0x20) != 0 ? false:true;
-	if((record->core.flag & 0x1) && (record->core.flag & 0x4)){
-		
-	}else if(mapping_quality > 10 && !conf->disableSV){
-		//prepareSVStructuresForAnalysis(record, query_quality, number_of_mismatch, direction, mate_direction,
-		//							   position, total_length_including_soft_clipped);
-	}
+	// bool mate_direction = (record->core.flag & 0x20) != 0 ? false:true;
+	// if((record->core.flag & 0x1) && (record->core.flag & 0x4)){
+	// 	
+	// }else if(mapping_quality > 10 && !conf->disableSV){
+	// 	//prepareSVStructuresForAnalysis(record, query_quality, number_of_mismatch, direction, mate_direction,
+	// 	//							   position, total_length_including_soft_clipped);
+	// }
 	//int mate_alignment_start = record.getMateAlignmentStart();
 
 	//-----------step1.2 cigar_modify--------------//
 	//
-	//int mateAlignmentStart = record.getMateAlignmentStart(); // TODO
 	int mateAlignmentStart = getMateAlignmentStart(record);
 	//cout << "mateAlignmentstart: " << mateAlignmentStart << endl;
 	//processCigar:
@@ -714,7 +713,6 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 				  && (start + 1) <= region.end && (i + 1) < cigar_element_length
 				  && q >= conf->goodq
 				  && isHasAndNotEquals(ref, start, seq, readPositionIncludingSoftClipped)
-				  //&& isNotEquals(15, ref.get(start))){
 				  && isNotEquals('N', ref[start])){
 
 				if(query_quality[readPositionIncludingSoftClipped + 1]  < conf->goodq + 5){
@@ -1112,8 +1110,6 @@ inline bool isReadChimericWithSA(bam1_t* record, int positon, char* saTagString,
 			&& strcmp(saChromosome, refName)
 			//&& (abs(saPosition - positon) < 2 * maxReadLength)
 			&& mm);
-		
-
 }
 
 void CigarParser::process_softclip(string chrName, bam1_t* record, char* querySequence, uint8_t mappingQuality,

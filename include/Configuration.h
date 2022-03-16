@@ -247,11 +247,6 @@ class Configuration {
      */
     double lofreq = 0.05d; // -V
 
-    ///**
-    // * Any base with quality &lt;=10 will be consider low quality in soft-clipped seq and extension will stop.
-    // */
-    // static int LOWQUAL;
-
     /**
      * The minimum matches for a read to be considered
      */
@@ -260,16 +255,6 @@ class Configuration {
      *  Output splicing read counts
      */
     //bool outputSplicing = false; // -i
-
-    /**
-     * How strict to be when reading a SAM or BAM.
-     */
-    //ValidationStringency validationStringency = ValidationStringency.LENIENT; // -VS
-
-    /**
-     * Include Ns in the total depth calculation.
-     */
-    bool includeNInTotalDepth = false; // -K
 
     /**
      * Indicate unique mode, which when mate pairs overlap,
@@ -321,28 +306,10 @@ class Configuration {
     // bool chimeric = true; // --chimeric
 
     /**
-     * Turn off structural variant calling when set to true
-     */
-    // bool disableSV = false; //-U
-    bool disableSV = true; //-U
-
-    /**
      * Turn on deleting of duplicate variants that can appear due to VarDict linear work on regions.
      */
     bool deleteDuplicateVariants = false;
 
-    ///**
-    // * The minimum distance between two SV clusters in term of read length
-    // */
-    // static double MINSVCDIST;
-    /**
-     * Mean Insert size
-     */
-    // int INSSIZE = 300; //-w
-    /**
-     * Insert std
-     */
-    //int INSSTD = 100; //-W
     /**
      * Insert std amount
      */
@@ -351,23 +318,6 @@ class Configuration {
      * The minimum structural variant length to be presented using &lt;DEL&gt; &lt;DUP&gt; &lt;INV&gt; &lt;INS&gt;, etc.
      */
     int SVMINLEN = 1000; //-L
-    ///**
-    // * Max Structure variant size to be called in realignment step
-    // */
-    // static int SVMAXLEN;
-    ///**
-    // * the flanking sequence length for SV
-    // */
-    // static int SVFLANK;
-    ///**
-    // * The minimum mapping quality when structural variant is only supported by discordant pairs
-    // */
-    // static int DISCPAIRQUAL;
-
-    // static int EXTENSION;
-
-    // static string DEFAULT_AMPLICON_PARAMETERS;
-
     /**
      * Default reference extension $REFEXT
      */

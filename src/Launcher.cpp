@@ -63,9 +63,9 @@ void VarDictLauncher::initResources(Configuration *conf) {
 		//	cout << "seg: " <<  seg << endl;
 		//}	
 		//cout << "ampliconBasedcalling: " << ampliconBasedCalling << endl;
-    //exit(-1);
+    // exit(-1);
 
-		if (ampliconBasedCalling != "") {
+    if (ampliconBasedCalling != "") {
 			//segments = builder.buildAmpRegions(segraw, zeroBased != null ? zeroBased : false);
 			segments = builder.buildAmpRegions(segraw, zeroBased);
 		} else {
@@ -301,11 +301,11 @@ Configuration* cmdParse(int argc, char* argv[]){
   //cmd.add("vcf_format", 'v',"VCF format output");
   //cmd.add("splice", 'i', "Output splicing read counts");
   cmd.add("pileup", 'p', "Do pileup regardless of the frequency");
-  cmd.add("Chr_name", 'C', "Indicate the chromosome names are just numbers, such as 1, 2, not chr1, chr2 (deprecated)");
-  cmd.add("debug", 'D', "Debug mode.  Will print some error messages and append full genotype at the end.");
+  //cmd.add("Chr_name", 'C', "Indicate the chromosome names are just numbers, such as 1, 2, not chr1, chr2 (deprecated)");
+  //cmd.add("debug", 'D', "Debug mode.  Will print some error messages and append full genotype at the end.");
   cmd.add("dedup", 't', "Indicate to remove duplicated reads.  Only one pair with same start positions will be kept");
   cmd.add("3-prime", '3', "Indicate to move indels to 3-prime if alternative alignment can be achieved.");
-  cmd.add("calcu_Ns", 'K', "Include Ns in the total depth calculation");
+  //cmd.add("calcu_Ns", 'K', "Include Ns in the total depth calculation");
   cmd.add("uni", 'u', "Indicate unique mode, which when mate pairs overlap, the overlapping part will be counted only once\n\t\t\t      using forward read only.");
   cmd.add("UN", 0, "Indicate unique mode, which when mate pairs overlap, the overlapping part will be counted only once \n\t\t\t      using first read only.");
   cmd.add("chimeric", 0, "Indicate to turn off chimeric reads filtering.");
@@ -344,10 +344,6 @@ Configuration* cmdParse(int argc, char* argv[]){
   cmd.add<int>("th", 0, "Threads count.", false, 0);
   cmd.add("fisher", 0, "Experimental feature: fisher test");
   cmd.add<int>("Min_macth", 'M', "The minimum matches for a read to be considered. If, after soft-clipping, the matched bp is less \n\t\t\t      than INT, then the read is discarded. It's meant for PCR based targeted sequencing where there's no \n\t\t\t      insert and the matching is only the primers. Default: 0, or no filtering", false, 0);
-  cmd.add<int>("STD", 'A', "The number of STD. A pair will be considered for DEL if INSERT > INSERT_SIZE + INSERT_STD_AMT * \n\t\t\t      INSERT_STD.  Default: 4", false, 4);
-  //cmd.add<int>("insert-std", 'W', "The insert size STD.  Used for SV calling.  Default: 100", false, 100);
-  //cmd.add<int>("insert-size", 'w', "The insert size.  Used for SV calling.  Default: 300", false, 300);
-  cmd.add<int>("minlen_sv", 'L', "The minimum structural variant length to be presented using <DEL> <DUP> <INV> <INS>, etc. \n\t\t\t      Default: 1000. Any indel, complex variants less than this will be spelled out with exact \n\t\t\t      nucleotides.", false, 1000);
   cmd.add<int>("ref-extension", 'Y', "Extension of bp of reference to build lookup table. Default to 1200 bp. Increase the number will \n\t\t\t      slowdown the program. The main purpose is to call large indels with 1000 bit that can be missed by \n\t\t\t      discordant mate pairs.", false, 1200);
   //cmd.add<int>("P", 0, "The read position filter.  If the mean variants position is less that specified, it's considered false positive.  Default: 5", false, 5);
   cmd.add<int>("minimum_reads", 'r', "The minimum # of variant reads, default 2", false, 2);
@@ -357,14 +353,14 @@ Configuration* cmdParse(int argc, char* argv[]){
 
   cmd.add<double>("allele_fre", 'f', "The threshold for allele frequency, default: 0.01 or 1%", false, 0.01);
   cmd.add<double>("downsample", 'Z', "For downsampling fraction.  e.g. 0.7 means roughly 70% downsampling.  Default: No downsampling. \n\t\t\t      Use with caution.  The downsampling will be random and non-reproducible.", false, 0);
-  cmd.add<string>("VS", 0, "How strict to be when reading a SAM or BAM. \n\t\t\t      STRICT\t- throw an exception if something looks wrong.\n\t\t\t      LENIENT\t- Emit warnings but keep going if possible. \n\t\t\t      SILENT\t- Like LENIENT, only don't emit warning messages. \n\t\t\t      Default: LENIENT", false, "LENIENT");
+  //cmd.add<string>("VS", 0, "How strict to be when reading a SAM or BAM. \n\t\t\t      STRICT\t- throw an exception if something looks wrong.\n\t\t\t      LENIENT\t- Emit warnings but keep going if possible. \n\t\t\t      SILENT\t- Like LENIENT, only don't emit warning messages. \n\t\t\t      Default: LENIENT", false, "LENIENT");
   cmd.add<string>("adaptor", 0, "Filter adaptor sequences so that they aren't used in realignment. Multiple adaptors can be supplied \n\t\t\t      by setting them with comma, like: --adaptor ACGTTGCTC,ACGGGGTCTC,ACGCGGCTAG .", false, "");
   cmd.add<int>("crispr", 'J', "The genomic position that CRISPR/Cas9 suppose to cut, typically 3bp from the PAM NGG site and  \n\t\t\t      within the guide.  For CRISPR mode only.  It will adjust the variants (mostly In-Del) start and end \n\t\t\t      sites to as close to this location as possible,if there are alternatives. The option should only be \n\t\t\t      used for CRISPR mode.", false, 0);
   cmd.add<int>("CRISPR_fbp", 'j', "In CRISPR mode, the minimum amount in bp that a read needs to overlap with cutting site.  If a read does not meet the criteria,\n\t\t\t      it will not be used for variant calling, since it is likely just a partially amplified PCR.  Default: not set, or no filtering", false, 0);
   cmd.add<double>("mfreq", 0, "The variant frequency threshold to determine variant as good in case of monomer MSI. \n\t\t\t      Default: 0.25", false, 0.25);
   cmd.add<double>("nmfreq", 0, "The variant frequency threshold to determine variant as good in case of non-monomer MSI. \n\t\t\t      Default: 0.1", false, 0.1);
 
-  cmd.add<string>("out", 0, "The out put file path. \n\t\t\t      Default: ./out.vcf", false, "./out.vcf");
+  cmd.add<string>("out", 0, "The out put file path. \n\t\t\t      Default: ./out.txt", false, "./out.txt");
   cmd.add<string>("bed", 'i', "The region file to be processed", false, "");
   cmd.add("version", 0, "Print FastVC version information");
   cmd.add("auto_resize", 0, "Auto resize the bed region size for better performance");
@@ -387,8 +383,8 @@ Configuration* cmdParse(int argc, char* argv[]){
     std::cerr << "You not specify a region, use WGS region default" << std::endl;
   }
   //config->printHeader = cmd.exist('h');
-  config->chromosomeNameIsNumber = cmd.exist('C');
-  config->debug = cmd.exist('D');
+  //config->chromosomeNameIsNumber = cmd.exist('C');
+  //config->debug = cmd.exist('D');
   config->removeDuplicatedReads = cmd.exist('t');
   config->moveIndelsTo3 = cmd.exist('3');
   config->samfilter = cmd.get<string>('F');
@@ -468,21 +464,12 @@ Configuration* cmdParse(int argc, char* argv[]){
     config->minmatch = cmd.get<int>('M');
   }
 
-  if (cmd.exist("VS")) {
-    //config->validationStringency = ValidationStringency.valueOf(cmd.getParsedOptionValue("VS").toString().toUpperCase());
-  }
 
-  config->includeNInTotalDepth = cmd.exist('K');
+  //config->includeNInTotalDepth = cmd.exist('K');
   config->chimeric = cmd.exist("chimeric");
-  //config->disableSV = cmd.exist('U');
   config->uniqueModeSecondInPairEnabled = cmd.exist("UN");
   config->uniqueModeAlignmentEnabled = cmd.exist('u');
   config->deleteDuplicateVariants = cmd.exist("deldupvar");
-
-  //config->INSSIZE = cmd.get<int>('w');
-  //config->INSSTD = cmd.get<int>('W');
-  config->INSSTDAMT = cmd.get<int>('A');
-  config->SVMINLEN = cmd.get<int>('L');
 
   config->threads = max(cmd.get<int>("th"), 1);
   config->fisher = cmd.exist("fisher");
@@ -497,12 +484,6 @@ Configuration* cmdParse(int argc, char* argv[]){
   //if (cmd.exist("DP")) {
   if (cmd.exist("out")) {
     config->outFileName = cmd.get<string>("out");
-    // string defaultPrinter = cmd.get<string>("DP");
-    // if(defaultPrinter== "ERR") {
-    //     config->printerType = "PrinterType.ERR";
-    // }else{
-    // 	config->printerType = "PrinterType.OUT";
-    // }
   }
 
   config->crisprCuttingSite = cmd.get<int>('J');
