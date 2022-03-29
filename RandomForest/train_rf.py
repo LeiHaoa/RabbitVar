@@ -1,7 +1,6 @@
 import sys
 import os
-from multiprocessing import Process, Queue
-sys.path.append(os.path.join(os.getcwd(), '../utils'))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../utils'))
 
 import joblib
 import numpy as np
@@ -15,6 +14,8 @@ import argparse
 
 from features import *
 from datautil import get_data_fromcsv, hard_filter
+import features
+import datautil
 
 SOM_SNV_FEATURES=len(som_selected_features) + 1 
 SOM_INDEL_FEATURES = SOM_SNV_FEATURES + 3
@@ -211,7 +212,6 @@ def train_rf(args):
     vartype = args.var_type
     #--- prepare source datafram from file ---#
     fastvc_file = args.train_data
-    cr = list()
 
     if vartype == "SNV":
         if args.tsv == None:
@@ -232,50 +232,33 @@ def train_rf(args):
         y = aug_data["label"]#.to_numpy()
         print(len(aug_data), len(y))
     elif vartype == "INDEL":
-        if args.tsv == None:
-            data = pd.DataFrame(cr, columns=["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel", "label"])
-            data[data.columns[:-2]] = data[data.columns[:-2]].apply(pd.to_numeric)
-            data[data.columns] = data[data.columns].apply(pd.to_numeric)
-        else:
-            data = get_data_fromcsv(args.tsv, ["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel", "label"], vtype = 'INDEL')
-
+        data = get_data_fromcsv(args.tsv, columns=[*features.som_rf_input_features, 'Label'], vtype = 'INDEL')
         print("before hard filter: {} data".format(len(data)))
         data = hard_filter(data)
         print("after hard filter: {} data".format(len(data)))
-        data['is_train'] = np.random.uniform(0, 1, len(data)) <= 0.9
-        train, test = data[data['is_train'] == True], data[data['is_train'] == False]
-        #--- data prepare ----#
-        false = train[train['label'] == 0 ]
-        truth = train[train['label'] == 1 ]
-        print("faslse number: {}, truth number: {}".format(len(false), len(truth)) )
-        aug_data = shuffle(pd.concat([truth, false, truth, truth], axis = 0))
-        train_set = aug_data[aug_data.columns[:-2]].to_numpy()
-        y = aug_data["label"]#.to_numpy()
-        print(len(aug_data), len(y))
+        #data['is_train'] = np.random.uniform(0, 1, len(data)) <= 0.9
+        #train, test = data[data['is_train'] == True], data[data['is_train'] == False]
+        ##--- data prepare ----#
+        #false = train[train['label'] == 0 ]
+        #truth = train[train['label'] == 1 ]
+        #print("faslse number: {}, truth number: {}".format(len(false), len(truth)) )
+        #aug_data = shuffle(pd.concat([truth, false, truth, truth], axis = 0))
+        #train_set = aug_data[aug_data.columns[:-2]].to_numpy()
+        #y = aug_data["label"]#.to_numpy()
+        #print(len(aug_data), len(y))
 
     print("data prepare done, start fiting ...")
-    if args.pretrained_model == None:
-        clf = RandomForestClassifier(n_jobs=args.nthreads, max_depth=20, min_samples_leaf=50, 
-                                     n_estimators=150, max_features=None)
-    else:
-        print("model {} exists!".format(args.pretrained_model))
-        exit(-1)
-        if not os.path.exists(args.pretrained_model):
-            print("model {} not exists, create new one!".format(args.pretrained_model))
-            clf = RandomForestClassifier(n_jobs=args.nthreads, max_depth=20, min_samples_leaf=50, 
-                                         n_estimators=150, max_features=None)
-        else:
-            print("loading model: ", args.pretrained_model)
-            clf = joblib.load(args.pretrained_model)
+    clf = RandomForestClassifier(n_jobs=args.nthreads, max_depth=20, min_samples_leaf=50, 
+                                 n_estimators=150, max_features=None)
 
-    clf.fit(train_set, y)
+    clf.fit(data[features.som_rf_input_features], data['Label'])
     
     joblib.dump(clf, args.out_model, compress=9)
     print("store model done, now testing...")
-    test_set = test[test.columns[:-2]].to_numpy()
-    ytest = test['label']
-    ypred = clf.predict(test_set)
-    print("Accuracy score", sklearn.metrics.accuracy_score(ytest, ypred))
+    #test_set = test[test.columns[:-2]].to_numpy()
+    #ytest = test['label']
+    #ypred = clf.predict(test_set)
+    #print("Accuracy score", sklearn.metrics.accuracy_score(ytest, ypred))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

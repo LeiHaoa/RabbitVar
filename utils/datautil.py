@@ -135,14 +135,12 @@ def get_data_fromtxt(fvc_result_path, vtype = 'ALL'):
       print('ERROR: unsupported variant type: ', vtype)
       exit(-1)
 
-def get_data_fromcsv(data_path, header, vtype = 'SNV'):
-  data = pd.read_csv(data_path, header=None)
-  if vtype.upper() == 'INDEL':
-    data.columns = header
-    #data = data[data['VarLabel'] != 0] #vartype != germline
-  elif vtype.upper() == 'SNV':
-    data.columns = header
-    #data = data[data['VarLabel'] != 0] #vartype != germline
+def get_data_fromcsv(data_path, columns, vtype = 'SNV'):
+  data = pd.read_csv(data_path, header=None, names=columns, engine = 'pyarrow')
+  #if vtype.upper() == 'INDEL':
+  #  data.columns = header
+  #elif vtype.upper() == 'SNV':
+  #  data.columns = header
   return data 
 
 def hard_filter(data):
@@ -150,8 +148,8 @@ def hard_filter(data):
                               | (data['Var1QMean'] <= 20)
                               | (data['Var1NM'] >= 6)
                               | (data['Var1NM'] < 0)
-                              | ((data['Var1Depth'] == 0) | (data['Var2Depth'] == 0))
                               | ((data['VarLabel'] != 3) & (data['VarLabel'] != 4) & (data['VarLabel'] != 5)))]
+  #| ((data['Var1Depth'] == 0) | (data['Var2Depth'] == 0))
   return hard_filtered_data
 
 def hard_filter_keeporg(data):
