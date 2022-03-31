@@ -76,7 +76,7 @@ inline void add_depth_by_region(Region &region, robin_hood::unordered_map<int, i
       reg_sum_cov += refCoverage->at(i);
     }
   }
-  cov_info.total_coverage = reg_sum_cov;
+  cov_info.total_coverage += reg_sum_cov;
   cov_info.covered_site += cov_pos;
 }
 
