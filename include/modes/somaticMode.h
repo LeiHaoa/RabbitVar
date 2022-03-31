@@ -7,9 +7,16 @@
 #include "../scopedata/AlignedVarsData.h"
 #include "../data/data_pool.h"
 
+struct sample_info{
+  uint64_t total_coverage;
+  uint64_t covered_site;
+};
+
 struct SomaticThreadResource{
-	vector<vector<bamReader> > bamReaders;
+  sample_info tumor_info;
+  sample_info normal_info;
 	dataPool* data_pool;
+	vector<vector<bamReader> > bamReaders;
 };
 
 struct ScopePair{
@@ -53,6 +60,7 @@ private:
 	vector<Region> mRegs;
 	int mRepo_pos;
 	FILE* file_ptr;	
+	FILE* info_file_ptr;	
 };
 
 #endif

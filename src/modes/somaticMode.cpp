@@ -66,6 +66,20 @@ static Scope<AlignedVarsData>* one_region_run(Region region, Configuration* conf
 	return avd;
 }
 
+inline void add_depth_by_region(Region &region, robin_hood::unordered_map<int, int> *refCoverage, 
+                                sample_info& cov_info){
+  uint64_t reg_sum_cov = 0;
+  uint64_t cov_pos = 0;
+  for(int i = region.start; i < region.end; ++i){
+    if(refCoverage->count(i)){
+      cov_pos++;
+      reg_sum_cov += refCoverage->at(i);
+    }
+  }
+  cov_info.total_coverage = reg_sum_cov;
+  cov_info.covered_site += cov_pos;
+}
+
 static ScopePair one_region_run_somt(Region region, Configuration* conf, SomaticThreadResource &trs, set<string>* splice){
 	dataPool *data_pool = trs.data_pool;
 	data_pool->reset();
@@ -82,9 +96,9 @@ static ScopePair one_region_run_somt(Region region, Configuration* conf, Somatic
 	VariationRealigner var_realinger(conf, data_pool);
 	Scope<RealignedVariationData> rvd = var_realinger.process(svd);
 	//cout << "valide count : " << var_realinger.debug_valide_count << endl;
-
 	ToVarsBuilder vars_builder(conf);
 	Scope<AlignedVarsData> *avd = vars_builder.process(rvd);
+  add_depth_by_region(region, vars_builder.get_refcov(), trs.tumor_info);
 	
 	//TODO: about bam2
 	//1. preprocessor difference step use difference preprocessor
@@ -99,13 +113,11 @@ static ScopePair one_region_run_somt(Region region, Configuration* conf, Somatic
 	Scope<RealignedVariationData> rvd2 = var_realinger2.process(svd2);
 	ToVarsBuilder vars_builder2(conf);
 	Scope<AlignedVarsData>* avd2 = vars_builder2.process(rvd2);
+  add_depth_by_region(region, vars_builder2.get_refcov(), trs.normal_info);
 
-
-	//delete avd->data;
-	delete preprocessor;
+  delete preprocessor;
 	delete preprocessor2;
 	delete init_data;
-	//delete avd2.data;
 	delete init_data2;
 
 	ScopePair sp;
@@ -714,6 +726,8 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 	
 	this->conf = conf;
 	this->file_ptr = fopen(conf->outFileName.c_str(), "wb");
+  std::string info_file = conf->outFileName + ".info";
+  this->info_file_ptr = fopen(info_file.c_str(), "wb");
 	if(this->file_ptr == NULL){
 		cerr << "open file: " << conf->outFileName << " error!" << endl;
 	}else{
@@ -766,6 +780,19 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 		string variant_result = output(pair.normal_scope, pair.tumor_scope, trs);
 		fwrite(variant_result.c_str(), 1, variant_result.length(), this->file_ptr);
 
+    uint64_t tumor_sum_cov = 0;
+    uint64_t tumor_sum_pos = 0;
+    uint64_t normal_sum_cov = 0;
+    uint64_t normal_sum_pos = 0;
+    tumor_sum_cov  += trs.tumor_info.total_coverage;
+    tumor_sum_pos  += trs.tumor_info.covered_site;
+    normal_sum_cov += trs.normal_info.total_coverage;
+    normal_sum_pos += trs.normal_info.covered_site;
+    double tumor_avg_cov = tumor_sum_cov / (double)tumor_sum_pos;
+    double normal_avg_cov = normal_sum_cov / (double)tumor_sum_pos;
+    const string contex1 = std::to_string(tumor_avg_cov) + '\n' + std::to_string(normal_avg_cov) + "\n";
+    fwrite(contex1.c_str(), 1, contex1.length(), this->info_file_ptr);
+
 		for(Variation* variation: trs.data_pool->_data){
 			delete variation;
 		}	
@@ -790,18 +817,18 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 				}
 			}
 		}
-	    const int reg_num = mRegs.size();
-		InitItemRepository(reg_num);
+    const int reg_num = mRegs.size();
+    InitItemRepository(reg_num);
 		
 		int processor_num = conf->threads;
 		omp_set_num_threads(processor_num);
 		cout << "[info] num threads: " << processor_num << endl;
-        #pragma omp parallel
-		{
-            #pragma omp single
-			processor_num = omp_get_num_threads();
-		}
-		double * time = new double[processor_num];
+#pragma omp parallel
+    {
+#pragma omp single
+      processor_num = omp_get_num_threads();
+    }
+    double * time = new double[processor_num];
 		for(int i = 0; i < processor_num; i++)	time[i] = 0.0;
 		SomaticThreadResource *trs = new SomaticThreadResource[processor_num];
 //#pragma omp parallel for schedule(static) //num_threads(processor_num)
@@ -846,8 +873,8 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 			//----init bamReader end------//
 			trs[t].data_pool = new dataPool(conf->mempool_size);
 		}
-			double end_0 = get_time();
-			std::cerr << "generate thread resource" << end_0 - start_0<< std::endl;
+    double end_0 = get_time();
+    std::cerr << "generate thread resource" << end_0 - start_0 << std::endl;
 #pragma omp parallel for default(shared) private(reg, data_pool) schedule(dynamic) //num_threads(2)
 		for(int i = 0; i < reg_num; i++){
 			double start2 = get_time();
@@ -873,6 +900,21 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 		double end_1 = get_time();
 		std::cerr << "parallel time" << end_1 - end_0 << std::endl;
 
+    //------compute the average of all region ---------//
+    uint64_t tumor_sum_cov = 0;
+    uint64_t tumor_sum_pos = 0;
+    uint64_t normal_sum_cov = 0;
+    uint64_t normal_sum_pos = 0;
+    for(int t = 0; t < processor_num; t++){
+      tumor_sum_cov += trs[t].tumor_info.total_coverage;
+      tumor_sum_pos += trs[t].tumor_info.covered_site;
+      normal_sum_cov += trs[t].normal_info.total_coverage;
+      normal_sum_pos += trs[t].normal_info.covered_site;
+    }
+    double tumor_avg_cov = tumor_sum_cov / (double)tumor_sum_pos;
+    double normal_avg_cov = normal_sum_cov / (double)tumor_sum_pos;
+    const string contex1 = std::to_string(tumor_avg_cov) + '\n' + std::to_string(normal_avg_cov) + "\n";
+    fwrite(contex1.c_str(), 1, contex1.length(), this->info_file_ptr);
 
 		//------free threadResource_somatic------
 		for(int t = 0; t < processor_num; t++){

@@ -14,16 +14,15 @@ using namespace std;
  */
 
 bool CMP_KEY(string s1, string s2){
-    return s1.compare(s2)<0;//s1 de ASCii <s2;
+  return s1.compare(s2) < 0; // s1 de ASCii <s2;
 }
 
-
 bool CMP_VARI(Variant *o1, Variant *o2){
-        double res = o1->meanQuality * o1->positionCoverage - o2->meanQuality * o2->positionCoverage;
-        if( res<0.00001 && res>-0.00001)
-            return o1->descriptionString.compare(o2->descriptionString)<0;
-        else
-            return res>0;
+  double res = o1->meanQuality * o1->positionCoverage - o2->meanQuality * o2->positionCoverage;
+  if (res < 0.00001 && res > -0.00001)
+    return o1->descriptionString.compare(o2->descriptionString) < 0;
+  else
+    return res > 0;
 }
 
 void ToVarsBuilder::print_result(){
@@ -49,7 +48,6 @@ void ToVarsBuilder::print_result(){
 		for(auto &vm : var_map -> variation_map){
 			printf("%d - %s - %d - %d\n", position, vm.first.c_str(), vm.second->varsCount, vm.second->highQualityReadsCount);
 		}
-			
 	}
 	//for(auto &v: nonInsertionVariants){
 	//	int position = v.first;
@@ -80,16 +78,15 @@ ToVarsBuilder::ToVarsBuilder(Configuration *conf){
 
 ToVarsBuilder::~ToVarsBuilder(){
 }
-void ToVarsBuilder::initFromScope(Scope<RealignedVariationData> &scope) {
-    //this->ref = scope.regionRef->referenceSequences;
-	this->reference = scope.regionRef;
-    this->region = scope.region;
-    this->refCoverage = scope.data->refCoverage;
-    this->insertionVariants = scope.data->insertionVariants;
-    this->nonInsertionVariants = scope.data->nonInsertionVariants;
-    this->duprate = scope.data->duprate;
+void ToVarsBuilder::initFromScope(Scope<RealignedVariationData> &scope){
+  this->reference = scope.regionRef;
+  this->region = scope.region;
+  this->refCoverage = scope.data->refCoverage;
+  this->insertionVariants = scope.data->insertionVariants;
+  this->nonInsertionVariants = scope.data->nonInsertionVariants;
+  this->duprate = scope.data->duprate;
 
-	delete scope.data;
+  delete scope.data;
 }
 
 /**
@@ -99,8 +96,6 @@ void ToVarsBuilder::initFromScope(Scope<RealignedVariationData> &scope) {
  */
 Scope<AlignedVarsData>* ToVarsBuilder::process(Scope<RealignedVariationData> &scope) {
   initFromScope(scope);
-  //Configuration config = instance().conf;
-
   //the variant structure
   robin_hood::unordered_map<int, Vars*> alignedVariants;
   int lastPosition = 0;
@@ -139,7 +134,6 @@ Scope<AlignedVarsData>* ToVarsBuilder::process(Scope<RealignedVariationData> &sc
         //printf("tovar: continue for 2\n");
         continue;
       }
-
 
       //total position coverage
       int totalPosCoverage = (*refCoverage)[position];
@@ -1139,18 +1133,6 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
       }
 
       adjustVariantCounts(position, vref);
-
-      //Construct debug lines
-      //if (instance().conf.debug) {
-      //    string sb = "";
-      //    for (string str : debugLines) {
-      //        if (sb.length() > 0) {
-      //            sb.append(" & ");
-      //        }
-      //        sb.append(str);
-      //    }
-      //    vref->DEBUG = sb.toString();
-      //}
     }
     //TODO: It is a "lazy" solution because current logic in realignment methods can't be changed simply for --nosv option
     //if (instance().conf.disableSV) {
@@ -1184,17 +1166,6 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
     vref->leftseq = "";
     vref->rightseq = "";
     vref->duprate = duprate;
-    //Construct debug lines
-    //if (instance().conf.debug) {
-    //    StringBuilder sb = new StringBuilder();
-    //    for (string str : debugLines) {
-    //        if (sb.length() > 0) {
-    //            sb.append(" & ");
-    //        }
-    //        sb.append(str);
-    //    }
-    //    vref->DEBUG = sb.toString();
-    //}
   } else {
     variationsAtPos->referenceVariant = new Variant();
   }

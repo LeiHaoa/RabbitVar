@@ -27,7 +27,7 @@ class VariationData {
     	double duprate;
 
 		VariationData(
-			robin_hood::unordered_map<int, VariationMap*> *nonInsertionVariants,
+      robin_hood::unordered_map<int, VariationMap*> *nonInsertionVariants,
 			robin_hood::unordered_map<int, VariationMap*> *insertionVariants,
 			robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > *positionToInsertionCount,
 			robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > *positionToDeletionCount,
@@ -39,8 +39,7 @@ class VariationData {
 			set<string> *splice,
 			robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > *mnp,
 			robin_hood::unordered_map<string, vector<int> > *spliceCount,
-			double duprate
-			){
+			double duprate){
 			this->nonInsertionVariants = nonInsertionVariants;
 			this->insertionVariants = insertionVariants;
 			this->positionToInsertionCount = positionToInsertionCount;

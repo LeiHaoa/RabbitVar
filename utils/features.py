@@ -130,4 +130,4 @@ som_rf_input_features = [
     "Pvalue", "Oddratio"
     ]
 
-som_rf_input_features = som_selected_features
+#som_rf_input_features = som_selected_features

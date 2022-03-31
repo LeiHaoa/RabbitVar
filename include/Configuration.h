@@ -331,7 +331,7 @@ class Configuration {
     /**
      * output file name
      */
-    string outFileName = "./out.vcf";
+    string outFileName = "./out.txt";
 
     /**
      * Exception counter

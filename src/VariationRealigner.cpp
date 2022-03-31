@@ -1329,6 +1329,7 @@ void VariationRealigner::realignlgins30() {
           break;
         } catch(...){// (Exception exception) {
           //printExceptionAndContinue(exception, "variant", string.valueOf(lastPosition), region);
+          cerr << "Error while pprocessing position: " << lastPosition << endl;
         }
       }
     } catch(...){// (Exception exception) {
