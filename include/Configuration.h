@@ -97,10 +97,6 @@ struct bamReader{
 
 class Configuration {
   public:
-    // static string HG19 = "/ngs/reference_data/genomes/Hsapiens/hg19/seq/hg19.fa";
-    // static string HG38 = "/ngs/reference_data/genomes/Hsapiens/hg38/seq/hg38.fa";
-    // static string MM10 = "/ngs/reference_data/genomes/Mmusculus/mm10/seq/mm10.fa";
-
     /**
      * Print a header row describing columns
      */

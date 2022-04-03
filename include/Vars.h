@@ -41,6 +41,11 @@ class Vars {
       //if(referenceVariant)
       //	delete referenceVariant;
     }
+	void print_vars(){
+		for(Variant *x: variants){
+			cerr << x->tostring() << endl;
+		}
+	}
 };
 
 #endif

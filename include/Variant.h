@@ -31,48 +31,49 @@ class Variant {
      * 7). ... &amp; sequence                  - for insertion/deletion variants followed by matched sequence
      */
     public:
-	    string descriptionString; 
-		int positionCoverage;
-        int varsCountOnForward;
-        int varsCountOnReverse;
-        string strandBiasFlag = "0";
-        double frequency;
-        double meanPosition;
-        bool isAtLeastAt2Positions;
-        double meanQuality;
-        bool hasAtLeast2DiffQualities;
-        double meanMappingQuality;
-        double highQualityToLowQualityRatio;
-        double highQualityReadsFrequency;
-        double extraFrequency;
-        int shift3;
-        double msi;
-        int msint;
-        double numberOfMismatches;
-        int hicnt;
-        int hicov;
-        string leftseq = "";
-        string rightseq = "";
-        int startPosition;
-        int endPosition;
-        int refReverseCoverage;
-        int refForwardCoverage;
-        int totalPosCoverage;
-        double duprate;
-        string genotype = "";
-        string varallele = "";
-        string refallele = "";
-        string vartype = "";
-        string DEBUG = "";
-        int crispr;
+	    string descriptionString;
+      int positionCoverage;
+      int varsCountOnForward;
+      int varsCountOnReverse;
+      string strandBiasFlag = "0";
+      double frequency;
+      double meanPosition;
+      bool isAtLeastAt2Positions;
+      double meanQuality;
+      bool hasAtLeast2DiffQualities;
+      double meanMappingQuality;
+      double highQualityToLowQualityRatio;
+      double highQualityReadsFrequency;
+      double extraFrequency;
+      int shift3;
+      double msi;
+      int msint;
+      double numberOfMismatches;
+      int hicnt;
+      int hicov;
+      string leftseq = "";
+      string rightseq = "";
+      int startPosition;
+      int endPosition;
+      int refReverseCoverage;
+      int refForwardCoverage;
+      int totalPosCoverage;
+      double duprate;
+      string genotype = "";
+      string varallele = "";
+      string refallele = "";
+      string vartype = "";
+      string DEBUG = "";
+      int crispr;
 
-    /**
-     * A variant is considered noise if the quality is below <code>goodq</code> and
-     * there're no more than 3 reads
-     * @return Returns true if variance is considered noise if the quality is below <code>goodq</code>
-     * and there're no more than 3 reads in coverage
-     */
-    bool isNoise(Configuration* conf) {
+      /**
+       * A variant is considered noise if the quality is below <code>goodq</code> and
+       * there're no more than 3 reads
+       * @return Returns true if variance is considered noise if the quality is below <code>goodq</code>
+       * and there're no more than 3 reads in coverage
+       */
+      bool isNoise(Configuration *conf)
+      {
         const double qual = this->meanQuality;
         if (((qual < 4.5 || (qual < 12 && !this->hasAtLeast2DiffQualities)) && this->positionCoverage <= 3)
                 || (qual < conf->goodq
@@ -217,7 +218,7 @@ class Variant {
                 return false;
             }
         }
-		set<std::string>::iterator it = find(splice->begin(), splice->end(), startPosition + "-" + endPosition);
+        set<std::string>::iterator it = find(splice->begin(), splice->end(), startPosition + "-" + endPosition);
         if (type == "Deletion" && it != splice->end() ) {
             return false;
         }
@@ -249,43 +250,43 @@ class Variant {
     
     string tostring() {
         string str =  "Variant{" ;
-                str = str +
-					"descriptionString=" + "'" + descriptionString + "\'" +
-					", positionCoverage=" + to_string(positionCoverage) +
-					//", varsCountOnForward=" + to_string(varsCountOnForward) +
-					//", varsCountOnReverse=" + to_string(varsCountOnReverse) +
-					//", strandBiasFlag='" + strandBiasFlag + "\'" +
-					//", frequency=" + to_string(frequency) +
-					//", meanPosition=" + to_string(meanPosition) +
-					//", isAtLeastAt2Positions=" + to_string(isAtLeastAt2Positions) +
-					//", meanQuality=" + to_string(meanQuality) +
-					//", hasAtLeast2DiffQualities=" + to_string(hasAtLeast2DiffQualities) +
-					//", meanMappingQuality=" + to_string(meanMappingQuality) +
-					//", highQualityToLowQualityRatio=" + to_string(highQualityToLowQualityRatio) +
-					//", highQualityReadsFrequency=" + to_string(highQualityReadsFrequency) +
-					//", extraFrequency=" + to_string(extraFrequency) +
-					//", shift3=" + to_string(shift3) +
-					//", msi=" + to_string(msi) +
-                ", msint=" + to_string(msint) +
-					//", numberOfMismatches=" + to_string(numberOfMismatches) +
-					//", hicnt=" + to_string(hicnt) +
-					//", hicov=" + to_string(hicov) +
-					//", leftseq='" + leftseq + "\'" +
-					//", rightseq='" + rightseq + "\'" +
-					//", startPosition=" + to_string(startPosition) +
-					//", endPosition=" + to_string(endPosition) +
-                ", refReverseCoverage=" + to_string(refReverseCoverage) +
-                ", refForwardCoverage=" + to_string(refForwardCoverage) +
-                ", totalPosCoverage=" + to_string(totalPosCoverage) +
-					//", duprate=" + to_string(duprate) +
-					//", genotype= '" + genotype + "\'" +
-                ", varallele='" + varallele + "\'" +
-                ", refallele='" + refallele + "\'" +
-                ", vartype='" + vartype + "\'" +
-					//", crispr= '" + to_string(crispr) + "\'" +
-					//", DEBUG= '" + DEBUG + "\'" +
-                '}';
-                return str;
+        str = str +
+              "descriptionString=" + "'" + descriptionString + "\'" +
+              ", positionCoverage=" + to_string(positionCoverage) +
+              ", varsCountOnForward=" + to_string(varsCountOnForward) +
+              ", varsCountOnReverse=" + to_string(varsCountOnReverse) +
+              //", strandBiasFlag='" + strandBiasFlag + "\'" +
+              //", frequency=" + to_string(frequency) +
+              //", meanPosition=" + to_string(meanPosition) +
+              //", isAtLeastAt2Positions=" + to_string(isAtLeastAt2Positions) +
+              //", meanQuality=" + to_string(meanQuality) +
+              //", hasAtLeast2DiffQualities=" + to_string(hasAtLeast2DiffQualities) +
+              //", meanMappingQuality=" + to_string(meanMappingQuality) +
+              //", highQualityToLowQualityRatio=" + to_string(highQualityToLowQualityRatio) +
+              //", highQualityReadsFrequency=" + to_string(highQualityReadsFrequency) +
+              //", extraFrequency=" + to_string(extraFrequency) +
+              //", shift3=" + to_string(shift3) +
+              //", msi=" + to_string(msi) +
+              ", msint=" + to_string(msint) +
+              //", numberOfMismatches=" + to_string(numberOfMismatches) +
+              //", hicnt=" + to_string(hicnt) +
+              //", hicov=" + to_string(hicov) +
+              //", leftseq='" + leftseq + "\'" +
+              //", rightseq='" + rightseq + "\'" +
+              //", startPosition=" + to_string(startPosition) +
+              //", endPosition=" + to_string(endPosition) +
+              ", refReverseCoverage=" + to_string(refReverseCoverage) +
+              ", refForwardCoverage=" + to_string(refForwardCoverage) +
+              ", totalPosCoverage=" + to_string(totalPosCoverage) +
+              //", duprate=" + to_string(duprate) +
+              //", genotype= '" + genotype + "\'" +
+              ", varallele='" + varallele + "\'" +
+              ", refallele='" + refallele + "\'" +
+              ", vartype='" + vartype + "\'" +
+              //", crispr= '" + to_string(crispr) + "\'" +
+              //", DEBUG= '" + DEBUG + "\'" +
+              '}';
+        return str;
     }
 };
 #endif
