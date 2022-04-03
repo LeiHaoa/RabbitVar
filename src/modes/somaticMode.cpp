@@ -777,7 +777,7 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
 		//dscope.region = region;
 		set<string> splice;
 		ScopePair pair = one_region_run_somt(region, conf, trs, &splice);
-		string variant_result = output(pair.normal_scope, pair.tumor_scope, trs);
+		string variant_result = output(pair.tumor_scope, pair.normal_scope, trs);
 		fwrite(variant_result.c_str(), 1, variant_result.length(), this->file_ptr);
 
     uint64_t tumor_sum_cov = 0;
