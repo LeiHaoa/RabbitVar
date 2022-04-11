@@ -18,16 +18,17 @@
 //#include<unordered_map>
 #include "./robin_hood.h"
 
-class MSI {
-	public:
-      	double msi;
-		int shift3;
-    	string msint;
-		MSI(double msi, int shift3, string msint) {
-        	this->msi = msi;
-        	this->shift3 = shift3;
-        	this->msint = msint;
-    	};
+class MSI{
+public:
+  double msi;
+  int shift3;
+  string msint;
+  MSI(double msi, int shift3, string msint)
+  {
+    this->msi = msi;
+    this->shift3 = shift3;
+    this->msint = msint;
+  };
 };
 
 /**

@@ -169,7 +169,7 @@ bool CigarParser::isNextInsertion(int n_cigar, int ci) {
  		
 }
 bool getSecondOfPairFlag(bam1_t *record){
-	return true;
+	return record->core.flag & BAM_FPAIRED;
 }
 /**
  * Skip overlapping reads to avoid double counts for coverage (alignment or second in pair flag is used)
@@ -346,7 +346,6 @@ Variation* getVariationFromSeq(Sclip* softClip,
 		//(*seq_map)[ch] = variation;
 		seq_map->insert(robin_hood::unordered_map<char, Variation*>::value_type(ch, variation));
 		softClip->seq[idx] = *seq_map;
-		//TODO: 不知道会不会*seq_map 不是复制一个拷贝。
 		delete seq_map;
 		return variation;
 	}
@@ -925,7 +924,6 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 						(*refCoverage)[start-qi+1]++;
 					}
 		
-
 					//If variation starts with a deletion ('-' character)
 					if (start_with_deletion) {
 						positionToDeletionCount[pos][s]++;
@@ -935,7 +933,6 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 							(*refCoverage)[start+qi]++;
 						}
 					}
-
 				}
 			}
 
@@ -948,18 +945,18 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 			if(c_operator != BAM_CINS) {
 				start++;
 			}
-            //Shift read position by 1 if CIGAR segment is not deletion
-            if (c_operator != BAM_CDEL) {
-                readPositionIncludingSoftClipped++;
-                readPositionExcludingSoftClipped++;
-            }
-            // Skip read if it is overlap
-            if (skipOverlappingReads(record, position, direction, mateAlignmentStart)) {
-                //break processCigar;
-				printf("skip ! for overlaping read\n");
-				//return;
-            }
-		}
+      // Shift read position by 1 if CIGAR segment is not deletion
+      if (c_operator != BAM_CDEL){
+        readPositionIncludingSoftClipped++;
+        readPositionExcludingSoftClipped++;
+      }
+      // Skip read if it is overlap
+      if (skipOverlappingReads(record, position, direction, mateAlignmentStart)){
+        // break processCigar;
+        printf("skip ! for overlaping read\n");
+        // return;
+      }
+    }
 		if(moffset != 0){
 			offset = moffset;
 			readPositionIncludingSoftClipped += moffset;

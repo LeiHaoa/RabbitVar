@@ -8,8 +8,8 @@
 #include "../data/data_pool.h"
 
 struct sample_info{
-  uint64_t total_coverage;
-  uint64_t covered_site;
+  uint64_t total_coverage = 0;
+  uint64_t covered_site = 0;
 };
 
 struct SomaticThreadResource{

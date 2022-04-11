@@ -330,10 +330,10 @@ string SomaticMode::output(Scope<AlignedVarsData>* scopeFromBam1, Scope<AlignedV
 			}else{
 				output_string.append(callingForBothSamples(position, v1->second, v2->second, region, splice, maxReadLength, trs));
 			}
-		}catch(...) {
-			cerr << "error in output function!!" << endl;
-		}
-	}
+    }catch (const std::exception& e){
+      cerr << "error in output function: " << e.what() << endl;
+    }
+  }
 	return output_string;
 }
 //---------------------------------------------//
@@ -906,8 +906,8 @@ void SomaticMode::process(Configuration* conf, vector<vector<Region>> &segments)
     uint64_t normal_sum_cov = 0;
     uint64_t normal_sum_pos = 0;
     for(int t = 0; t < processor_num; t++){
-      tumor_sum_cov += trs[t].tumor_info.total_coverage;
-      tumor_sum_pos += trs[t].tumor_info.covered_site;
+      tumor_sum_cov  += trs[t].tumor_info.total_coverage;
+      tumor_sum_pos  += trs[t].tumor_info.covered_site;
       normal_sum_cov += trs[t].normal_info.total_coverage;
       normal_sum_pos += trs[t].normal_info.covered_site;
     }

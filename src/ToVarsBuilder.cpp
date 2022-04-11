@@ -165,11 +165,6 @@ Scope<AlignedVarsData>* ToVarsBuilder::process(Scope<RealignedVariationData> &sc
       totalPosCoverage = createInsertion(duprate, position, totalPosCoverage, var, debugLines, hicov);
       //printf("%d hicov: %d, totalPoscoverage: %d\n", position, hicov, totalPosCoverage);
       sort(var.begin(), var.end() , CMP_VARI);
-      //sortVariants(var);
-      //for(Variant* v: var){
-      //	printf("%d var info: %s\n", position, v->tostring().c_str());
-      //}
-
       double maxfreq = collectVarsAtPosition(alignedVariants, position, var);
 
       if (!conf->doPileup && maxfreq <= conf->freq && conf->ampliconBasedCalling == "") {
@@ -694,33 +689,8 @@ MSI* ToVarsBuilder::findMSI(const string& tseq1, const string& tseq2, const stri
     //Microsattelite nucleotide sequence; trim nucleotide(s) from the end
     string msint = vc_substr(tseq1, -nmsi, nmsi);
     smatch sm;
-    //Pattern pattern = Pattern.compile("((" + msint + ")+)$");
-    //Matcher mtch = pattern.matcher(tseq1);
-    //string msimatch = "";
-    //string pattmp = "((" + msint + ")+)$" ; //------------------need tobe verifying-----------//
-    //printf("pat: %s\n", pattmp.c_str());
-    //if (regex_search(tseq1, sm, regex(pattmp))) {
-    //    msimatch = sm[1];
-    //	//printf("msimatch1: %s\n", msimatch.c_str());
-    //}
-    //if (!left.empty()) {
-    //    //mtch = pattern.matcher(left + tseq1);
-    //    string mubiao = left+tseq1;
-    //    if (regex_search(mubiao, sm, regex(pattmp) ) ) {
-    //        msimatch = sm[1];
-    //		//printf("msimatch2: %s\n", msimatch.c_str());
-    //    }
-    //}
     string mubiao = left+tseq1;
     double curmsi = curmsi_from_end(mubiao, msint, nmsi);
-    //double curmsi = msimatch.length() / (double)nmsi;
-    //printf("1 msint: %s, curmsi: %f\n", msint.c_str(), curmsi);
-    //mtch = Pattern.compile("^((" + msint + ")+)").matcher(tseq2);
-    //if (regex_search(tseq2, sm, regex( "^((" + msint + ")+)" ))) {
-    //    curmsi += sm[1].str().length() / (double)nmsi;
-    //	//printf("curmsi: %f\n", curmsi);
-    //}
-    //--------------------------------------
     //	curmsi += curmsi_from_start(tseq2, msint, nmsi);
     for(int i = 0; i < tseq2.length(); i+=nmsi){
       if(i + nmsi < tseq2.length() && tseq2.substr(i, nmsi) == msint){
@@ -777,14 +747,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
   }
 
   if (starts_with(genotype1, "+")) {
-    smatch sm;
-    //Matcher mm = DUP_NUM.matcher(genotype1);
-    if (regex_search(genotype1, sm, conf->patterns->DUP_NUM)) {
-      genotype1 = "+" + to_string(CONF_SVFLANK + atoi(sm[1].str().c_str()));
-    }
-    else {
-      genotype1 = "+" + to_string(genotype1.length() - 1);
-    }
+    genotype1 = "+" + to_string(genotype1.length() - 1);
   }
   //description string for any other variant
   string genotype2;
@@ -839,7 +802,9 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
       if (starts_with(descriptionString, "+")) {
         //If no '&' and '#' symbols are found in variant string
         //These symbols are in variant if a matched sequence follows insertion
-        if (descriptionString.find("&")==descriptionString.npos && descriptionString.find("#")==descriptionString.npos && descriptionString.find("<dup")==descriptionString.npos) {
+        if (descriptionString.find("&")==descriptionString.npos 
+            && descriptionString.find("#")==descriptionString.npos 
+            && descriptionString.find("<dup")==descriptionString.npos) {
           refVariantMsi = proceedVrefIsInsertion(position, descriptionString);
           msi = refVariantMsi->msi;
           shift3 = refVariantMsi->shift3;
@@ -855,24 +820,9 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
         refallele = ref.count(position) ? string(1, ref.at(position)) : "";
         //variant allele is reference base concatenated with insertion
         varallele = refallele + descriptionString.substr(1);
-        if (varallele.length() > conf->SVMINLEN) {
-          endPosition += varallele.length();
-          varallele = "<DUP>";
-        }
 
-        //Matcher mm = DUP_NUM.matcher(varallele);
-        if (regex_search(varallele, sm, conf->patterns->DUP_NUM)) {
-          int dupCount = atoi(sm[1].str().c_str());
-          endPosition = startPosition + (2 * CONF_SVFLANK + dupCount) - 1;
-          genotype2 = "+" + to_string(2 * CONF_SVFLANK + dupCount);
-          varallele = "<DUP>";
-        }
-        //printf("%d-1 %s\n", position, msint.c_str());
       } else if (starts_with(descriptionString, "-")) { //deletion variant
-        //Matcher matcherINV = INV_NUM.matcher(descriptionString);
-        //Matcher matcherStartMinusNum = BEGIN_MINUS_NUMBER_CARET.matcher(descriptionString);
-        bool matcherINV = regex_search(descriptionString, conf->patterns->INV_NUM);
-        bool matcherStartMinusNum = regex_search(descriptionString, conf->patterns->BEGIN_MINUS_NUMBER_CARET);
+        //bool matcherStartMinusNum = regex_search(descriptionString, conf->patterns->BEGIN_MINUS_NUMBER_CARET);
         if (deletionLength < conf->SVMINLEN) {
           //variant allele is in the record
           //remove '-' and number from beginning of variant string
@@ -885,19 +835,11 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
           shift3 = refVariantMsi->shift3;
           msint = refVariantMsi->msint;
           delete refVariantMsi;
-
-          if (matcherINV) {
-            varallele = "<INV>";
-            genotype2 = "<INV" + deletionLength + '>';
-          }
-        } else if (matcherStartMinusNum) {
-          varallele = "<INV>";
-          genotype2 = "<INV" + deletionLength + '>';
-        } else {
-          varallele = "<DEL>";
-        }
+        } 
         //If no matched sequence or indel follows the variant
-        if (descriptionString.find("&")==descriptionString.npos && descriptionString.find("#")==descriptionString.npos && descriptionString.find("^")==descriptionString.npos) {
+        if (descriptionString.find("&") == descriptionString.npos 
+            && descriptionString.find("#") == descriptionString.npos 
+            && descriptionString.find("^") == descriptionString.npos) {
           //Shift position to 3' if -3 option is set
           if (conf->moveIndelsTo3) {
             startPosition += shift3;
@@ -910,11 +852,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
           refallele = ref.count(position - 1) ? string(1, ref.at(position - 1)) : "";
           startPosition--;
         }
-        //Matcher mm = SOME_SV_NUMBERS.matcher(descriptionString);
-        if (regex_search(descriptionString,conf->patterns->SOME_SV_NUMBERS)) {
-          refallele = ref.count(position) ? string(1, ref.at(position)) : "";
-        }
-        else if (deletionLength < conf->SVMINLEN) {
+        if (deletionLength < conf->SVMINLEN) {
           //append dellen bases from reference string to reference allele
           refallele += joinRef(ref, position, position + deletionLength - 1);
         }
@@ -963,23 +901,11 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
           genotype1 += tch;
           endPosition += vextra.length();
         }
-
         //If description string starts with '+' sign, remove it from reference and variant alleles
         if (starts_with( descriptionString, "+")) {
           refallele = refallele.substr(1);
           varallele = varallele.substr(1);
           startPosition++;
-        }
-
-        if (varallele=="<DEL>" && refallele.length() >= 1) {
-          refallele = ref.count(startPosition) ? string(1, ref.at(startPosition)) : "";
-          if (refCoverage->count(startPosition - 1)) {
-            totalPosCoverage = refCoverage->at(startPosition - 1);
-          }
-          if (vref->positionCoverage > totalPosCoverage ){
-            totalPosCoverage = vref->positionCoverage;
-          }
-          vref->frequency = vref->positionCoverage / (double) totalPosCoverage;
         }
       }
 

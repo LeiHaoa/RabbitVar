@@ -336,10 +336,10 @@ public:
   bool exist(const char sname) const{
     for (size_t i=0; i<ordered.size(); i++){
       if (ordered[i]->short_name() && ordered[i]->short_name() == sname){
-	  	return options.find(ordered[i]->name())->second->has_set();
-	  }
-	}
-	return false;
+        return options.find(ordered[i]->name())->second->has_set();
+      }
+    }
+    return false;
   }
 
   template <class T>
@@ -354,15 +354,15 @@ public:
     std::string sname="-1";
     for (size_t i=0; i<ordered.size(); i++){
       if (ordered[i]->short_name() && ordered[i]->short_name() == name){
-			sname = ordered[i]->name();
-			break;
-		}
-	}
-	
-	if (options.count(sname)==0) throw cmdline_error("there is no flag: -"+name);
-   	const option_with_value<T> *p=dynamic_cast<const option_with_value<T>*>(options.find(sname)->second);
-   	if (p==NULL) throw cmdline_error("type mismatch flag -"+name);
-   	return p->get();
+        sname = ordered[i]->name();
+        break;
+      }
+    }
+
+    if (options.count(sname)==0) throw cmdline_error("there is no flag: -"+name);
+    const option_with_value<T> *p=dynamic_cast<const option_with_value<T>*>(options.find(sname)->second);
+    if (p==NULL) throw cmdline_error("type mismatch flag -"+name);
+    return p->get();
   }
 
   const std::vector<std::string> &rest() const {
