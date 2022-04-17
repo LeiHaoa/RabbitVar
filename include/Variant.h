@@ -246,7 +246,6 @@ class Variant {
         }
         return true;
     }
-
     
     string tostring() {
         string str =  "Variant{" ;

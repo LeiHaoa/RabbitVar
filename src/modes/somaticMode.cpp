@@ -134,13 +134,13 @@ inline void put_fisher_ext_and_odds(string &var_str, int ref_fwd, int ref_rev, i
                   &fisher_left_p, &fisher_right_p, &fisher_twoside_p);
   var_str.append(std::to_string(fisher_twoside_p)).append("\t"); // pvale
 
-  ref_fwd += 0.5;
-  ref_rev += 0.5;
-  alt_fwd += 0.5;
-  alt_rev += 0.5;
-  const double ad = (ref_fwd * alt_rev);
-  const double bc = (ref_rev * alt_fwd); // ratio: (a*d) / (b*c)
-  const double ratio = std::log(ad / bc + bc / ad);
+  const float t_ref_fwd = ref_fwd + 0.5;
+  const float t_ref_rev = ref_rev + 0.5;
+  const float t_alt_fwd = alt_fwd + 0.5;
+  const float t_alt_rev = alt_rev + 0.5;
+  const float ad = (t_ref_fwd * t_alt_rev);
+  const float bc = (t_ref_rev * t_alt_fwd); // ratio: (a*d) / (b*c)
+  const float ratio = std::log(ad / bc + bc / ad);
   //if (bc != 0 && ad != 0)
   //{
   //  ratio = ad > bc ? (ad / bc) : (bc / ad);
@@ -269,10 +269,10 @@ string SomaticMode::print_output_variant_simple(Variant* beginVariant, Variant* 
 
 	//- fiser 3
 	if(fisher){
-		int var1totalCoverage   = tumorVariant == NULL ? 0 : tumorVariant->totalPosCoverage;
-		int var1variantCoverage = tumorVariant == NULL ? 0 : tumorVariant->positionCoverage;
-		int var2totalCoverage   = normalVariant == NULL ? 0 : normalVariant->totalPosCoverage;
-		int var2variantCoverage = normalVariant == NULL ? 0 : normalVariant->positionCoverage;
+		const int var1totalCoverage   = tumorVariant == NULL ? 0 : tumorVariant->totalPosCoverage;
+		const int var1variantCoverage = tumorVariant == NULL ? 0 : tumorVariant->positionCoverage;
+		const int var2totalCoverage   = normalVariant == NULL ? 0 : normalVariant->totalPosCoverage;
+		const int var2variantCoverage = normalVariant == NULL ? 0 : normalVariant->positionCoverage;
 		int tref = var1totalCoverage - var1variantCoverage;
 		int rref = var2totalCoverage - var2variantCoverage;
 		if(tref < 0) tref = 0;
@@ -296,11 +296,11 @@ string SomaticMode::print_output_variant_simple(Variant* beginVariant, Variant* 
     //like TumorNormalAllelLogOdds in strelka
     double tumor_vaf = tumorVariant == NULL ? 0 : tumorVariant->frequency;
     double normal_vaf = normalVariant == NULL ? 0 : normalVariant->frequency;
-    double tn_af_logodds = std::log(std::min(tumor_vaf, 0.0001) / std::min(normal_vaf, 0.0001));
-    var_str.append(std::to_string(tn_af_logodds));
+    double tn_af_logodds = std::log(std::max(tumor_vaf, 0.0001) / std::max(normal_vaf, 0.0001));
+    var_str.append(std::to_string(tn_af_logodds)).append("\t");
     //like IndelRepeatCount (only the alt)
     //like TumorNormalindelAltLogOdd => log(tvarcount/nvarcount);
-    var_str.append(std::to_string(std::log((var1variantCoverage + 0.5)/ (var2variantCoverage + 0.5))));
+    var_str.append(std::to_string(std::log((static_cast<float>(var1variantCoverage) + 0.5)/ (static_cast<float>(var2variantCoverage) + 0.5)))).append("\t");
 	}
 
 	var_str.append("\n");
