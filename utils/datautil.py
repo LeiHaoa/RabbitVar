@@ -123,7 +123,7 @@ def get_data_fromtxt(fvc_result_path, vtype = 'ALL'):
                       'Seg':'object','VarLabel':'object','VarType':'object','Duprate1':'float32',
                       'SV_info1':'int32','Duprate2':'float32','SV_info2':'int32',
                       'Pvalue':'float32','Oddratio':'float32','None':'float32'}
-  cr = pd.read_csv(fvc_result_path, delimiter = '\t', names = [*som_features, 'None'], dtype = dtype_dictionary, header = None, engine = 'pyarrow', na_values=[''])
+  cr = pd.read_csv(fvc_result_path, delimiter = '\t', names = [*som_features, 'None'], dtype = dtype_dictionary, header = None, engine = 'c', na_values=[''])
   cr.columns = [*som_features, 'None'] #TODO: i should change the code of c++ to avoid the None colum
   if vtype == 'INDEL':
       return cr[cr['VarType'] != 'SNV']
