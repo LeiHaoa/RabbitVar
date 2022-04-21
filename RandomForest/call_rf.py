@@ -136,6 +136,14 @@ def rf_filter(args):
   time_step2 = time.time()
   print("hard filter time: ", time_step2 - time_step1)
 
+  tdepth = args.tdepth
+  ndepth = args.ndepth
+  if os.path.exists(args.in_file+'.info'):
+    with open(args.in_file + ".info", "r") as f:
+      tdepth = round(float(f.readline().strip()))
+      ndepth = round(float(f.readline().strip()))  
+      print("find .info file!, tdepth: {}, ndepth: {}".format(tdepth, ndepth))
+
   #snv data process 
   if args.var_type == 'SNV':
     time_start = time.time()
@@ -159,13 +167,9 @@ def rf_filter(args):
       print('Just use hard filter')
       return indels
 
-    #iii = ["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel"]
-    #inputs = indels[["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel"]]
     #depth normal lization
-    # indels = depth_normalization(indels, args.tdepth, args.ndepth)
-    #tmp = indels[["Var1DepthFreq", "Var1AltFreq", "Var1RefFwdFreq", "Var1AltFwdFreq",  "Var1AF","Var2DepthFreq", "Var2AltFreq", "Var2RefFwdFreq", "Var2AltFwdFreq",  "Var2AF"]]
-    #tmp.to_csv("./result_vcf.csv", sep="\t", index='False', encoding='ascii', float_format='%10.4f')
-    inputs = indels[som_rf_input_features]
+    indels = depth_normalization(indels, tdepth, ndepth)
+    inputs = indels[som_rf_indel_input_features]
     print("inputs size: ", len(inputs))
     #clf = joblib.load(args.indel_model)
     clf = joblib.load(args.model)
@@ -197,78 +201,75 @@ def call_rf(args):
   print("time of write: {} s".format(cr_end - cr_start) )
 
 
-def call_rf_old(args):
-    in_file = args.in_file
-    vartype = args.var_type
-    cr = list()
-    raw = list()
-    cr_start = time.time()
-    with open(in_file, 'r') as f:
-        for var in f:
-            if var[0] == '#':
-                continue
-            items = var.strip().split('\t')
-            if(len(items) == 61): #36 or 38(fisher)
-                if vartype == "SNV" and items[fe2i["VarType"]] != "SNV":
-                    continue
-                elif vartype == "INDEL" and items[fe2i["VarType"]] == "SNV":
-                    continue
-                elif items[fe2i["VarLabel"]] == "Germline":
-                    continue
-                if vartype == 'SNV':
-                    key, data = format_snv_data_item(items, True)
-                elif vartype == 'INDEL':
-                    key, data = format_indel_data_item(items, True)
-                cr.append(data)
-                raw.append(var)
-            else:
-                print("wrong data format!!", len(items))
-    cr_end = time.time()
-    print("time of load data to cr: {} s".format(cr_end - cr_start) )
-    
-    cr_start = time.time()
-    #clf = joblib.load("/home/old_home/haoz/workspace/FastVC/RandomForest/models/ramdom_forest_model_somatic_test0d02.pkl")
+def call_rf_keep(args):
+  cr = list()
+  raw = list()
+  in_file = args.in_file
+  scale = float(args.scale)
+  time_step0 = time.time()
+  #cr = pd.read_csv(in_file, delimiter = '\t', header = None, engine = 'c', skipinitialspace = True, na_filter = False)
+  #cr.columns = [*som_features, 'None'] #TODO: i should change the code of c++ to avoid the None colum
+  cr = datautil.get_data_fromtxt(in_file, args.var_type)
+  cr['VarLabel'] = cr['VarLabel'].map(varLabel_to_label)
+  cr['VarType'] = cr['VarType'].map(type_to_label)
+  cr['RefLength'] = cr['Ref'].str.len()
+  cr['AltLength'] = cr['Alt'].str.len()
+
+  time_step1 = time.time()
+  print("load time: ", time_step1 - time_step0)
+  #hard filter
+  print('before hardf:', len(cr))
+  cr = hard_filter(cr)
+  print('after hardf:', len(cr))
+  time_step2 = time.time()
+  print("hard filter time: ", time_step2 - time_step1)
+
+  tdepth = args.tdepth
+  ndepth = args.ndepth
+  if os.path.exists(args.in_file+'.info'):
+    with open(args.in_file + ".info", "r") as f:
+      tdepth = round(float(f.readline().strip()))
+      ndepth = round(float(f.readline().strip()))  
+      print("find .info file!, tdepth: {}, ndepth: {}".format(tdepth, ndepth))
+
+  #snv data process 
+  if args.var_type == 'SNV':
+    time_start = time.time()
+    snvs = cr[cr['VarType'] == 0]
+    if scale == 0:
+      print('Just use hard filter')
+      return snvs
+    inputs = snvs[[*som_selected_features, "VarLabel"]].to_numpy()
+    clf = joblib.load(args.models)
+    clf.verbose = False
+    snv_pred = my_predict(clf, inputs, scale)
+    snv_result = snvs.loc[snv_pred == 1]
+    time_end = time.time()
+    print("time filter snv: {} s".format(time_end - time_start))
+    return snv_result
+  #indel data process
+  elif args.var_type == 'INDEL':
+    time_start = time.time()
+    indels = cr[cr['VarType'] != 0]
+    if scale == 0:
+      print('Just use hard filter')
+      return indels
+
+    #depth normal lization
+    indels = depth_normalization(indels, tdepth, ndepth)
+    inputs = indels[som_rf_indel_input_features]
+    print("inputs size: ", len(inputs))
+    #clf = joblib.load(args.indel_model)
     clf = joblib.load(args.model)
-    cr_end = time.time()
-    print("time of load model: {} s".format(cr_end - cr_start) )
-
-    cr_start = time.time()
-    #data = np.asfarray(cr)
-    data = pd.DataFrame(cr)
-    if vartype == 'INDEL':
-        if all_inform:
-            data.columns = ["RefLength", "AltLength", "VarType", "Var1SBR", "Var1SBA", "Var2SBR", "Var2SBA", "SameGenotype", "GT", "GTM", *som_selected_features, "VarLabel"]
-        else:
-            data.columns = ["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel"]
-    else:
-        data.columns = [*som_selected_features, "VarLabel"]
-    cr_end = time.time()
-    print("time of np.asaray: {} s".format(cr_end - cr_start) )
-    
-    #--hardfilter--#
-    print("before hard filter: {} data".format(len(data)))
-    data = hard_filter_keeporg(data)
-    print("after hard filter: {} data".format(len(data)))
-    ###-----------test for not depth data-------------------#
-    #data = data[["RefLength", "AltLength", "VarType", *som_rf_input_features, "VarLabel", "hard_flag"]]
-    ###
-    cr_start = time.time()
-    scale = args.scale
-    pred = my_predict(clf, data[data.columns[:-1]], scale) #remove hard flag
-    data['pred'] = pred
-    cr_end = time.time()
-    print("length {} - {}".format(len(data), len(pred)))
-    print("time of pred: {} s".format(cr_end - cr_start) )
-
-    cr_start = time.time()
-    with open(args.out_file, 'w') as f:
-        for i in range(len(pred)):
-            if pred[i] == 1 and data['hard_flag'][i] == 0:
-                #if data['hard_flag'][i] == 0:
-                f.write(str(raw[i]))
-    cr_end = time.time()
-    print("time of write: {} s".format(cr_end - cr_start) )
-
+    clf.verbose = False
+    indel_pred = my_predict(clf, inputs, scale)
+    indel_result = indels.loc[indel_pred == 1]
+    time_end = time.time()
+    print("time filter indel: {} s, indel size: {}".format(time_end - time_start, len(indel_result)))
+    return indel_result
+  else: 
+    print("ERROR: Unsupported variant type:", args.var_type)
+    exit(-1)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

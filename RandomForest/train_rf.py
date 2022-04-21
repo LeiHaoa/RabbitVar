@@ -232,7 +232,7 @@ def train_rf(args):
         y = aug_data["label"]#.to_numpy()
         print(len(aug_data), len(y))
     elif vartype == "INDEL":
-        data = get_data_fromcsv(args.tsv, columns=[*features.som_rf_input_features, 'Label'], vtype = 'INDEL')
+        data = get_data_fromcsv(args.tsv, columns=[*features.som_rf_indel_input_features, 'Label'], vtype = 'INDEL')
         print("before hard filter: {} data".format(len(data)))
         data = hard_filter(data)
         print("after hard filter: {} data".format(len(data)))
@@ -251,7 +251,7 @@ def train_rf(args):
     clf = RandomForestClassifier(n_jobs=args.nthreads, max_depth=20, min_samples_leaf=50, 
                                  n_estimators=150, max_features=None)
 
-    clf.fit(data[features.som_rf_input_features], data['Label'])
+    clf.fit(data[features.som_rf_indel_input_features], data['Label'])
     
     joblib.dump(clf, args.out_model, compress=9)
     print("store model done, now testing...")
