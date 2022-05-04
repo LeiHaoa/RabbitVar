@@ -252,7 +252,7 @@ string SomaticMode::print_output_variant_simple(Variant* beginVariant, Variant* 
 		var_str.append("\t");
 	}
 
-    //-------there is no sv related member------//
+	//-------there is no sv related member------//
 	if(tumorVariant != NULL){
 		var_str.append(to_string(tumorVariant->duprate)).append("\t");
 	}else{

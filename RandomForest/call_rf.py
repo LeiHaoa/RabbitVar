@@ -7,6 +7,7 @@ import subprocess
 
 import sys
 import os
+
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../utils'))
 from features import *
 from datautil import hard_filter
@@ -207,8 +208,6 @@ def call_rf_keep(args):
   in_file = args.in_file
   scale = float(args.scale)
   time_step0 = time.time()
-  #cr = pd.read_csv(in_file, delimiter = '\t', header = None, engine = 'c', skipinitialspace = True, na_filter = False)
-  #cr.columns = [*som_features, 'None'] #TODO: i should change the code of c++ to avoid the None colum
   cr = datautil.get_data_fromtxt(in_file, args.var_type)
   cr['VarLabel'] = cr['VarLabel'].map(varLabel_to_label)
   cr['VarType'] = cr['VarType'].map(type_to_label)
@@ -243,10 +242,11 @@ def call_rf_keep(args):
     clf = joblib.load(args.models)
     clf.verbose = False
     snv_pred = my_predict(clf, inputs, scale)
-    snv_result = snvs.loc[snv_pred == 1]
+    #snv_result = snvs.loc[snv_pred == 1]
+    snvs['pred'] = snv_pred
     time_end = time.time()
     print("time filter snv: {} s".format(time_end - time_start))
-    return snv_result
+    vcf = snvs
   #indel data process
   elif args.var_type == 'INDEL':
     time_start = time.time()
@@ -259,17 +259,33 @@ def call_rf_keep(args):
     indels = depth_normalization(indels, tdepth, ndepth)
     inputs = indels[som_rf_indel_input_features]
     print("inputs size: ", len(inputs))
-    #clf = joblib.load(args.indel_model)
     clf = joblib.load(args.model)
     clf.verbose = False
-    indel_pred = my_predict(clf, inputs, scale)
-    indel_result = indels.loc[indel_pred == 1]
+    #indel_pred = my_predict(clf, inputs, scale)
+    indel_pred = clf.predict_proba(inputs) 
+    #indel_result = indels.loc[indel_pred == 1]
+    indels['pred'] = indel_pred[:,1]
     time_end = time.time()
-    print("time filter indel: {} s, indel size: {}".format(time_end - time_start, len(indel_result)))
-    return indel_result
+    print("time filter indel: {} s, indel size: {}".format(time_end - time_start, len(indels)))
+    vcf = indels
   else: 
     print("ERROR: Unsupported variant type:", args.var_type)
     exit(-1)
+
+  cr_start = time.time()
+  vcf['Chr'] = vcf['Chr'].astype(str)
+  vcf = vcf.sort_values(by=['Chr', 'Start'])
+  print(vcf.head())
+  vcf_file = args.out_file
+  with open(vcf_file, 'w') as f:
+    write_header(f)
+    tmp = "\t".join(["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", 'Sample']) #TODO what if user not specified a sample name???
+    tmp += '\n'
+    f.write(tmp)
+    for i, record in vcf.iterrows():
+      f.write(format_record(record) + '\n')
+  cr_end = time.time()
+  print("time of write: {} s".format(cr_end - cr_start) )
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -284,4 +300,4 @@ if __name__ == "__main__":
     parser.add_argument('--tdepth', help = "tdepth", type=int, required = True)
     parser.add_argument('--ndepth', help = "ndepth", type=int, required = True)
     args = parser.parse_args()
-    call_rf(args)
+    call_rf_keep(args)
