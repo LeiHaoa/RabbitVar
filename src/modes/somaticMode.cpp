@@ -127,6 +127,26 @@ static ScopePair one_region_run_somt(Region region, Configuration* conf, Somatic
 }
 
 //void SomaticMode::output_binary_variant():
+inline void put_fisher_ext_and_odds(string &var_str, int ref_fwd, int ref_rev, int alt_fwd, int alt_rev){
+  double fisher_left_p, fisher_right_p, fisher_twoside_p;
+  kt_fisher_exact(ref_fwd, ref_rev,
+                  alt_fwd, alt_rev,
+                  &fisher_left_p, &fisher_right_p, &fisher_twoside_p);
+  var_str.append(std::to_string(fisher_twoside_p)).append("\t"); // pvale
+
+  const float t_ref_fwd = ref_fwd + 0.5;
+  const float t_ref_rev = ref_rev + 0.5;
+  const float t_alt_fwd = alt_fwd + 0.5;
+  const float t_alt_rev = alt_rev + 0.5;
+  const float ad = (t_ref_fwd * t_alt_rev);
+  const float bc = (t_ref_rev * t_alt_fwd); // ratio: (a*d) / (b*c)
+  const float ratio = std::log(ad / bc + bc / ad);
+  //if (bc != 0 && ad != 0)
+  //{
+  //  ratio = ad > bc ? (ad / bc) : (bc / ad);
+  //}
+  var_str.append(std::to_string(ratio)).append("\t"); // ratio(not odd ratio)
+}
 
 string SomaticMode::print_output_variant_simple(Variant* beginVariant, Variant* endVariant, Variant* tumorVariant, Variant* normalVariant, 
 												Region region, string& varLabel, bool fisher){
@@ -171,18 +191,8 @@ string SomaticMode::print_output_variant_simple(Variant* beginVariant, Variant* 
 	//- fisher 1
 	if(fisher){
 		if(tumorVariant != NULL){
-			double fisher_left_p, fisher_right_p, fisher_twoside_p;
-			kt_fisher_exact(tumorVariant->refForwardCoverage, tumorVariant->refReverseCoverage, 
-							tumorVariant->varsCountOnForward, tumorVariant->varsCountOnReverse,
-							&fisher_left_p, &fisher_right_p, &fisher_twoside_p);
-			var_str.append(std::to_string(fisher_twoside_p)).append("\t"); //pvale
-			double ad = (tumorVariant->refForwardCoverage * tumorVariant->varsCountOnReverse);
-			double bc = (tumorVariant->refReverseCoverage * tumorVariant->varsCountOnForward); //ratio: (a*d) / (b*c)
-			double ratio = 0.00;
-			if( bc != 0  && ad != 0){
-				ratio = ad > bc ? (ad / bc) : (bc / ad);
-			}
-			var_str.append(std::to_string(ratio)).append("\t"); //ratio(not odd ratio)
+			put_fisher_ext_and_odds(var_str, tumorVariant->refForwardCoverage, tumorVariant->refReverseCoverage, 
+							tumorVariant->varsCountOnForward, tumorVariant->varsCountOnReverse);
 		}else{
 			var_str.append("0\t0\t");
 		}
@@ -216,18 +226,8 @@ string SomaticMode::print_output_variant_simple(Variant* beginVariant, Variant* 
 	//- fisher 2
 	if(fisher){
 		if(normalVariant != NULL){
-			double fisher_left_p, fisher_right_p, fisher_twoside_p;
-			kt_fisher_exact(normalVariant->refForwardCoverage, normalVariant->refReverseCoverage, 
-							normalVariant->varsCountOnForward, normalVariant->varsCountOnReverse,
-							&fisher_left_p, &fisher_right_p, &fisher_twoside_p);
-			var_str.append(std::to_string(fisher_twoside_p)).append("\t"); //pvale
-			double ad = (normalVariant->refForwardCoverage * normalVariant->varsCountOnReverse);
-			double bc = (normalVariant->refReverseCoverage * normalVariant->varsCountOnForward); //ratio: (a*d) / (b*c)
-			double ratio = 0.00;
-			if( bc != 0  && ad != 0){
-				ratio = ad > bc ? (ad / bc) : (bc / ad);
-			}
-			var_str.append(std::to_string(ratio)).append("\t"); //ratio(not odd ratio)
+			put_fisher_ext_and_odds(var_str, normalVariant->refForwardCoverage, normalVariant->refReverseCoverage, 
+							normalVariant->varsCountOnForward, normalVariant->varsCountOnReverse);
 		}else{
 			var_str.append("0\t0\t");
 		}
@@ -252,7 +252,7 @@ string SomaticMode::print_output_variant_simple(Variant* beginVariant, Variant* 
 		var_str.append("\t");
 	}
 
-    //-------there is no sv related member------//
+	//-------there is no sv related member------//
 	if(tumorVariant != NULL){
 		var_str.append(to_string(tumorVariant->duprate)).append("\t");
 	}else{
@@ -269,15 +269,15 @@ string SomaticMode::print_output_variant_simple(Variant* beginVariant, Variant* 
 
 	//- fiser 3
 	if(fisher){
-		int var1totalCoverage   = tumorVariant == NULL ? 0 : tumorVariant->totalPosCoverage;
-		int var1variantCoverage = tumorVariant == NULL ? 0 : tumorVariant->positionCoverage;
-		int var2totalCoverage   = normalVariant == NULL ? 0 : normalVariant->totalPosCoverage;
-		int var2variantCoverage = normalVariant == NULL ? 0 : normalVariant->positionCoverage;
+		const int var1totalCoverage   = tumorVariant == NULL ? 0 : tumorVariant->totalPosCoverage;
+		const int var1variantCoverage = tumorVariant == NULL ? 0 : tumorVariant->positionCoverage;
+		const int var2totalCoverage   = normalVariant == NULL ? 0 : normalVariant->totalPosCoverage;
+		const int var2variantCoverage = normalVariant == NULL ? 0 : normalVariant->positionCoverage;
 		int tref = var1totalCoverage - var1variantCoverage;
 		int rref = var2totalCoverage - var2variantCoverage;
 		if(tref < 0) tref = 0;
 		if(rref < 0) rref = 0;
-
+    /*
 		double fisher_less_p, fisher_greater_p, fisher_twoside_p;
 		kt_fisher_exact(var1variantCoverage, tref, var2variantCoverage, rref,
 						&fisher_less_p, &fisher_greater_p, &fisher_twoside_p);
@@ -290,7 +290,19 @@ string SomaticMode::print_output_variant_simple(Variant* beginVariant, Variant* 
 			ratio = ad > bc ? (ad / bc) : (bc / ad);
 		}
 		var_str.append(std::to_string(ratio)).append("\t"); //ratio(not odd ratio)
+    */
+    put_fisher_ext_and_odds(var_str, var1variantCoverage, tref, var2variantCoverage, rref);
+
+    //like TumorNormalAllelLogOdds in strelka
+    double tumor_vaf = tumorVariant == NULL ? 0 : tumorVariant->frequency;
+    double normal_vaf = normalVariant == NULL ? 0 : normalVariant->frequency;
+    double tn_af_logodds = std::log(std::max(tumor_vaf, 0.0001) / std::max(normal_vaf, 0.0001));
+    var_str.append(std::to_string(tn_af_logodds)).append("\t");
+    //like IndelRepeatCount (only the alt)
+    //like TumorNormalindelAltLogOdd => log(tvarcount/nvarcount);
+    var_str.append(std::to_string(std::log((static_cast<float>(var1variantCoverage) + 0.5)/ (static_cast<float>(var2variantCoverage) + 0.5)))).append("\t");
 	}
+
 	var_str.append("\n");
 
 	return var_str;

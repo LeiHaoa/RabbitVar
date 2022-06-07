@@ -14,6 +14,10 @@ from datautil import hard_filter
 import datautil
 from vcf_writer import *
 
+#---------------xgboost
+import xgboost as xgb
+from sklearn.metrics import mean_squared_error
+
 all_inform = False
 
 if all_inform:
@@ -30,8 +34,6 @@ varLabel_to_label = {
 }
 fe2i = som_features_to_index
 fvc_sf = som_selected_features
-
-
 
 def format_snv_data_item(jri, fisher):
     if not fisher:
@@ -98,7 +100,10 @@ def format_indel_data_item(jri, fisher):
     return key, data
 
 def my_predict(clf, data, scale):
+    start_t = time.time()
     proba = clf.predict_proba(data)
+    end_t = time.time()
+    print("predict time: ", end_t - start_t)
     return np.asarray([1 if x >= scale else 0 for x in proba[:,1]])
 
 def depth_normalization(data, tdepth, ndepth):
@@ -152,8 +157,8 @@ def rf_filter(args):
     if scale == 0:
       print('Just use hard filter')
       return snvs
-    inputs = snvs[[*som_selected_features, "VarLabel"]].to_numpy()
-    clf = joblib.load(args.models)
+    inputs = snvs[som_rf_snv_input_features].to_numpy()
+    clf = joblib.load(args.model)
     clf.verbose = False
     snv_pred = my_predict(clf, inputs, scale)
     snv_result = snvs.loc[snv_pred == 1]
@@ -170,9 +175,17 @@ def rf_filter(args):
 
     #depth normal lization
     indels = depth_normalization(indels, tdepth, ndepth)
-    inputs = indels[som_rf_indel_input_features]
+    tmp_feature = [
+      "VarLabel", "VarType", "RefLength", "AltLength",
+      "Var1PMean", "Var1PStd", "Var1QMean", "Var1QStd", "Var1MQ", "Var1Sig_Noise", "Var1HiAF", "Var1ExtraAF", "Var1NM", "Var1Pvalue", "Var1Oddr",
+      "Var2PMean", "Var2PStd", "Var2QMean", "Var2QStd", "Var2MQ", "Var2Sig_Noise", "Var2HiAF", "Var2ExtraAF", "Var2NM", "Var2Pvalue", "Var2Oddr",
+      "shift3", "MSI", "MSI_NT",
+      "Pvalue", "Oddratio",
+      "TumorNormalAllelLogOdds", "TumorNormalindelAltLogOdd"
+    ]
+    tmp_feature = som_rf_indel_input_features
+    inputs = indels[tmp_feature]
     print("inputs size: ", len(inputs))
-    #clf = joblib.load(args.indel_model)
     clf = joblib.load(args.model)
     clf.verbose = False
     indel_pred = my_predict(clf, inputs, scale)
@@ -300,4 +313,4 @@ if __name__ == "__main__":
     parser.add_argument('--tdepth', help = "tdepth", type=int, required = True)
     parser.add_argument('--ndepth', help = "ndepth", type=int, required = True)
     args = parser.parse_args()
-    call_rf_keep(args)
+    call_rf(args)
