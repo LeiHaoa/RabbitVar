@@ -1,5 +1,4 @@
-* RabbitVar Dataset Description
-** Realworld Data 
+* Realworld Data 
 | Sample | Tumor             | Normal            | Purities used                       |
 |--------+-------------------+-------------------+-------------------------------------|
 | EA1    | WGS_EA_T_1        | WGS_EA_N_1        | 100%T/100%N, 100%T/95%N, 10%T/100%N |
@@ -12,13 +11,17 @@
 | NS1-9  | WGS_NS_T_combine9 | WGS_NS_N_combine9 | 100%T/100%N, 100%T/95%N, 10%T/100%N |
 - *file path*: plt:/home/large/haoz/HCC1395_DATAS/WGS[/mix]
 - *description*: the .bam files provided by SEQC-II project, used by
-  paper "-Toward best practice in cancer mutation detection with
-  whole-genome and whole-exome sequencing-" every sample contained
-  three mix stragety as listed by "Purities used" in the table above.
-	- generation method: realworld sample data, tested by six different institution.
+  paper "[[Achieving robust somatic mutation detection with deep
+  learning models derived from reference data sets of a cancer
+  sample][https://genomebiology.biomedcentral.com/articles/10.1186/s13059-021-02592-9]]"
+  every sample contained three mix stragety as listed by "Purities
+  used" in the table above.
+	- generation method: realworld sample data, tested by six different
+    institution.
 - *used for*: training && testing
 
-** WGS-Spike models
+* Spike-in Data
+*** SEQC-II WGS-Spike models
 | Sample           | Tumor                   | Normal                                                       | Purities used           |
 |------------------+-------------------------+--------------------------------------------------------------+-------------------------|
 | FD2N_FD1N        | synthetic_tumor_FD2N    | WGS_FD_N_1                                                   | 100%T/100%N, 100%T/95%N |
@@ -34,11 +37,54 @@
 
 - file path: plt:/home/large/haoz/HCC1395_DATAS/WGS/mix
 - *description*: the .bam files provided by SEQC-II project, used by
-  paper "-Toward best practice in cancer mutation detection with
-  whole-genome and whole-exome sequencing-" every sample contained
-  two mix stragety as listed by "Purities used" in the table above.
-	- generation method: BamSurgen spike in 
-- *used for*: training && testing
-
-** Syntetic Data 
-** Mix Data of two sample
+  paper "[[Achieving robust somatic mutation detection with deep
+  learning models derived from reference data sets of a cancer
+ sample][https://genomebiology.biomedcentral.com/articles/10.1186/s13059-021-02592-9]]"
+  every sample contained two mix stragety as listed by "Purities used"
+  in the table above.
+- generation method: BamSurgen spike in
+- *used for*: training
+** Dream challenge 3
+** Octopus syntetic data
+   - NA24631 PACA:
+      a mutation rate of ten per megabase (60,110 mutations)
+      frequencies uniformly sampled between 0.5% and 50%,
+   - NA12878 BRCA
+      a mutation rate of ten per megabase (60,110 mutations)
+      frequencies uniformly sampled between 1% and 20%,
+** SPP_sync_350x   &&  Downsample
+- file path: plt:/home/user_home/data_share/HCC1395
+- *description*: the sequencing files provide by SEQC-II, including
+  different purity mixture, and very high coverage sequencing data
+  *note that the different purity data is mixed with gDNA(not simply
+  mix the FASTQ data)*
+  | Sample        | Purities used           |
+  |---------------+-------------------------|
+  | SPP_GT_0-1_1  | pure normal             |
+  | SPP_GT_1-0_1  | pure tumor              |
+  | SPP_GT_1-1_1  | 50% tumor && 50% normal |
+  | SPP_GT_1-19_1 | 5%  tumor && 95% normal |
+  | SPP_GT_3-1_1  | 75% tumor && 25% normal |
+- generation method: mixed tumor HCC1395 gDNA with normal HCC1395BL
+  gDNA at different ratios to generate a range of admixtures that
+  represented tumor purity levels of 100%, 75%, 50%, 20%, 10%, 5% and
+  0% and performed WGS with 350¡Á coverage
+- used for: testing  
+* Mix Data of two sample
+** Strelka2Insilico
+- file path: /home/user_home/data_share/Strelka2_InSilicoMix
+- data purity  
+  - normal:
+  InSilicoNormal3_Purity90.bam
+  Normal2_Purity100.bam       
+  Normal1_Purity100.bam
+  - tumor
+  InSilicoTumor_Purity20.bam
+  InSilicoTumor_Purity80.bam
+- generation method: based on NA12878 and NA12877 data.
+  simply mix two different sequencing data with different purity
+- Used for: Training / testing
+** mix12878_24385
+- file path: /home/user_home/data_share/mixture_na12878_na24385/bam
+- Generation method: mix the two sample tissue physically
+- Used for: testing
