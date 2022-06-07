@@ -125,20 +125,17 @@ som_selected_features = [
 
 som_rf_indel_input_features = [
     "VarLabel", "VarType", "RefLength", "AltLength",
-    "Var1DepthFreq", "Var1RefFwdFreq", "Var1AltFwdFreq",  "Var1AF",
-    "Var1PMean", "Var1PStd", "Var1QMean", "Var1QStd", "Var1MQ", "Var1Sig_Noise", "Var1HiAF", "Var1ExtraAF", "Var1NM", "Var1Pvalue", "Var1Oddr",
-    "Var2DepthFreq", "Var2RefFwdFreq", "Var2AltFwdFreq",  "Var2AF",
-    "Var2PMean", "Var2PStd", "Var2QMean", "Var2QStd", "Var2MQ", "Var2Sig_Noise", "Var2HiAF", "Var2ExtraAF", "Var2NM", "Var2Pvalue", "Var2Oddr",
+    "Var1AF","Var1PMean", "Var1PStd", "Var1QMean", "Var1QStd", "Var1MQ", "Var1Sig_Noise", "Var1HiAF", "Var1ExtraAF", "Var1NM", "Var1Pvalue", "Var1Oddr",
+    "Var2AF","Var2PMean", "Var2PStd", "Var2QMean", "Var2QStd", "Var2MQ", "Var2Sig_Noise", "Var2HiAF", "Var2ExtraAF", "Var2NM", "Var2Pvalue", "Var2Oddr",
     "shift3", "MSI", "MSI_NT",
     "Pvalue", "Oddratio",
     "TumorNormalAllelLogOdds", "TumorNormalindelAltLogOdd"
     ]
+    #"Var1DepthFreq", "Var1RefFwdFreq", "Var1AltFwdFreq",  "Var1AF",
 som_rf_snv_input_features = [
     "VarLabel", 
-    "Var1DepthFreq", "Var1RefFwdFreq", "Var1AltFwdFreq",  "Var1AF",
-    "Var1PMean", "Var1PStd", "Var1QMean", "Var1QStd", "Var1MQ", "Var1Sig_Noise", "Var1HiAF", "Var1ExtraAF", "Var1NM", "Var1Pvalue", "Var1Oddr",
-    "Var2DepthFreq", "Var2RefFwdFreq", "Var2AltFwdFreq",  "Var2AF",
-    "Var2PMean", "Var2PStd", "Var2QMean", "Var2QStd", "Var2MQ", "Var2Sig_Noise", "Var2HiAF", "Var2ExtraAF", "Var2NM", "Var2Pvalue", "Var2Oddr",
+    "Var1AF", "Var1PMean", "Var1PStd", "Var1QMean", "Var1QStd", "Var1MQ", "Var1Sig_Noise", "Var1HiAF", "Var1ExtraAF", "Var1NM", "Var1Pvalue", "Var1Oddr",
+    "Var2AF", "Var2PMean", "Var2PStd", "Var2QMean", "Var2QStd", "Var2MQ", "Var2Sig_Noise", "Var2HiAF", "Var2ExtraAF", "Var2NM", "Var2Pvalue", "Var2Oddr",
     "shift3", "MSI", "MSI_NT",
     "Pvalue", "Oddratio",
     "TumorNormalAllelLogOdds", "TumorNormalindelAltLogOdd"

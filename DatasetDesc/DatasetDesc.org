@@ -1,0 +1,44 @@
+* RabbitVar Dataset Description
+** Realworld Data 
+| Sample | Tumor             | Normal            | Purities used                       |
+|--------+-------------------+-------------------+-------------------------------------|
+| EA1    | WGS_EA_T_1        | WGS_EA_N_1        | 100%T/100%N, 100%T/95%N, 10%T/100%N |
+| FD1    | WGS_FD_T_1        | WGS_FD_N_1        | 100%T/100%N, 100%T/95%N, 10%T/100%N |
+| IL1    | WGS_IL_T_1        | WGS_IL_N_1        | 100%T/100%N, 100%T/95%N, 10%T/100%N |
+| LL1    | WGS_LL_T_1        | WGS_LL_N_1        | 100%T/100%N, 100%T/95%N, 10%T/100%N |
+| NC1    | WGS_NC_T_1        | WGS_NC_N_1        | 100%T/100%N, 100%T/95%N,10%T/100%N  |
+| NS1    | WGS_NS_T_1        | WGS_NS_N_1        | 100%T/100%N, 100%T/95%N,10%T/100%N  |
+| NV1    | WGS_NV_T_1        | WGS_NV_N_1        | 100%T/100%N, 100%T/95%N, 10%T/100%N |
+| NS1-9  | WGS_NS_T_combine9 | WGS_NS_N_combine9 | 100%T/100%N, 100%T/95%N, 10%T/100%N |
+- *file path*: plt:/home/large/haoz/HCC1395_DATAS/WGS[/mix]
+- *description*: the .bam files provided by SEQC-II project, used by
+  paper "-Toward best practice in cancer mutation detection with
+  whole-genome and whole-exome sequencing-" every sample contained
+  three mix stragety as listed by "Purities used" in the table above.
+	- generation method: realworld sample data, tested by six different institution.
+- *used for*: training && testing
+
+** WGS-Spike models
+| Sample           | Tumor                   | Normal                                                       | Purities used           |
+|------------------+-------------------------+--------------------------------------------------------------+-------------------------|
+| FD2N_FD1N        | synthetic_tumor_FD2N    | WGS_FD_N_1                                                   | 100%T/100%N, 100%T/95%N |
+| FD3N_FD2N        | synthetic_tumor_FD3N    | WGS_FD_N_2                                                   | 100%T/100%N, 100%T/95%N |
+| IL2N_IL1N        | synthetic_tumor_IL2N    | WGS_IL_N_1                                                   | 100%T/100%N, 100%T/95%N |
+| IL1N_IL2N        | synthetic_tumor_IL1N    | WGS_IL_N_2                                                   | 100%T/100%N, 100%T/95%N |
+| NS2N_NS1N        | synthetic_tumor_NS2N    | WGS_NS_N_1                                                   | 100%T/100%N, 100%T/95%N |
+| NS1N_NS2N        | synthetic_tumor_NS1N    | WGS_NS_N_2                                                   | 100%T/100%N, 100%T/95%N |
+| NV2N_NV1N        | synthetic_tumor_NV2N    | WGS_NV_N_1                                                   | 100%T/100%N, 100%T/95%N |
+| NV3N_NV2N        | synthetic_tumor_NV3N    | WGS_NV_N_2                                                   | 100%T/100%N, 100%T/95%N |
+| NS_1-5N_ NS_6-9N | synthetic_tumor_NS_1-5N | Merged bam of WGS_NS_N_6, WGS_NS_N_7, WGS_NS_N_8, WGS_NS_N_9 | 100%T/100%N, 100%T/95%N |
+| NS_5-9N_ NS_1-4N | synthetic_tumor_NS_5-9N | Merged bam of WGS_NS_N_1, WGS_NS_N_2, WGS_NS_N_3, WGS_NS_N_4 | 100%T/100%N, 100%T/95%N |
+
+- file path: plt:/home/large/haoz/HCC1395_DATAS/WGS/mix
+- *description*: the .bam files provided by SEQC-II project, used by
+  paper "-Toward best practice in cancer mutation detection with
+  whole-genome and whole-exome sequencing-" every sample contained
+  two mix stragety as listed by "Purities used" in the table above.
+	- generation method: BamSurgen spike in 
+- *used for*: training && testing
+
+** Syntetic Data 
+** Mix Data of two sample
