@@ -300,4 +300,4 @@ if __name__ == "__main__":
     parser.add_argument('--tdepth', help = "tdepth", type=int, required = True)
     parser.add_argument('--ndepth', help = "ndepth", type=int, required = True)
     args = parser.parse_args()
-    call_rf_keep(args)
+    call_rf(args)
