@@ -45,6 +45,9 @@ def train_rf(args):
         test_data = get_data_fromcsv("./data_INDEL_HCC1395_ALL.tsv.test", columns=[*features.som_rf_indel_input_features, "Label"], vtype = "INDEL")
         test_data = hard_filter(test_data)
         tmp_feature = features.som_rf_indel_input_features
+    else:
+        print(f'undefied variant type: {vartype}')
+        exit(-1)
 
     print(data.head())
     print("data prepare done, start fiting ...")
