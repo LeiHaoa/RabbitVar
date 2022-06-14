@@ -248,8 +248,11 @@ def train_rf(args):
         #print(len(aug_data), len(y))
 
     print("data prepare done, start fiting ...")
+    data = data.fillna(2)
     clf = RandomForestClassifier(n_jobs=args.nthreads, max_depth=20, min_samples_leaf=50, 
-                                 n_estimators=150, max_features=None)
+                                 n_estimators=1200, max_features=None)
+    #clf = RandomForestClassifier(n_jobs=args.nthreads, max_depth=20, min_samples_leaf=50, 
+    #                             n_estimators=150, max_features=None)
 
     clf.fit(data[features.som_rf_indel_input_features], data['Label'])
     

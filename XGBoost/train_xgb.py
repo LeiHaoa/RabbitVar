@@ -29,6 +29,7 @@ def train_rf(args):
 
     if vartype == "SNV":
         data = get_data_fromcsv(args.tsv, columns=[*features.som_rf_snv_input_features, 'Label'], vtype = 'SNV')
+        data[data.columns] = data[data.columns].apply(pd.to_numeric)
         print("before hard filter: {} data".format(len(data)))
         #data = hard_filter(data)
         print("after hard filter: {} data".format(len(data)))
@@ -38,6 +39,7 @@ def train_rf(args):
     elif vartype == "INDEL":
         data = get_data_fromcsv(args.tsv, columns=[*features.som_rf_indel_input_features, 'Label'], vtype = 'INDEL')
         print("before hard filter: {} data".format(len(data)))
+        data[data.columns] = data[data.columns].apply(pd.to_numeric)
         data = hard_filter(data)
         print("after hard filter: {} data".format(len(data)))
         #-----------test data -------------#

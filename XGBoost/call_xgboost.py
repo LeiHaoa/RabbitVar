@@ -99,12 +99,30 @@ def format_indel_data_item(jri, fisher):
         exit(-1)
     return key, data
 
-def my_predict(clf, data, scale):
+def my_predict2(clf, data, scale):
     start_t = time.time()
     proba = clf.predict_proba(data)
-    end_t = time.time()
-    print("predict time: ", end_t - start_t)
     return np.asarray([1 if x >= scale else 0 for x in proba[:,1]])
+
+def my_predict(clf, data, scale):
+    start_t = time.time()
+    proba = clf.predict_proba(data)[:,1]
+    af = data['Var1AF'].to_numpy()
+    res = []
+    print(type(proba), type(af))
+    print(proba.shape, af.shape)
+    assert(len(af) == len(proba))
+    for i in range(len(proba)):
+      if (af[i] < 0.1 and proba[i] > 0.9) or (af[i] >= 0.1 and proba[i] > 0.5):
+        res.append(1)
+      else:
+        res.append(0)
+
+    return np.asarray(res)
+
+    #return data[((data['Var1AF'] <= 0.1) & (data['proba'] > 0.8))
+    #            | ((data['Var1AF']  > 0.1) & (data['proba'] > 0.5))]
+    #return np.asarray([1 if x >= scale else 0 for x in proba[:,1]])
 
 def depth_normalization(data, tdepth, ndepth):
     #to_be_scale = ["Var1AltDepth", "Var1RefFwdReads", "Var1RefRevReads", "Var1AltFwdReads", "Var1AltRevReads", "Var2AltDepth", "Var2RefFwdReads", "Var2RefRevReads", "Var2AltFwdReads", "Var2AltRevReads"]

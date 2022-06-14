@@ -142,6 +142,7 @@ def get_data_fromcsv(data_path, columns, vtype = 'SNV'):
   #  data.columns = header
   #elif vtype.upper() == 'SNV':
   #  data.columns = header
+  print(data.dtypes)
   return data 
 
 def hard_filter(data):
