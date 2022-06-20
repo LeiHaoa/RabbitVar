@@ -31,9 +31,9 @@ def train_rf(args):
         data = get_data_fromcsv(args.tsv, columns=[*features.som_rf_snv_input_features, 'Label'], vtype = 'SNV')
         data[data.columns] = data[data.columns].apply(pd.to_numeric)
         print("before hard filter: {} data".format(len(data)))
-        #data = hard_filter(data)
+        data = hard_filter(data)
         print("after hard filter: {} data".format(len(data)))
-        test_data = get_data_fromcsv(args.tsv + ".test", columns=[*features.som_rf_snv_input_features, "Label"], vtype = "SNV")
+        test_data = get_data_fromcsv("./data_SNV_PACA_FD_DC_SYNC0521_AF.tsv.test", columns=[*features.som_rf_snv_input_features, "Label"], vtype = "SNV")
         #test_data = hard_filter(test_data)
         tmp_feature = features.som_rf_snv_input_features
     elif vartype == "INDEL":
@@ -60,17 +60,18 @@ def train_rf(args):
     xg_w_scale = sum(data['Label'] == 0) / sum(data['Label'] == 1)
     print("using xgboost pos weight: ", xg_w_scale)
     # snv xgboost param
-    # clf = xgb.XGBClassifier(objective ='binary:logistic', scale_pos_weight = xg_w_scale, 
-    #                         learning_rate = 0.1, max_depth = 10, min_child_weight = 17,
-    #                         n_jobs = -1, n_estimators = 1300,
-    #                         tree_method = 'gpu_hist', gpu_id = 0
-    #                         )
-    # indel xgboost param
-    clf = xgb.XGBClassifier(objective ='binary:logistic', scale_pos_weight = xg_w_scale, 
-                            learning_rate = 0.01, max_depth = 25, min_child_weight = 18,
-                            n_jobs = -1, n_estimators = 1200,
-                            tree_method = 'gpu_hist', gpu_id = 1
-                            )
+    if vartype == "SNV":
+        clf = xgb.XGBClassifier(objective ='binary:logistic', scale_pos_weight = xg_w_scale, 
+                                learning_rate = 0.01, max_depth = 25, min_child_weight = 18,
+                                n_jobs = -1, n_estimators = 1300,
+                                tree_method = 'gpu_hist', gpu_id = 0
+                                )
+    else: # indel xgboost param
+        clf = xgb.XGBClassifier(objective ='binary:logistic', scale_pos_weight = xg_w_scale, 
+                                learning_rate = 0.01, max_depth = 25, min_child_weight = 18,
+                                n_jobs = -1, n_estimators = 1200,
+                                tree_method = 'gpu_hist', gpu_id = 1
+                                )
 
     clf.fit(data[tmp_feature], data['Label'])
     

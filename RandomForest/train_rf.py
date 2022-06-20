@@ -214,23 +214,13 @@ def train_rf(args):
     fastvc_file = args.train_data
 
     if vartype == "SNV":
-        if args.tsv == None:
-            data = pd.DataFrame(cr, columns=[*som_selected_features, "VarLabel", "label"])
-            data[data.columns] = data[data.columns].apply(pd.to_numeric)
-            #data['VarLabel'] = data['VarLabel'].astype('category')
-            #data["label"] = data["label"]
-        else:
-            data = get_data_fromcsv(args.tsv, [*som_selected_features, "VarLabel", "label"], vtype = 'SNV')
-
+        data = get_data_fromcsv(args.tsv, columns=[*features.som_rf_snv_input_features, 'Label'], vtype = 'SNV')
         data = hard_filter(data)
 
         #--- data prepare ----#
-        false = data[ data['label'] == 0 ]
-        truth = data[ data['label'] == 1 ]
+        false = data[ data['Label'] == 0 ]
+        truth = data[ data['Label'] == 1 ]
         print("faslse number: {}, truth number: {}".format(len(false), len(truth)) )
-        aug_data = shuffle(pd.concat([truth, false, truth, truth], axis = 0))
-        y = aug_data["label"]#.to_numpy()
-        print(len(aug_data), len(y))
     elif vartype == "INDEL":
         data = get_data_fromcsv(args.tsv, columns=[*features.som_rf_indel_input_features, 'Label'], vtype = 'INDEL')
         print("before hard filter: {} data".format(len(data)))
@@ -239,8 +229,8 @@ def train_rf(args):
         #data['is_train'] = np.random.uniform(0, 1, len(data)) <= 0.9
         #train, test = data[data['is_train'] == True], data[data['is_train'] == False]
         ##--- data prepare ----#
-        #false = train[train['label'] == 0 ]
-        #truth = train[train['label'] == 1 ]
+        #false = train[train['Label'] == 0 ]
+        #truth = train[train['Label'] == 1 ]
         #print("faslse number: {}, truth number: {}".format(len(false), len(truth)) )
         #aug_data = shuffle(pd.concat([truth, false, truth, truth], axis = 0))
         #train_set = aug_data[aug_data.columns[:-2]].to_numpy()
@@ -248,13 +238,16 @@ def train_rf(args):
         #print(len(aug_data), len(y))
 
     print("data prepare done, start fiting ...")
-    data = data.fillna(2)
+    #data = data.fillna(2)
     clf = RandomForestClassifier(n_jobs=args.nthreads, max_depth=20, min_samples_leaf=50, 
                                  n_estimators=1200, max_features=None)
     #clf = RandomForestClassifier(n_jobs=args.nthreads, max_depth=20, min_samples_leaf=50, 
     #                             n_estimators=150, max_features=None)
 
-    clf.fit(data[features.som_rf_indel_input_features], data['Label'])
+    if vartype == "INDEL":
+      clf.fit(data[features.som_rf_indel_input_features], data['Label'])
+    else:
+      clf.fit(data[features.som_rf_snv_input_features], data['Label'])
     
     joblib.dump(clf, args.out_model, compress=9)
     print("store model done, now testing...")

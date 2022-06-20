@@ -113,16 +113,13 @@ def my_predict(clf, data, scale):
     print(proba.shape, af.shape)
     assert(len(af) == len(proba))
     for i in range(len(proba)):
-      if (af[i] < 0.1 and proba[i] > 0.9) or (af[i] >= 0.1 and proba[i] > 0.5):
+      if (af[i] < 0.2 and proba[i] > 0.90) or (af[i] >= 0.2 and proba[i] > 0.25):
         res.append(1)
       else:
         res.append(0)
 
     return np.asarray(res)
 
-    #return data[((data['Var1AF'] <= 0.1) & (data['proba'] > 0.8))
-    #            | ((data['Var1AF']  > 0.1) & (data['proba'] > 0.5))]
-    #return np.asarray([1 if x >= scale else 0 for x in proba[:,1]])
 
 def depth_normalization(data, tdepth, ndepth):
     #to_be_scale = ["Var1AltDepth", "Var1RefFwdReads", "Var1RefRevReads", "Var1AltFwdReads", "Var1AltRevReads", "Var2AltDepth", "Var2RefFwdReads", "Var2RefRevReads", "Var2AltFwdReads", "Var2AltRevReads"]
@@ -175,7 +172,7 @@ def rf_filter(args):
     if scale == 0:
       print('Just use hard filter')
       return snvs
-    inputs = snvs[som_rf_snv_input_features].to_numpy()
+    inputs = snvs[som_rf_snv_input_features]
     clf = joblib.load(args.model)
     clf.verbose = False
     snv_pred = my_predict(clf, inputs, scale)
@@ -233,7 +230,7 @@ def call_rf(args):
   print("time of write: {} s".format(cr_end - cr_start) )
 
 
-def call_rf_keep(args):
+def call_rf_keep_all(args):
   cr = list()
   raw = list()
   in_file = args.in_file
@@ -332,3 +329,4 @@ if __name__ == "__main__":
     parser.add_argument('--ndepth', help = "ndepth", type=int, required = True)
     args = parser.parse_args()
     call_rf(args)
+    #call_rf_keep_all(args)

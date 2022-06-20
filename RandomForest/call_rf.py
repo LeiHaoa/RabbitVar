@@ -153,7 +153,7 @@ def rf_filter(args):
       print('Just use hard filter')
       return snvs
     inputs = snvs[[*som_selected_features, "VarLabel"]].to_numpy()
-    clf = joblib.load(args.models)
+    clf = joblib.load(args.model)
     clf.verbose = False
     snv_pred = my_predict(clf, inputs, scale)
     snv_result = snvs.loc[snv_pred == 1]
@@ -239,7 +239,7 @@ def call_rf_keep(args):
       print('Just use hard filter')
       return snvs
     inputs = snvs[[*som_selected_features, "VarLabel"]].to_numpy()
-    clf = joblib.load(args.models)
+    clf = joblib.load(args.model)
     clf.verbose = False
     snv_pred = my_predict(clf, inputs, scale)
     #snv_result = snvs.loc[snv_pred == 1]

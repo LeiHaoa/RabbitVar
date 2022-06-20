@@ -7,14 +7,16 @@ import features
 import numpy as np
 from sklearn.utils import shuffle
 
-def get_data_fromcsv(data_path, columns, vtype = 'SNV'):
+VTYPE="SNV"
+
+def get_data_fromcsv(data_path, columns, vtype = "SNV"):
   data = pd.read_csv(data_path, header=None, names=columns, engine = 'pyarrow')
   return data 
 
-tsv = "./data_INDEL_HCC1395_WGS_Spike.tsv"
-data = get_data_fromcsv(tsv, [*features.som_rf_indel_input_features, 'Label'], "INDEL")
-truth_data = data[data['Label'] == 1]
-false_data = data[data['Label'] == 0]
+tsv = "./data_SNV_HCC1395_WGS_Spike.tsv"
+data1 = get_data_fromcsv(tsv, [*features.som_rf_snv_input_features, 'Label'], VTYPE)
+truth_data = data1[data1['Label'] == 1]
+false_data = data1[data1['Label'] == 0]
 print(f"tsv dataset1: {tsv}, truth: {len(truth_data)}, false: {len(false_data)}")
 
 '''
@@ -26,10 +28,13 @@ false_data = false_data[false_data['is_selected'] == 1]
 '''
 
 #---------------all HCC data--------------#
-tsv = "./data_INDEL_PACA.tsv"
-paca_data = get_data_fromcsv(tsv, [*features.som_rf_indel_input_features, 'Label'], "INDEL")
+tsv = "./data_SNV_DREAMC.tsv"
+data2 = get_data_fromcsv(tsv, [*features.som_rf_snv_input_features, 'Label'], VTYPE)
+truth_data = data2[data2['Label'] == 1]
+false_data = data2[data2['Label'] == 0]
+print(f"tsv dataset1: {tsv}, truth: {len(truth_data)}, false: {len(false_data)}")
 
 #aug_data = shuffle(pd.concat([HCC1395_data, truth_data, false_data], axis = 0))
-aug_data = shuffle(pd.concat([paca_data, data], axis = 0))
-aug_data = aug_data[[*features.som_rf_indel_input_features, 'Label']]
-aug_data.to_csv("./data_INDEL_SPICKEIN_PACA.tsv",index = False)
+aug_data = shuffle(pd.concat([data1, data2], axis = 0))
+aug_data = aug_data[[*features.som_rf_snv_input_features, 'Label']]
+aug_data.to_csv("./data_SNV_SPICKEIN_DREAM.tsv",header = False, index = False)
