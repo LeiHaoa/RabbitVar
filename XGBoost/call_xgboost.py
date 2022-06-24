@@ -109,14 +109,17 @@ def my_predict(clf, data, scale):
     proba = clf.predict_proba(data)[:,1]
     af = data['Var1AF'].to_numpy()
     res = []
-    print(type(proba), type(af))
-    print(proba.shape, af.shape)
     assert(len(af) == len(proba))
+    #sp = float(scale.split(':')[0])
+    sp, lowaf_scale, highaf_scale = [float(x) for x in scale.split(':')]
+    print(f"sp: {sp}, lowaf_scale: {lowaf_scale}, highaf_scale: {highaf_scale}")
     for i in range(len(proba)):
-      if (af[i] < 0.2 and proba[i] > 0.90) or (af[i] >= 0.2 and proba[i] > 0.25):
+      if (af[i] < sp and proba[i] > lowaf_scale) or (af[i] >= sp and proba[i] > highaf_scale):
         res.append(1)
       else:
         res.append(0)
+    end_t = time.time()
+    print(f'predict time: {end_t - start_t}s')
 
     return np.asarray(res)
 
@@ -138,7 +141,7 @@ def rf_filter(args):
   cr = list()
   raw = list()
   in_file = args.in_file
-  scale = float(args.scale)
+  scale = args.scale
   time_step0 = time.time()
   #cr = pd.read_csv(in_file, delimiter = '\t', header = None, engine = 'c', skipinitialspace = True, na_filter = False)
   #cr.columns = [*som_features, 'None'] #TODO: i should change the code of c++ to avoid the None colum
@@ -169,7 +172,7 @@ def rf_filter(args):
   if args.var_type == 'SNV':
     time_start = time.time()
     snvs = cr[cr['VarType'] == 0]
-    if scale == 0:
+    if scale == '0':
       print('Just use hard filter')
       return snvs
     inputs = snvs[som_rf_snv_input_features]
@@ -184,24 +187,18 @@ def rf_filter(args):
   elif args.var_type == 'INDEL':
     time_start = time.time()
     indels = cr[cr['VarType'] != 0]
-    if scale == 0:
+    if scale == '0':
       print('Just use hard filter')
       return indels
 
     #depth normal lization
-    indels = depth_normalization(indels, tdepth, ndepth)
-    tmp_feature = [
-      "VarLabel", "VarType", "RefLength", "AltLength",
-      "Var1PMean", "Var1PStd", "Var1QMean", "Var1QStd", "Var1MQ", "Var1Sig_Noise", "Var1HiAF", "Var1ExtraAF", "Var1NM", "Var1Pvalue", "Var1Oddr",
-      "Var2PMean", "Var2PStd", "Var2QMean", "Var2QStd", "Var2MQ", "Var2Sig_Noise", "Var2HiAF", "Var2ExtraAF", "Var2NM", "Var2Pvalue", "Var2Oddr",
-      "shift3", "MSI", "MSI_NT",
-      "Pvalue", "Oddratio",
-      "TumorNormalAllelLogOdds", "TumorNormalindelAltLogOdd"
-    ]
+    #indels = depth_normalization(indels, tdepth, ndepth)
     tmp_feature = som_rf_indel_input_features
     inputs = indels[tmp_feature]
     print("inputs size: ", len(inputs))
     clf = joblib.load(args.model)
+    load_time = time.time()
+    print(f'load model time: {load_time - time_start}')
     clf.verbose = False
     indel_pred = my_predict(clf, inputs, scale)
     indel_result = indels.loc[indel_pred == 1]
@@ -217,7 +214,6 @@ def call_rf(args):
   cr_start = time.time()
   vcf['Chr'] = vcf['Chr'].astype(str)
   vcf = vcf.sort_values(by=['Chr', 'Start'])
-  print(vcf.head())
   vcf_file = args.out_file
   with open(vcf_file, 'w') as f:
     write_header(f)
@@ -234,7 +230,7 @@ def call_rf_keep_all(args):
   cr = list()
   raw = list()
   in_file = args.in_file
-  scale = float(args.scale)
+  scale = args.scale
   time_step0 = time.time()
   cr = datautil.get_data_fromtxt(in_file, args.var_type)
   cr['VarLabel'] = cr['VarLabel'].map(varLabel_to_label)
@@ -320,7 +316,7 @@ if __name__ == "__main__":
         description = "train your network")
     parser.add_argument('--in_file', help = "RabbitVar intermidiate file(with fisher test)", type=str, required = True)
     parser.add_argument('--var_type', help = "var type you want to train(SNV/INDEL)", type=str, required = True)
-    parser.add_argument('--scale', help = 'scale for random forest predict_proba to filter, 0.5 perform the same result as function predict. (default > 0.2)', type = float, default = 0.2)
+    parser.add_argument('--scale', help = 'scale for xgboost predict_proba to filter, 0.5 perform the same result as function predict, formula: a:b-c means when VAF < a, chose variants whose predict prob > b and when VAF >= a, chose variants whose predict prob > c. (default 0.2:0.9-0.25)', type = str, default = "0.2:0.9-0.25")
     #parser.add_argument('--var_type', help = "var type you want to train(SNV/INDEL)", type=str, required = True)
     parser.add_argument('--nthreads', help = "number of thread", type=int, default=20)
     parser.add_argument('--model', help = "random forest model", type=str, required = True)
