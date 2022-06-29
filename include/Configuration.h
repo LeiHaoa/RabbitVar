@@ -317,7 +317,7 @@ class Configuration {
     /**
      * Default reference extension $REFEXT
      */
-    int referenceExtension = 1200;
+    int referenceExtension = 200;
 
     /**
      * Default printer for variants - system.out

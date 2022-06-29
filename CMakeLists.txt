@@ -22,6 +22,7 @@ endif()
 message("hts dir: " ${HTS_PREFIX})
 
 LINK_DIRECTORIES(${HTS_PREFIX}/lib)
+#LINK_DIRECTORIES(/home/user_home/haoz/tools/lib)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -43,6 +44,7 @@ if(STATIC)
 	target_link_libraries(FastVC libhts.a)
 else()
 	target_link_libraries(FastVC hts)
+	#target_link_libraries(FastVC libtcmalloc.a)
 endif()
 
 SET(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR})

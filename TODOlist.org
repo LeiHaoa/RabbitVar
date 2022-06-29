@@ -9,3 +9,7 @@
 *note* 
 以前的rabbitvar对文件的读写是不连续的
 不能这么分配， 按理说应该一个线程先尽可能的处理连续的区域
+
+* optimizeing TODO
+**TODO left & right sequence， 等没有用的seq信息放到debug模式下输出
+**TODO vatype的枚举
