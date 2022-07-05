@@ -135,6 +135,10 @@ Scope<AlignedVarsData>* ToVarsBuilder::process(Scope<RealignedVariationData> &sc
         continue;
       }
 
+      //if(!is_variation_pass_prefilter()){
+      //  continue;
+      //}
+
       //total position coverage
       int totalPosCoverage = (*refCoverage)[position];
 
@@ -424,7 +428,7 @@ int ToVarsBuilder::createInsertion(double duprate, int position, int totalPosCov
       tvref->positionCoverage = cnt->varsCount;
       tvref->varsCountOnForward = fwd;
       tvref->varsCountOnReverse = rev;
-      tvref->strandBiasFlag = to_string(bias);
+      tvref->strandBiasFlag = bias;
       tvref->frequency = roundHalfEven("0.0000", cnt->varsCount / (double) ttcov);
       tvref->meanPosition = roundHalfEven("0.0", cnt->meanPosition / (double) cnt->varsCount);
       tvref->isAtLeastAt2Positions = cnt->pstd;
@@ -484,7 +488,7 @@ void ToVarsBuilder::createVariant(double duprate, robin_hood::unordered_map<int,
     //count of variants in reverse strand
     int rev = cnt->getDir(true);
     //strand bias flag (0, 1 or 2)
-    int bias = strandBias(fwd, rev, conf);
+    uint8_t bias = strandBias(fwd, rev, conf);
     //$vqual mean base quality for variant
     double basequality = roundHalfEven("0.0", cnt->meanQuality / cnt->varsCount); // base quality
     //$mq mean mapping quality for variant
@@ -509,7 +513,7 @@ void ToVarsBuilder::createVariant(double duprate, robin_hood::unordered_map<int,
     tvref->positionCoverage = cnt->varsCount;
     tvref->varsCountOnForward = fwd;
     tvref->varsCountOnReverse = rev;
-    tvref->strandBiasFlag = to_string(bias);
+    tvref->strandBiasFlag = bias;
     tvref->frequency = roundHalfEven("0.0000", cnt->varsCount / (double) ttcov);
     tvref->meanPosition = roundHalfEven("0.0", cnt->meanPosition / (double) cnt->varsCount);
     tvref->isAtLeastAt2Positions = cnt->pstd;
@@ -1019,6 +1023,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
       }
 
       //preceding reference sequence
+      #ifdef VERBOSE
       vref->leftseq = joinRef(ref, startPosition - 20 < 1 ? 1 : startPosition - 20, startPosition - 1); // left 20 nt
       //int chr0 = getOrElse(instance().chrLengths, region.chr, 0);
       //conf->chrLengths.count(region.chr)? 1 : conf->chrLengths[region.chr] = 0;
@@ -1026,6 +1031,7 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
       int chr0 = conf->chrLengths[region.chr];
       //following reference sequence
       vref->rightseq = joinRef(ref, endPosition + 1, endPosition + 20 > chr0 ? chr0 : endPosition + 20); // right 20 nt
+      #endif
       //genotype description string
       string genotype = genotype1 + "/" + genotype2;
       //remove '&' and '#' symbols from genotype string
@@ -1053,9 +1059,11 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
       //bias is [0-2];[0-2] where first flag is for reference, second for variant
       //if reference variant is not found, first flag is 0
       if (variationsAtPos->referenceVariant != NULL) {
-        vref->strandBiasFlag = variationsAtPos->referenceVariant->strandBiasFlag + ";" + vref->strandBiasFlag;
+        //vref->strandBiasFlag = variationsAtPos->referenceVariant->strandBiasFlag + ";" + vref->strandBiasFlag;
+        vref->strandBiasFlag = ((variationsAtPos->referenceVariant->strandBiasFlag) << 4) | (vref->strandBiasFlag);
       } else {
-        vref->strandBiasFlag = "0;" + vref->strandBiasFlag;
+        //vref->strandBiasFlag = "0;" + vref->strandBiasFlag;
+        vref->strandBiasFlag = 0x00 | vref->strandBiasFlag;
       }
 
       adjustVariantCounts(position, vref);
@@ -1079,7 +1087,8 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
     vref->varsCountOnReverse = 0;
     vref->msi = 0;
     vref->msint = 0;
-    vref->strandBiasFlag += ";0";
+    //vref->strandBiasFlag += ";0";
+    vref->strandBiasFlag =  vref->strandBiasFlag | 0x00 ;
     vref->shift3 = 0;
     vref->startPosition = position;
     vref->endPosition = position;
@@ -1089,8 +1098,10 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
     vref->refallele = validateRefallele(referenceBase);
     vref->varallele = validateRefallele(referenceBase);
     vref->genotype = referenceBase + "/" + referenceBase;
+    #ifdef VERBOSE
     vref->leftseq = "";
     vref->rightseq = "";
+    #endif
     vref->duprate = duprate;
   } else {
     variationsAtPos->referenceVariant = new Variant();

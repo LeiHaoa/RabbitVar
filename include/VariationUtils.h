@@ -31,11 +31,14 @@ inline bool isNotEquals(char ch1, char ch2){
 
 inline bool isHasAndEquals(char ch1, const REFTYPE &ref, int index) {
 	REFTYPE::const_iterator ri;
-	if( (ri = ref.find(index) ) != ref.end()){
-		return ri->second == ch1;
-    }else{
-		return false;
-	}
+  if ((ri = ref.find(index)) != ref.end())
+  {
+    return ri->second == ch1;
+  }
+  else
+  {
+    return false;
+  }
 }
 
 inline bool isHasAndEquals(int index, const REFTYPE &ref, int index2) {
@@ -530,7 +533,8 @@ inline Vars* getOrPutVars(robin_hood::unordered_map<int, Vars*> &mapv, int posit
     vars = itr->second;
   }else{
     vars = new Vars();
-    mapv[position] = vars;
+    //mapv[position] = vars;
+    mapv.insert({position, vars});
   }
   return vars;
 }

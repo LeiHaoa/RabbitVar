@@ -30,10 +30,10 @@ struct ScopePair{
 
 struct CombineAnalysisData{
 	int maxReadLength;
-	string type;
-	CombineAnalysisData(int maxReadLength, string type){
+	VarLabelSet varLabel;
+	CombineAnalysisData(int maxReadLength, VarLabelSet label){
 		this->maxReadLength = maxReadLength;
-		this->type = type;
+		this->varLabel = label;
 	}
 };
 
@@ -42,17 +42,17 @@ public:
 	void InitItemRepository(const int size);
 	void process(Configuration* conf, vector<vector<Region>> &segments);
 	string output(Scope<AlignedVarsData>* scopeFromBam1, Scope<AlignedVarsData>* scopeFromBam2, SomaticThreadResource &trs);
-	string callingForOneSample(Vars* variants, bool isFirstCover, string &varLabel, Region &region, set<string> *splice);
+	string callingForOneSample(Vars* variants, bool isFirstCover, VarLabelSet varLabel, Region &region, set<string> *splice);
 	string callingForBothSamples(int position, Vars* v1, Vars* v2, Region& region, set<string>* splice, int& maxReadLength, SomaticThreadResource &trs);
 	string printVariationsFromFirstSample(int position, Vars* v1, Vars* v2, Region& region, set<string>* splice, int& maxReadLength, SomaticThreadResource &trs);
 	string printVariationsFromSecondSample(int position, Vars* v1, Vars* v2, Region region, set<string> *splice, int& maxReadLength, SomaticThreadResource &trs);
-	string determinateType(Vars* variants, Variant* standardVariant, Variant* variantToCompare, set<string> *splice);
+  VarLabelSet determinateLabel(Vars* variants, Variant* standardVariant, Variant* variantToCompare, set<string> *splice);
 	CombineAnalysisData combineAnalysis(Variant* variant1, Variant* variant2,
 										string& chrName, int position,
 										string& descriptionString, set<string>* splice,
 										int maxReadLength, SomaticThreadResource &trs);
 	string print_output_variant_simple(Variant* beginVariant, Variant* endVariant, Variant* tumorVariant, Variant* normalVariant,
-									   Region region, string& varLabel, bool fisher);
+									   Region region, VarLabelSet varLabel, bool fisher);
 
 private:
 	Configuration* conf;

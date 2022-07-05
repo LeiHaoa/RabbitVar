@@ -88,7 +88,7 @@ void SimpleMode::print_output_variant_simple(const Variant* variant, Region &reg
 		str.emplace_back(std::to_string(variant->varsCountOnReverse));
 		str.emplace_back(variant->genotype == "" ? "0" : variant->genotype);
 		str.emplace_back(std::to_string(variant->frequency));
-		str.emplace_back(variant->strandBiasFlag);
+		str.emplace_back(std::to_string(variant->strandBiasFlag));
 		str.emplace_back(std::to_string(variant->meanPosition));
 		str.emplace_back(variant->isAtLeastAt2Positions ? std::to_string(1) :std::to_string(0));//ptsd
 		str.emplace_back(std::to_string(variant->meanQuality)); //qual
@@ -116,10 +116,12 @@ void SimpleMode::print_output_variant_simple(const Variant* variant, Region &reg
 		str.emplace_back(variant->numberOfMismatches > 0 ? std::to_string(variant->numberOfMismatches) : std::to_string(0)); // nm
 		str.emplace_back(std::to_string(variant->hicnt)); //hicnt
 		str.emplace_back(std::to_string(variant->hicov)); //hicov
+    #ifdef VERBOSE
 		str.emplace_back(variant->leftseq.empty() ? "0": variant->leftseq); //leftSequence
 		str.emplace_back(variant->rightseq.empty() ? "0": variant->rightseq); //rightSequence
+    #endif
 		str.emplace_back(region.chr + ":" + std::to_string(region.start) + "-" + std::to_string(region.end)); //region
-		str.emplace_back(variant->vartype); //varType
+		str.emplace_back(get_vartype_str(variant->vartype)); //varType
 		str.emplace_back(std::to_string(variant->duprate)); //duprate
 		str.emplace_back(sv == "" ? "0": sv); //sv: just for place-holder
 
@@ -170,7 +172,7 @@ void SimpleMode::output(Scope<AlignedVarsData>* mapScope, Configuration* conf){
 					print_output_variant_simple(vref, mapScope->region, variantsOnPosition->sv, position, conf->sample, conf->fisher);
 					continue;
 				}
-				vref->vartype = "";
+				vref->vartype = INIT_EMPTY;
 				vrefs.emplace_back(vref);
 			} else {
 				vector<Variant*> &vvar = variantsOnPosition->variants;
@@ -190,7 +192,7 @@ void SimpleMode::output(Scope<AlignedVarsData>* mapScope, Configuration* conf){
 			//std::cout << "vrefs size: " << vrefs.size() << std::endl;
 			for (int vi = 0; vi < vrefs.size(); vi++) {
 				Variant* vref = vrefs[vi];
-				if ("Complex" == vref->vartype) {
+				if (vref->vartype == COMPLEX) {
 					vref->adjComplex();
 				}
 				if (conf->crisprCuttingSite == 0) {

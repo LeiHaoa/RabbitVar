@@ -678,6 +678,9 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 		for(int i = offset; i < cigar_element_length; i++){
 			bool trim = isTrimAtOptTBases(direction, total_length_including_soft_clipped);
 			const char ch1 = seq[readPositionIncludingSoftClipped];
+      //if match, congitnue;
+      if(isHasAndEquals(ch1, ref, readPositionIncludingSoftClipped)) continue;
+
 			string s(1,ch1);
 			//stringstream sstm;
 

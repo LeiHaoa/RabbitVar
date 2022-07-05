@@ -8,7 +8,6 @@
 #include <omp.h>
 #include <assert.h>
 
-
 /* comparators */
 bool GVS_COMPARATOR(var2str_tup &o1, var2str_tup &o2){
 	return std::get<0>(o1)->frequency > std::get<0>(o2)->frequency;
@@ -149,7 +148,7 @@ void AmpliconMode::print_out_amp_sample(Variant* variant, Region &region,
 		str.emplace_back(std::to_string(variant->varsCountOnReverse));
 		str.emplace_back(variant->genotype == "" ? "0" : variant->genotype);
 		str.emplace_back(std::to_string(variant->frequency));
-		str.emplace_back(variant->strandBiasFlag);
+		str.emplace_back(std::to_string(variant->strandBiasFlag));
 		str.emplace_back(std::to_string(variant->meanPosition));
 		str.emplace_back(variant->isAtLeastAt2Positions ? std::to_string(1) :std::to_string(0));//ptsd
 		str.emplace_back(std::to_string(variant->meanQuality)); //qual
@@ -179,15 +178,17 @@ void AmpliconMode::print_out_amp_sample(Variant* variant, Region &region,
 		str.emplace_back(variant->numberOfMismatches > 0 ? std::to_string(variant->numberOfMismatches) : std::to_string(0)); // nm
 		str.emplace_back(std::to_string(variant->hicnt)); //hicnt
 		str.emplace_back(std::to_string(variant->hicov)); //hicov
+    #ifdef VERBOSE
 		str.emplace_back(variant->leftseq.empty() ? "0": variant->leftseq); //leftSequence
 		str.emplace_back(variant->rightseq.empty() ? "0": variant->rightseq); //rightSequence
+    #endif
 		if(goodVariants && !goodVariants->empty()){
 			str.emplace_back(std::get<1>(goodVariants->at(0))); //region
 		}else{
 			str.emplace_back(region.chr + ":" + std::to_string(position) + "-" + std::to_string(position));
 		}
 
-		str.emplace_back(variant->vartype); //varType
+		str.emplace_back(get_vartype_str(variant->vartype)); //varType
 		str.emplace_back(std::to_string(gvscnt));
 		str.emplace_back(std::to_string(gvscnt + badVariants->size()));
 		str.emplace_back(std::to_string(noCov));
@@ -541,7 +542,7 @@ void AmpliconMode::output(Region rg, vector<robin_hood::unordered_map<int, Vars*
 							: (variant_itr = vtmp->varDescriptionStringToVariants.find(gdnt)) == vtmp->varDescriptionStringToVariants.end()
 							? NULL
 							: variant_itr -> second;
-						if (variant != NULL && variant->isGoodVar(vtmp->referenceVariant, string(""), splice, conf)) {
+						if (variant != NULL && variant->isGoodVar(vtmp->referenceVariant, INIT_EMPTY, splice, conf)) {
 							gcnt.emplace_back(var2str_tup(variant, amps_reg));
 						}
 					}
@@ -585,7 +586,7 @@ void AmpliconMode::output(Region rg, vector<robin_hood::unordered_map<int, Vars*
 					flag = false;
 				}
 				vref->vartype = vref->varType();
-				if (vref->vartype == "Complex") {
+				if (vref->vartype == COMPLEX) {
 					vref->adjComplex();
 				}
 				//AmpliconOutputVariant outputVariant = new AmpliconOutputVariant(vref, rg, goodVariants, badVariants, position, currentGvscnt, nocov, flag);

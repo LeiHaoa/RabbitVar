@@ -8,18 +8,6 @@
 #include <assert.h>
 #include "htslib/kfunc.h"
 //#include 
-string STRONG_SOMATIC = "StrongSomatic";
-string SAMPLE_SPECIFIC = "SampleSpecific";
-string DELETION = "Deletion";
-string LIKELY_LOH = "LikelyLOH";
-string GERMLINE = "Germline";
-string STRONG_LOH = "StrongLOH";
-string LIKELY_SOMATIC = "LikelySomatic";
-string AF_DIFF = "AFDiff";
-string FALSE = "FALSE";
-string COMPLEX = "Complex";
-string SNV = "SNV";
-string EMPTY_STRING = "";
 
 void SomaticMode::InitItemRepository(const int size){
 	mRepo = new ScopePair[size];
@@ -149,7 +137,7 @@ inline void put_fisher_ext_and_odds(string &var_str, int ref_fwd, int ref_rev, i
 }
 
 string SomaticMode::print_output_variant_simple(Variant* beginVariant, Variant* endVariant, Variant* tumorVariant, Variant* normalVariant, 
-												Region region, string& varLabel, bool fisher){
+												Region region, VarLabelSet varLabel, bool fisher){
 	const string null_case_str = "0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\t";
 	string var_str = "";
 	var_str.append(conf->sample).append("\t")
@@ -174,7 +162,7 @@ string SomaticMode::print_output_variant_simple(Variant* beginVariant, Variant* 
 			.append(tumorVariant->genotype == "" ? "0" : tumorVariant->genotype).append("\t")
 			.append(to_string(tumorVariant->frequency)).append("\t")
 			//.append(tumorVariant->strandBiasFlag == null ? "0" : tumorVariant->strandBiasFlag).append("\t")
-			.append(tumorVariant->strandBiasFlag).append("\t")
+			.append(to_string(tumorVariant->strandBiasFlag)).append("\t")
 			.append(to_string(tumorVariant->meanPosition)).append("\t")
 			.append(to_string(tumorVariant->isAtLeastAt2Positions ? 1 : 0)).append("\t")
 			.append(to_string(tumorVariant->meanQuality)).append("\t")
@@ -209,7 +197,7 @@ string SomaticMode::print_output_variant_simple(Variant* beginVariant, Variant* 
 			.append(normalVariant->genotype == "" ? "0" : tumorVariant->genotype).append("\t")
 			.append(to_string(normalVariant->frequency)).append("\t")
 			//.append(normalVariant->strandBiasFlag == null ? "0" : tumorVariant->strandBiasFlag).append("\t")
-			.append(normalVariant->strandBiasFlag).append("\t")
+			.append(to_string(normalVariant->strandBiasFlag)).append("\t")
 			.append(to_string(normalVariant->meanPosition)).append("\t")
 			.append(to_string(normalVariant->isAtLeastAt2Positions ? 1 : 0)).append("\t")
 			.append(to_string(normalVariant->meanQuality)).append("\t")
@@ -236,18 +224,22 @@ string SomaticMode::print_output_variant_simple(Variant* beginVariant, Variant* 
 	if(endVariant != NULL){
 		var_str.append(to_string(endVariant->shift3)).append("\t")
 			.append(to_string(endVariant->msi)).append("\t")
-			.append(to_string(endVariant->msint)).append("\t")
-			.append(endVariant->leftseq.empty() ? "0" : endVariant->leftseq).append("\t")
+			.append(to_string(endVariant->msint)).append("\t");
+      #ifdef VERBOS
+			var_str.append(endVariant->leftseq.empty() ? "0" : endVariant->leftseq).append("\t")
 			.append(endVariant->rightseq.empty() ? "0" : endVariant->rightseq).append("\t");
+      #endif
 	}else{
 		var_str.append("\t\t\t\t\t");
 	}
 
-	var_str.append(region.chr + ":" + to_string(region.start) + "-" + to_string(region.end)).append("\t");
-	var_str.append(varLabel).append("\t");
+  #ifdef VERBOS
+  var_str.append(region.chr + ":" + to_string(region.start) + "-" + to_string(region.end)).append("\t");
+  #endif
+	var_str.append(get_varlabel_str(varLabel)).append("\t");
 
 	if(beginVariant != NULL){
-		var_str.append(beginVariant->vartype).append("\t");
+		var_str.append(get_vartype_str(beginVariant->vartype)).append("\t");
 	}else{
 		var_str.append("\t");
 	}
@@ -335,8 +327,9 @@ string SomaticMode::output(Scope<AlignedVarsData>* scopeFromBam1, Scope<AlignedV
 
 			robin_hood::unordered_map<int, Vars*>::iterator v1 = variationsFromBam1.find(position);
 			robin_hood::unordered_map<int, Vars*>::iterator v2 = variationsFromBam2.find(position);
-			if(v1 == variationsFromBam1.end()){
-				output_string.append(callingForOneSample(v2->second, true, DELETION, region, splice));
+			if(v1 == variationsFromBam1.end()){ // we do not care about this sitiation in theory;
+        cerr << "[debug: ] no coverage for sample1 (tumor), ignore the vaiant" << endl;
+				//output_string.append(callingForOneSample(v2->second, true, DELETION, region, splice));
 			}else if(v2 == variationsFromBam2.end()){
 				output_string.append(callingForOneSample(v1->second, false, SAMPLE_SPECIFIC, region, splice));
 			}else{
@@ -355,7 +348,7 @@ string SomaticMode::output(Scope<AlignedVarsData>* scopeFromBam1, Scope<AlignedV
  * @param isFirstCover if the first calling
  * @param varLabel type of variation (LikelyLOH, LikelySomatic, Germline, AFDiff, StrongSomatic)
  * */
-string SomaticMode::callingForOneSample(Vars* variants, bool isFirstCover, string &varLabel, Region &region, set<string> *splice) {
+string SomaticMode::callingForOneSample(Vars* variants, bool isFirstCover, VarLabelSet varLabel, Region &region, set<string> *splice) {
 	if (variants->variants.empty()) {
 		return "";
 	}
@@ -415,8 +408,8 @@ string SomaticMode::printVariationsFromFirstSample(int position, Vars* v1, Vars*
 		robin_hood::unordered_map<string, Variant*>::iterator v2nt_itr = v2->varDescriptionStringToVariants.find(nt);
 		if (v2nt_itr != v2->varDescriptionStringToVariants.end()) {
 			v2nt = v2nt_itr->second;
-			string type = determinateType(v2, vref, v2nt, splice);
-			first_sample_string.append(print_output_variant_simple(vref, v2nt, vref, v2nt, region, type, conf->fisher));
+			VarLabelSet label = determinateLabel(v2, vref, v2nt, splice);
+			first_sample_string.append(print_output_variant_simple(vref, v2nt, vref, v2nt, region, label, conf->fisher));
 		} else { // sample 1 only, should be strong somatic
 			Variant* varForPrint = new Variant();
 			bool delete_vfp = false;
@@ -432,7 +425,7 @@ string SomaticMode::printVariationsFromFirstSample(int position, Vars* v1, Vars*
 				varForPrint = NULL;
 			}
 
-			string type = STRONG_SOMATIC;
+			VarLabelSet label = STRONG_SOMATIC;
 			bool mm = regex_search(nt, conf->patterns->MINUS_NUM_NUM);
 			if (vref->vartype != SNV && (nt.length() > 10 || mm)) {
 				v2nt = new Variant();
@@ -441,20 +434,20 @@ string SomaticMode::printVariationsFromFirstSample(int position, Vars* v1, Vars*
 					CombineAnalysisData tpl = combineAnalysis(vref, v2nt, region.chr, position, nt,
 															  splice, maxReadLength, trs);
 					maxReadLength = tpl.maxReadLength;
-					string &newtype = tpl.type;
-					if (newtype == "FALSE") {
+					VarLabelSet newlabel = tpl.varLabel;
+					if (newlabel == FALSE) {
 						numberOfProcessedVariation++;
 						continue;
 					}
-					if (newtype.length() > 0) {
-						type = newtype;
+					if (newlabel != EMPTY_STRING) {
+						label = newlabel;
 					}
 				}
 			}
-			if (type == STRONG_SOMATIC) {
+			if (label == STRONG_SOMATIC) {
 				first_sample_string.append(print_output_variant_simple(vref, vref, vref, varForPrint, region, STRONG_SOMATIC, conf->fisher));
 			} else {
-				first_sample_string.append(print_output_variant_simple(vref, vref, vref, v2nt, region, type, conf->fisher));
+				first_sample_string.append(print_output_variant_simple(vref, vref, vref, v2nt, region, label, conf->fisher));
 			}
 			if(delete_vfp) delete varForPrint;
 			if(v2nt) delete v2nt;
@@ -476,13 +469,13 @@ string SomaticMode::printVariationsFromFirstSample(int position, Vars* v1, Vars*
 			//Variant* v1nt = getVarMaybe(v1, varn, nt);
 			Variant* v1nt = v1->varDescriptionStringToVariants.find(nt) != v1->varDescriptionStringToVariants.end() ? v1->varDescriptionStringToVariants.at(nt) : NULL;
 			if (v1nt != NULL) {
-				string type = v1nt->frequency < conf->lofreq ? LIKELY_LOH : GERMLINE;
+				VarLabelSet label = v1nt->frequency < conf->lofreq ? LIKELY_LOH : GERMLINE;
 				if (COMPLEX == v2var->vartype) {
 					v1nt->adjComplex();
 				}
 
 				v1nt->vartype = v1nt->varType();
-				first_sample_string.append(print_output_variant_simple(v1nt, v2var, v1nt, v2var, region, type, conf->fisher));
+				first_sample_string.append(print_output_variant_simple(v1nt, v2var, v1nt, v2var, region, label, conf->fisher));
 			} else {
 				//Variant* v1var = getVarMaybe(v1, var, 0);
 				Variant* v1var = v1->variants.size() ? v1->variants[0] : NULL;
@@ -531,7 +524,7 @@ string SomaticMode::printVariationsFromSecondSample(int position, Vars* v1, Vars
 		}
 		// potential LOH
 		string &descriptionString = v2var->descriptionString;
-		string type = STRONG_LOH;
+		VarLabelSet label = STRONG_LOH;
 		//Variant* v1nt = v1->varDescriptionStringToVariants.computeIfAbsent(descriptionString, k -> new Variant());
 		Variant* v1nt;
 		bool new_v1nt = false;
@@ -543,7 +536,8 @@ string SomaticMode::printVariationsFromSecondSample(int position, Vars* v1, Vars
 		}
 		
 		v1nt->positionCoverage = 0;
-		string newType = EMPTY_STRING;
+		//VarLabelSet newType = EMPTY_STRING;
+		VarLabelSet newLabel = EMPTY_STRING;
 		//jregex.Matcher mm = MINUS_NUM_NUM.matcher(descriptionString);
 		bool mm = regex_search(descriptionString, conf->patterns->MINUS_NUM_NUM);
 		if (v2->varDescriptionStringToVariants.at(descriptionString)->positionCoverage < conf->minr + 3
@@ -559,14 +553,14 @@ string SomaticMode::printVariationsFromSecondSample(int position, Vars* v1, Vars
 				maxReadLength,
 				trs);
 			maxReadLength = tpl.maxReadLength;
-			newType = tpl.type;
-			if (FALSE == newType) {
+			newLabel = tpl.varLabel;
+			if (FALSE == newLabel) {
 				continue;
 			}
 		}
 		Variant* varForPrint;
-		if (newType.length() > 0) {
-			type = newType;
+		if (newLabel !=  EMPTY_STRING) {
+			label = newLabel; //type is varlabel
 			varForPrint = v1nt;
 		} else {
 			Variant *v1ref = v1->referenceVariant;
@@ -582,7 +576,7 @@ string SomaticMode::printVariationsFromSecondSample(int position, Vars* v1, Vars
 
 		//SomaticOutputVariant outputVariant = new SomaticOutputVariant(v2var, v2var, varForPrint, v2var, region, "", v2.sv, type);
 		//variantPrinter.print(outputVariant);
-		second_sample_string.append(print_output_variant_simple(v2var, v2var, varForPrint, v2var, region, type, conf->fisher));
+		second_sample_string.append(print_output_variant_simple(v2var, v2var, varForPrint, v2var, region, label, conf->fisher));
 		if(new_v1nt) delete v1nt;
 	}
 	return second_sample_string;
@@ -595,29 +589,29 @@ string SomaticMode::printVariationsFromSecondSample(int position, Vars* v1, Vars
  * @param variantToCompare a variation to be compared
  * @return type of variation (LikelyLOH, LikelySomatic, Germline, AFDiff, StrongSomatic)
  * */
-string SomaticMode::determinateType(Vars* variants, Variant* standardVariant, Variant* variantToCompare, set<string> *splice) {
-	string type;
+VarLabelSet SomaticMode::determinateLabel(Vars* variants, Variant* standardVariant, Variant* variantToCompare, set<string> *splice) {
+	VarLabelSet label;
 	if (variantToCompare->isGoodVar(variants->referenceVariant, standardVariant->vartype, splice, conf)) {
 		if (standardVariant->frequency > (1 - conf->lofreq) && variantToCompare->frequency < 0.8d && variantToCompare->frequency > 0.2d) {
-			type = LIKELY_LOH;
+			label = LIKELY_LOH;
 		} else {
 			if (variantToCompare->frequency < conf->lofreq || variantToCompare->positionCoverage <= 1) {
-				type = LIKELY_SOMATIC;
+				label = LIKELY_SOMATIC;
 			} else {
-				type = GERMLINE;
+				label = GERMLINE;
 			}
 		}
 	} else {
 		if (variantToCompare->frequency < conf->lofreq || variantToCompare->positionCoverage <= 1) {
-			type = LIKELY_SOMATIC;
+			label = LIKELY_SOMATIC;
 		} else {
-			type = AF_DIFF;
+			label = AF_DIFF;
 		}
 	}
 	if (variantToCompare->isNoise(conf) && standardVariant->vartype == SNV) {
-		type = STRONG_SOMATIC;
+		label = STRONG_SOMATIC;
 	}
-	return type;
+	return label;
 }
 
 
@@ -719,7 +713,9 @@ CombineAnalysisData SomaticMode::combineAnalysis(Variant* variant1, Variant* var
 			variant2->frequency = variant2->positionCoverage / (double)variant2->totalPosCoverage;
 			variant2->highQualityToLowQualityRatio = variant1->highQualityToLowQualityRatio; // Can't back calculate and should be inaccurate
 			variant2->genotype = vref->genotype;
-			variant2->strandBiasFlag = strandBias(variant2->refForwardCoverage, variant2->refReverseCoverage, conf) + ";" +
+			//variant2->strandBiasFlag = strandBias(variant2->refForwardCoverage, variant2->refReverseCoverage, conf) + ";" +
+			//	strandBias(variant2->varsCountOnForward, variant2->varsCountOnReverse, conf);
+			variant2->strandBiasFlag = ((strandBias(variant2->refForwardCoverage, variant2->refReverseCoverage, conf)) << 4) | 
 				strandBias(variant2->varsCountOnForward, variant2->varsCountOnReverse, conf);
 			return CombineAnalysisData(maxReadLength, GERMLINE);
 		} else if (vref->positionCoverage < variant1->positionCoverage - 2) {
