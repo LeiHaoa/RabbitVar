@@ -135,10 +135,6 @@ Scope<AlignedVarsData>* ToVarsBuilder::process(Scope<RealignedVariationData> &sc
         continue;
       }
 
-      //if(!is_variation_pass_prefilter()){
-      //  continue;
-      //}
-
       //total position coverage
       int totalPosCoverage = (*refCoverage)[position];
 
@@ -350,6 +346,21 @@ double ToVarsBuilder::collectVarsAtPosition(robin_hood::unordered_map<int, Vars*
 }
 
 /**
+ * @brief  This function is just like Variatn::isNoise, to perform early filter
+ * @param var variation
+ * @param conf  configuration
+ * @param ttcov total coverage of this position
+ * @return * if the variation is fitlered 
+ */
+inline bool is_variation_pass_prefilter(const Variation* var, const Configuration* conf, int ttcov){
+  if(((var->meanQuality < 4.5 || (var->meanQuality < 12 && !var->qstd)) && var->varsCount <= 3)
+    ||(var->meanQuality < conf->goodq && (static_cast<double>(var->varsCount) / ttcov) < 2 * conf->lofreq && var->varsCount <= 1)){
+    return false;
+  }else{
+    return true;
+  }
+}
+/**
  * Creates insertion variant from each variation on this position and adds it to the list of aligned variants.
  * @param duprate duplication rate of insertion
  * @param position position of the insertion start
@@ -378,7 +389,7 @@ int ToVarsBuilder::createInsertion(double duprate, int position, int totalPosCov
       //    totalPosCoverage = refCoverage[position + 1];
       //}
       // String n = entV.getKey();
-      Variation* cnt = insertionVariations[descriptionString];
+      Variation* cnt = insertionVariations.at(descriptionString);
       //count of variants in forward strand
       int fwd = cnt->getDir(false);
       //count of variants in reverse strand
@@ -418,6 +429,10 @@ int ToVarsBuilder::createInsertion(double duprate, int position, int totalPosCov
           }
         }
         totalPosCoverage = ttcov;
+      }
+      if (!is_variation_pass_prefilter(cnt, conf, ttcov)){
+        // printf("earlyfilter!\n");
+        continue;
       }
 
       Variant* tvref = new Variant();
@@ -478,11 +493,26 @@ void ToVarsBuilder::createVariant(double duprate, robin_hood::unordered_map<int,
     //    continue;
     //}
     //printf("%d key: %s\n", position, descriptionString.c_str());
-    if(nonInsertionVariations->variation_map.count(descriptionString)==0)continue;
-    Variation* cnt = nonInsertionVariations->variation_map[descriptionString];
+    if(nonInsertionVariations->variation_map.count(descriptionString)==0) continue;
+    Variation* cnt = nonInsertionVariations->variation_map.at(descriptionString);
     if (cnt->varsCount == 0) { //skip variant if it does not have count
+      //printf("continue!\n");
       continue;
     }
+    /**
+     * condition:
+     *  1). cnt->cnt > tcov                         - variant count is more than position coverage
+     *  2). cnt->cnt - tcov < cnt->extracnt          - variant count is no more than position coverage + extracnt
+     */
+    int ttcov = totalPosCoverage;
+    if (cnt->varsCount > totalPosCoverage && cnt->extracnt > 0 && cnt->varsCount - totalPosCoverage < cnt->extracnt) { //adjust position coverage if condition holds
+      ttcov = cnt->varsCount;
+    }
+    if (!is_variation_pass_prefilter(cnt, conf, ttcov)){
+      //printf("earlyfilter!\n");
+      continue;
+    }
+
     //count of variants in forward strand
     int fwd = cnt->getDir(false);
     //count of variants in reverse strand
@@ -497,15 +527,6 @@ void ToVarsBuilder::createVariant(double duprate, robin_hood::unordered_map<int,
     int hicnt = cnt->highQualityReadsCount;
     //number of low-quality reads for variant
     int locnt = cnt->lowQualityReadsCount;
-    /**
-     * condition:
-     *  1). cnt->cnt > tcov                         - variant count is more than position coverage
-     *  2). cnt->cnt - tcov < cnt->extracnt          - variant count is no more than position coverage + extracnt
-     */
-    int ttcov = totalPosCoverage;
-    if (cnt->varsCount > totalPosCoverage && cnt->extracnt > 0 && cnt->varsCount - totalPosCoverage < cnt->extracnt) { //adjust position coverage if condition holds
-      ttcov = cnt->varsCount;
-    }
 
     //create variant record
     Variant *tvref = new Variant();
@@ -743,7 +764,8 @@ void ToVarsBuilder::collectReferenceVariants(int position, int totalPosCoverage,
   } else if (variationsAtPos->variants.size() > 0) {
     genotype1 = variationsAtPos->variants[0]->descriptionString;
   } else {
-    genotype1 = variationsAtPos->referenceVariant->descriptionString;
+    //genotype1 = variationsAtPos->referenceVariant->descriptionString;
+    genotype1 = "";
   }
   if (variationsAtPos->referenceVariant != NULL) {
     referenceForwardCoverage = variationsAtPos->referenceVariant->varsCountOnForward;
