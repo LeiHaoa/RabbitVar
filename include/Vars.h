@@ -5,7 +5,7 @@
 #include "Variant.h"
 
 //#include<unordered_map>
-#include "./robin_hood.h"
+#include "./global.h"
 #include<string.h>
 /**
  * Variants for position
@@ -26,7 +26,7 @@ class Vars {
      * Map of all variants except reference variant.
      * Key - variant description string, value - variant
      */
-    robin_hood::unordered_map<string, Variant*> varDescriptionStringToVariants;
+    unordered_map<string, Variant*> varDescriptionStringToVariants;
 
     string sv = "";
 

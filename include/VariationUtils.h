@@ -20,7 +20,7 @@
 //inline bool isNotEquals(uint8_t ch1, uint8_t ch2){
 //	return !(ch1 == ch2);
 //}
-typedef robin_hood::unordered_map<int, char> REFTYPE;
+typedef unordered_map<int, char> REFTYPE;
 
 inline bool isEquals(char ch1, char ch2){
 	return ch1 == ch2;
@@ -148,13 +148,13 @@ inline BaseInsertion* adjInsPos(int bi, string &ins, REFTYPE &ref) {
 //    return variation;
 //}
 
-inline Variation* getVariation(dataPool* data_pool, robin_hood::unordered_map<int, VariationMap* > &hash,
+inline Variation* getVariation(dataPool* data_pool, unordered_map<int, VariationMap* > &hash,
                                      int start,
                                      string descriptionString) {
 	//cout << "get variation: " << start << " ==> " << descriptionString << endl;
 	VariationMap *vmap;
 	Variation* variation;
-	robin_hood::unordered_map<int, VariationMap*>::iterator itr;
+	unordered_map<int, VariationMap*>::iterator itr;
 	if((itr = hash.find(start)) != hash.end()){
 		//map  = new VariationMap<string, Variation*>();
 		vmap = itr->second;
@@ -162,25 +162,25 @@ inline Variation* getVariation(dataPool* data_pool, robin_hood::unordered_map<in
 		vmap = new VariationMap();
 		//vmap = data_pool->get_variation();
 		//hash[start] = vmap;
-		hash.insert(robin_hood::unordered_map<int, VariationMap*>::value_type(start, vmap));
+		hash.insert(unordered_map<int, VariationMap*>::value_type(start, vmap));
 		//hash.emplace(start, vmap);
 		//variation = new Variation();
 		variation = data_pool->get_variation();
 		//vmap->variation_map[descriptionString] = variation;
 		//vmap->variation_map.emplace(descriptionString, variation);
-		vmap->variation_map.insert(robin_hood::unordered_map<string, Variation*>::value_type(descriptionString, variation));
+		vmap->variation_map.insert(unordered_map<string, Variation*>::value_type(descriptionString, variation));
 		return variation;
 	}
 
 
-	robin_hood::unordered_map<string, Variation*>::iterator itr2;
+	unordered_map<string, Variation*>::iterator itr2;
 	if((itr2 = vmap->variation_map.find(descriptionString)) != vmap->variation_map.end()){
 		return itr2->second;
 	}else{
 		//variation = new Variation();
 		variation = data_pool->get_variation();
 		//map[descriptionString] = variation;
-		vmap->variation_map.insert(robin_hood::unordered_map<string, Variation*>::value_type(descriptionString, variation));
+		vmap->variation_map.insert(unordered_map<string, Variation*>::value_type(descriptionString, variation));
 		//vmap->variation_map[descriptionString] = variation;
 		//vmap->variation_map.emplace(descriptionString, variation);
 		return variation;
@@ -218,7 +218,7 @@ inline Variation* getVariation(dataPool* data_pool, robin_hood::unordered_map<in
 //	}
 //    return variation;
 //}
-inline Variation* getVariationMaybe(robin_hood::unordered_map<int, VariationMap* > &hash,
+inline Variation* getVariationMaybe(unordered_map<int, VariationMap* > &hash,
 							 int start,
 							 char refBase) {
 	if(refBase == (char)0)
@@ -231,7 +231,7 @@ inline Variation* getVariationMaybe(robin_hood::unordered_map<int, VariationMap*
 	if(hash.find(start) == hash.end()){
 		return NULL;
 	}else{
-		robin_hood::unordered_map<string, Variation*> &vmap = hash.at(start)->variation_map;
+		unordered_map<string, Variation*> &vmap = hash.at(start)->variation_map;
 		string s_refBase(1, refBase);
 		if(vmap.find(s_refBase) == vmap.end()){
 			return NULL;
@@ -426,7 +426,7 @@ inline string findconseq(Sclip *softClip, int dir) {
   bool flag = false;
   for (auto& nve : softClip->nt) {
     int positionInSclip = nve.first;
-    robin_hood::unordered_map<char, int> nv = nve.second;
+    unordered_map<char, int> nv = nve.second;
     int maxCount = 0; //$max
     double maxQuality = 0; //$maxq
     char chosenBase = 0; //$mnt
@@ -523,12 +523,12 @@ inline int strandBias(int forwardCount, int reverseCount, Configuration* conf){
 
 }
 
-inline Vars* getOrPutVars(robin_hood::unordered_map<int, Vars*> &mapv, int position){
+inline Vars* getOrPutVars(unordered_map<int, Vars*> &mapv, int position){
   //Vars *vars = mapv[position];
   //mapv[position] = vars;
   //return vars;
   Vars *vars;
-  robin_hood::unordered_map<int, Vars*>::iterator itr;
+  unordered_map<int, Vars*>::iterator itr;
   if((itr = mapv.find(position)) != mapv.end()){
     vars = itr->second;
   }else{

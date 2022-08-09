@@ -8,7 +8,7 @@
 #include "htslib/hts.h"
 #include "htslib/sam.h"
 //#include "htslib/faidx.h"
-#include "./robin_hood.h"
+#include "./global.h"
 #include <iostream>
 
 #define CONF_LOWQUAL     10
@@ -382,12 +382,12 @@ class Configuration {
     /**
      *	some variable that used to store in instance
      */
-    robin_hood::unordered_map<string, int> chrLengths;
+    unordered_map<string, int> chrLengths;
     string sample;
     string samplem;
     //PrinterType printerTypeOut;
-    robin_hood::unordered_map<string, int> adaptorForward;
-    robin_hood::unordered_map<string, int> adaptorReverse;
+    unordered_map<string, int> adaptorForward;
+    unordered_map<string, int> adaptorReverse;
     Patterns* patterns;
     int mempool_size = 100000;
     /**

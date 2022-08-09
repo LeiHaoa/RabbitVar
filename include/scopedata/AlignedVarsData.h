@@ -1,7 +1,7 @@
 #ifndef _ALIGNEDVARSDATA_H
 #define  _ALIGNEDVARSDATA_H
 //#include<unordered_map>
-#include "../robin_hood.h"
+#include "../global.h"
 #include "../Vars.h"
 
 /**
@@ -12,9 +12,9 @@
 class AlignedVarsData {
     public:
 		int maxReadLength;
-    	robin_hood::unordered_map<int, Vars*> alignedVariants;
+    	unordered_map<int, Vars*> alignedVariants;
 
-    	AlignedVarsData(int maxReadLength, robin_hood::unordered_map<int, Vars*> alignedVariants) {
+    	AlignedVarsData(int maxReadLength, unordered_map<int, Vars*> alignedVariants) {
         	this->maxReadLength = maxReadLength;
         	this->alignedVariants = alignedVariants;
     	};

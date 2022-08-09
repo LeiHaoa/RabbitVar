@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <regex>
 #include "./data/Reference.h"
-#include "./robin_hood.h"
+#include "./global.h"
 #include "./patterns.h"
 
 struct ModifiedCigar{
@@ -55,7 +55,7 @@ private:
 	uint8_t* queryQuality;
 	int lseq; //lenght of read sequence
 	Reference *ref;
-	//robin_hood::unordered_map<int, char> reference;
+	//unordered_map<int, char> reference;
 	int indel;
 	int maxReadLength;
 	Patterns* pats;

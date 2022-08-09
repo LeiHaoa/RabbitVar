@@ -2,7 +2,7 @@
 #define _INITIALDATA_H
 
 //#include<unordered_map>
-#include "../robin_hood.h"
+#include "../global.h"
 #include<string.h>
 
 #include "../Variation.h"
@@ -13,11 +13,11 @@
  */
 class InitialData {
 public:
-	robin_hood::unordered_map<int, VariationMap* > *nonInsertionVariants = new robin_hood::unordered_map<int, VariationMap*>;
-	robin_hood::unordered_map<int, VariationMap* > *insertionVariants = new robin_hood::unordered_map<int, VariationMap*>;
-	robin_hood::unordered_map<int, int> *refCoverage = new robin_hood::unordered_map<int, int>;
-	robin_hood::unordered_map<int, Sclip* > *softClips5End = new robin_hood::unordered_map<int, Sclip* >;
-	robin_hood::unordered_map<int, Sclip* > *softClips3End = new robin_hood::unordered_map<int, Sclip* >;
+	unordered_map<int, VariationMap* > *nonInsertionVariants = new unordered_map<int, VariationMap*>;
+	unordered_map<int, VariationMap* > *insertionVariants = new unordered_map<int, VariationMap*>;
+	unordered_map<int, int> *refCoverage = new unordered_map<int, int>;
+	unordered_map<int, Sclip* > *softClips5End = new unordered_map<int, Sclip* >;
+	unordered_map<int, Sclip* > *softClips3End = new unordered_map<int, Sclip* >;
 	unordered_set<string> *duplicates = new unordered_set<string>;
 	//vector<bamReader> bamReaders;
 

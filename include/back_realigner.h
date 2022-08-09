@@ -30,7 +30,7 @@
 #include <map>
 #include <sstream>
 //#include <unordered_map>
-#include "robin_hood.h"
+#include "global.h"
 #include <unordered_set>
 #include <regex>
 #include "stdio.h"
@@ -112,14 +112,14 @@ public :
 };
 class VariationRealigner {
 private:
-	robin_hood::unordered_map<int, vector<Sclip*> > SOFTP2SV;
-	robin_hood::unordered_map<int, VariationMap*> *nonInsertionVariants;
-	robin_hood::unordered_map<int, VariationMap*> *insertionVariants;
-	robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > *positionToInsertionCount;
-	robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > *positionToDeletionCount;
-	robin_hood::unordered_map<int, int> *refCoverage;
-	robin_hood::unordered_map<int, Sclip*> *softClips5End;
-	robin_hood::unordered_map<int, Sclip*> *softClips3End;
+	unordered_map<int, vector<Sclip*> > SOFTP2SV;
+	unordered_map<int, VariationMap*> *nonInsertionVariants;
+	unordered_map<int, VariationMap*> *insertionVariants;
+	unordered_map<int, unordered_map<string, int> > *positionToInsertionCount;
+	unordered_map<int, unordered_map<string, int> > *positionToDeletionCount;
+	unordered_map<int, int> *refCoverage;
+	unordered_map<int, Sclip*> *softClips5End;
+	unordered_map<int, Sclip*> *softClips3End;
 
     //ReferenceResource referenceResource;
     Reference reference;
@@ -130,7 +130,7 @@ private:
     double duprate;
     vector<string> bams;
     string bam;
-    robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > *mnp;
+    unordered_map<int, unordered_map<string, int> > *mnp;
     //SVStructures svStructures;
     //VariantPrinter variantPrinter;
 	Configuration* conf;
@@ -157,33 +157,33 @@ public:
 	Cluster* checkCluster(vector<Mate> mates, int rlen) ;
 	void adjustMNP() ;
 	void realignIndels();
-	void realigndel(vector<string> *bamsParameter,robin_hood::unordered_map<int,robin_hood::unordered_map<string, int> > positionToDeletionCount); 
-	string realignins(robin_hood::unordered_map<int,robin_hood::unordered_map<string, int> > &positionToInsertionCount) ;
+	void realigndel(vector<string> *bamsParameter,unordered_map<int,unordered_map<string, int> > positionToDeletionCount); 
+	string realignins(unordered_map<int,unordered_map<string, int> > &positionToInsertionCount) ;
 	void realignlgdel(vector<Sclip> svfdel, vector<Sclip> svrdel) ;
 	void realignlgins30() ;
 	void realignlgins(vector<Sclip> svfdup, vector<Sclip> svrdup) ;
-	vector<SortPositionDescription*> fillAndSortTmp(robin_hood::unordered_map<int,robin_hood::unordered_map<string, int> > &changes); 
+	vector<SortPositionDescription*> fillAndSortTmp(unordered_map<int,unordered_map<string, int> > &changes); 
 
-    //MismatchResult* findMM3(robin_hood::unordered_map<int, char> &ref, int p, string sanpseq);
-	int findMM5(robin_hood::unordered_map<int, char> &ref,
+    //MismatchResult* findMM3(unordered_map<int, char> &ref, int p, string sanpseq);
+	int findMM5(unordered_map<int, char> &ref,
 				 int position,
 				 string wupseq,
 				 vector<Mismatch*> &mismatches, vector<int>& sc5p, int& mn, int& misp, string& misnt5);
-	//MismatchResult* findMM5(robin_hood::unordered_map<int, char> &ref, int position, string wupseq);
-	int findMM3(robin_hood::unordered_map<int, char> &ref,
+	//MismatchResult* findMM5(unordered_map<int, char> &ref, int position, string wupseq);
+	int findMM3(unordered_map<int, char> &ref,
 				 int p,
 				 string sanpseq,
 				 vector<Mismatch*> &mismatches, vector<int>& sc3p, int& mn, int& misp, string& misnt5);
 
 	void rmCnt(Variation *vref, Variation *tv);
-	bool ismtchref(string &sequence, robin_hood::unordered_map<int, char> &ref, int position, int dir);
+	bool ismtchref(string &sequence, unordered_map<int, char> &ref, int position, int dir);
 	void adjRefFactor(Variation *ref, double factor_f);
 	void adjRefCnt(Variation *tv, Variation *ref, int len);
-	bool ismatchref(string sequence, robin_hood::unordered_map<int, char> &ref, int position,int dir) ;
-	bool ismatchref(string sequence, robin_hood::unordered_map<int, char> &ref, int position,int dir, int MM) ;
+	bool ismatchref(string sequence, unordered_map<int, char> &ref, int position,int dir) ;
+	bool ismatchref(string sequence, unordered_map<int, char> &ref, int position,int dir, int MM) ;
 	void addVarFactor(Variation *vref, double factor_f);
-	int findbp(string &sequence, int startPosition, robin_hood::unordered_map<int, char> &ref, int direction, string &chr);
-	BaseInsertion* findbi(string &seq, int position, robin_hood::unordered_map<int, char> &ref, int dir, string &chr) ;
+	int findbp(string &sequence, int startPosition, unordered_map<int, char> &ref, int direction, string &chr);
+	BaseInsertion* findbi(string &seq, int position, unordered_map<int, char> &ref, int dir, string &chr) ;
 	//BaseInsertion* adjInsPos(int bi, string &ins, unordered_map<int, char> &ref);
 	int count(string &str, char chr);
 	//bool islowcomplexseq(string &seq);

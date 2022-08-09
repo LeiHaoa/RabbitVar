@@ -27,7 +27,7 @@
 #include "data/data_pool.h"
 #include <map>
 //#include <unordered_map>
-#include "./robin_hood.h"
+#include "./global.h"
 #include <regex>
 
 //using namespace std;
@@ -52,12 +52,12 @@ class CigarParser{
         bool startWithDeletion, double q, int qbases,
         int qibases, int ddlen, int pos);
     void process_softclip(string chrName, bam1_t* record, char* querySequence, uint8_t mappingQuality,
-        robin_hood::unordered_map<int, char> &ref, uint8_t* queryQuality, int numberOfMismatches,
+        unordered_map<int, char> &ref, uint8_t* queryQuality, int numberOfMismatches,
         bool direction, int position, int totalLengthIncludingSoftClipped, int ci);
-    int  process_insertion(char* querySequence, uint8_t mappingQuality, robin_hood::unordered_map<int, char> &ref,
+    int  process_insertion(char* querySequence, uint8_t mappingQuality, unordered_map<int, char> &ref,
         uint8_t* queryQuality, int numberOfMismatches, bool direction, int position,
         int readLengthIncludeMatchingAndInsertions, int ci);
-    int  process_deletion(char* querySequence, uint8_t mappingQuality, robin_hood::unordered_map<int, char> &ref,
+    int  process_deletion(char* querySequence, uint8_t mappingQuality, unordered_map<int, char> &ref,
         uint8_t* queryQuality, int numberOfMismatches, bool direction,
         int readLengthIncludeMatchingAndInsertions, int ci);
     void processNotMatched() ;
@@ -69,7 +69,7 @@ class CigarParser{
         int& quality_segment_count,
         int mLen, int indelLen, int begin, bool isInsertion);
     bool isInsertionOrDeletionWithNextMatched(int ci) ;
-    bool isCloserThenVextAndGoodBase(char* querySequence, robin_hood::unordered_map<int, char> ref, uint8_t* queryQuality, int ci, int i, string ss, int CigatOperator);
+    bool isCloserThenVextAndGoodBase(char* querySequence, unordered_map<int, char> ref, uint8_t* queryQuality, int ci, int i, string ss, int CigatOperator);
     bool isNextMatched(int ci);
     bool isPairedAndSameChromosome(bam1_t *record);
     bool isNextAfterNumMatched(bam1_t *record, int ci, int number);
@@ -93,8 +93,8 @@ class CigarParser{
         int cigarLength,
         char* querySequence,
         uint8_t* queryQuality,
-        robin_hood::unordered_map<int, char> &reference,
-        robin_hood::unordered_map<int, int> &refCoverage);
+        unordered_map<int, char> &reference,
+        unordered_map<int, int> &refCoverage);
     bool skipSitesOutRegionOfInterest();
     void makeReference(string fa_file_path, bam_hdr_t* header);
     char* getRefName(bam1_t* record);
@@ -104,16 +104,16 @@ class CigarParser{
     Configuration *conf;
     // Utils maps
     //------TODO: use pointer instead to save copy time ------//
-    robin_hood::unordered_map<int, int> *refCoverage;
-    robin_hood::unordered_map<int, VariationMap* > *nonInsertionVariants;
-    robin_hood::unordered_map<int, VariationMap* > *insertionVariants;
-    robin_hood::unordered_map<int, Sclip*> *softClips3End; // soft clipped at 3'
-    robin_hood::unordered_map<int, Sclip*> *softClips5End; // soft clipped at 5'
+    unordered_map<int, int> *refCoverage;
+    unordered_map<int, VariationMap* > *nonInsertionVariants;
+    unordered_map<int, VariationMap* > *insertionVariants;
+    unordered_map<int, Sclip*> *softClips3End; // soft clipped at 3'
+    unordered_map<int, Sclip*> *softClips5End; // soft clipped at 5'
 
-    robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > positionToInsertionCount;
-    robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > mnp; // Keep track of MNPs
-    robin_hood::unordered_map<int, robin_hood::unordered_map<string, int> > positionToDeletionCount;
-    robin_hood::unordered_map<string, vector<int> > spliceCount;
+    unordered_map<int, unordered_map<string, int> > positionToInsertionCount;
+    unordered_map<int, unordered_map<string, int> > mnp; // Keep track of MNPs
+    unordered_map<int, unordered_map<string, int> > positionToDeletionCount;
+    unordered_map<string, vector<int> > spliceCount;
     //SVStructures svStructures;
 
     Region region;
