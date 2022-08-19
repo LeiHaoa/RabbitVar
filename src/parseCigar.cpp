@@ -16,7 +16,7 @@
 #include "../include/data/BaseInsertion.h"
 #include <map>
 #include <sstream>
-//#include <unordered_map>
+//#include <umap>
 #include <regex>
 #include "stdio.h"
 
@@ -115,8 +115,8 @@ void CigarParser::initFromScope(Scope<InitialData> scope) {
 	//this->totalReads = scope.data->totalReads;
 }
 CigarParser::CigarParser(RecordPreprocessor *preprocessor, dataPool* data_pool){
-	//this->spliceCount = new unordered_map<string, int>();
-	//this->positionToDeletionCount = new unordered_map<int map<string, int> >();
+	//this->spliceCount = new umap<string, int>();
+	//this->positionToDeletionCount = new umap<int map<string, int> >();
 	//this->region = scope.region;
 	this->preprocessor = preprocessor;
 	this->conf = preprocessor->conf;
@@ -210,8 +210,8 @@ Offset CigarParser::findOffset(int referencePosition,
 				  int cigarLength,
 				  char* querySequence,
 				  uint8_t* queryQuality,
-				  unordered_map<int, char> &reference,
-				  unordered_map<int, int> &refCoverage){
+				  umap<int, char> &reference,
+				  umap<int, int> &refCoverage){
 
 	int offset = 0;
 	string ss = "";
@@ -333,29 +333,29 @@ inline void addCnt(Variation *variation,
 Variation* getVariationFromSeq(Sclip* softClip,
 							  int idx,
 							  char ch) {
-	unordered_map<char, Variation*>* seq_map; //= softClip->seq[idx];
+	umap<char, Variation*>* seq_map; //= softClip->seq[idx];
 	Variation* variation;
 
-	map<int ,unordered_map<char, Variation*> >::iterator itr;
+	map<int ,umap<char, Variation*> >::iterator itr;
 	if((itr = softClip->seq.find(idx)) != softClip->seq.end()){
 		seq_map = &((softClip->seq)[idx]);
 	}else{
-		seq_map = new unordered_map<char, Variation*>();
+		seq_map = new umap<char, Variation*>();
 
 		variation = new Variation();
 		//(*seq_map)[ch] = variation;
-		seq_map->insert(unordered_map<char, Variation*>::value_type(ch, variation));
+		seq_map->insert(umap<char, Variation*>::value_type(ch, variation));
 		softClip->seq[idx] = *seq_map;
 		delete seq_map;
 		return variation;
 	}
 
-	unordered_map<char, Variation*>::iterator itr2;
+	umap<char, Variation*>::iterator itr2;
 	if((itr2 = seq_map->find(ch)) != seq_map->end()){
 		return itr2->second;
 	}else{
 		variation = new Variation();
-		seq_map->insert(unordered_map<char, Variation*>::value_type(ch, variation));
+		seq_map->insert(umap<char, Variation*>::value_type(ch, variation));
 		return variation;
 	}
     return variation;
@@ -509,7 +509,7 @@ void CigarParser::parseCigar(string chrName, bam1_t *record, int count){
 	if(n_cigar <= 0){
 		return;
 	}
-	unordered_map<int, char> &ref = reference->referenceSequences;
+	umap<int, char> &ref = reference->referenceSequences;
 
 	const int insertion_deletion_length = getInsertionDeletionLength(cigar, n_cigar);
 	int total_number_of_mismatches = 0;
@@ -1113,7 +1113,7 @@ inline bool isReadChimericWithSA(bam1_t* record, int positon, char* saTagString,
 }
 
 void CigarParser::process_softclip(string chrName, bam1_t* record, char* querySequence, uint8_t mappingQuality,
-					  unordered_map<int, char> &ref, uint8_t* queryQuality, int numberOfMismatches,
+					  umap<int, char> &ref, uint8_t* queryQuality, int numberOfMismatches,
 					  bool direction, int position, int totalLengthIncludingSoftClipped, int ci){
 	if(ci == 0){ //5' soft clipped
 		//ignore large soft clip due to chimeric reads in libraty construction
@@ -1136,7 +1136,7 @@ void CigarParser::process_softclip(string chrName, bam1_t* record, char* querySe
 			//trying to detect chimeric reads even when there's no supplementary
 			// alignment from aligner
 			else if (cigar_element_length >= CONF_SEED_1) {
-				unordered_map<string, vector<int>> &referenceSeedMap  = reference.seed;
+				umap<string, vector<int>> &referenceSeedMap  = reference.seed;
 				string sequence = getReverseComplementedSequence(record, 0, cigarElementLength);
 				string reverseComplementedSeed = sequence.substr(0, CONF_SEED_1);
 			
@@ -1274,7 +1274,7 @@ void CigarParser::process_softclip(string chrName, bam1_t* record, char* querySe
 				Sclip* sclip;
 				if(softClips3End->find(start) == softClips3End->end()){
 					sclip = new Sclip();
-					softClips3End->insert(unordered_map<int, Sclip*>::value_type(start, sclip));
+					softClips3End->insert(umap<int, Sclip*>::value_type(start, sclip));
 					//softClips3End[start] = sclip;
 				}else{
 					sclip = softClips3End->at(start);
@@ -1303,7 +1303,7 @@ void CigarParser::process_softclip(string chrName, bam1_t* record, char* querySe
 	start = position;//[-----]//had to reset the stat due to softclipping adjustment
 }
 
-int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, unordered_map<int, char> &ref,
+int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, umap<int, char> &ref,
 					 uint8_t* queryQuality, int numberOfMismatches, bool direction, int position,
 					 int readLengthIncludeMatchingAndInsertions, int ci){
 	
@@ -1525,7 +1525,7 @@ int CigarParser::process_insertion(char* querySequence, uint8_t mappingQuality, 
 	return ci;
 }
 
-int CigarParser::process_deletion(char* querySequence, uint8_t mappingQuality, unordered_map<int, char> &ref,
+int CigarParser::process_deletion(char* querySequence, uint8_t mappingQuality, umap<int, char> &ref,
 					uint8_t* queryQuality, int numberOfMismatches, bool direction,
 					int readLengthIncludeMatchingAndInsertions, int ci){
 	//ignore deletion right after introns at exon in RNA-seq
@@ -1826,7 +1826,7 @@ bool CigarParser::isInsertionOrDeletionWithNextMatched(int ci) {
 		&& bam_cigar_op(cigar[ci + 3]) != BAM_CDEL ; // != D;
 }
 
-bool CigarParser::isCloserThenVextAndGoodBase(char* querySequence, unordered_map<int, char> ref, uint8_t* queryQuality, int ci, int i, string ss, int CigarOperator){
+bool CigarParser::isCloserThenVextAndGoodBase(char* querySequence, umap<int, char> ref, uint8_t* queryQuality, int ci, int i, string ss, int CigarOperator){
 	//return conf.performLocalRealignment;
 	return conf->performLocalRealignment &&
 		cigar_element_length - i <= conf->vext &&

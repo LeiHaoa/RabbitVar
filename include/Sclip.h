@@ -1,7 +1,7 @@
 #ifndef _SCLIP_H
 #define _SCLIP_H
 
-//#include <unordered_map>
+//#include <umap>
 #include "./global.h"
 #include <string>
 
@@ -9,8 +9,8 @@
 
 class Sclip : public Variation{
 public:
-	map<int, unordered_map<char, int> > nt;
-	map<int, unordered_map<char, Variation*> > seq;
+	map<int, umap<char, int> > nt;
+	map<int, umap<char, Variation*> > seq;
 
 	string sequence = "";
 	bool used = false;

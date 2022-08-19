@@ -55,7 +55,7 @@ private:
 	uint8_t* queryQuality;
 	int lseq; //lenght of read sequence
 	Reference *ref;
-	//unordered_map<int, char> reference;
+	//umap<int, char> reference;
 	int indel;
 	int maxReadLength;
 	Patterns* pats;

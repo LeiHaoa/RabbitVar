@@ -16,7 +16,7 @@ inline std::set<int> init_debug(){
 	return debug_pos;
 }
 /*
-std::set<int> init_debug_ref(unordered_map<int, char> &ref){
+std::set<int> init_debug_ref(umap<int, char> &ref){
 	std::set<int> debug_pos;
 	int base = BASE_POS;
 	int debug_start = base - 13;

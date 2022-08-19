@@ -797,7 +797,7 @@ struct WrapKeyEqual : public T {
 
 // A highly optimized hashmap implementation, using the Robin Hood algorithm.
 //
-// In most cases, this map should be usable as a drop-in replacement for std::unordered_map, but be
+// In most cases, this map should be usable as a drop-in replacement for std::umap, but be
 // about 2x faster in most cases and require much less allocations.
 //
 // This implementation uses the following memory layout:
@@ -824,7 +824,7 @@ struct WrapKeyEqual : public T {
 // https://www.reddit.com/r/cpp/comments/ahp6iu/compile_time_binary_size_reductions_and_cs_future/eeguck4/
 template <bool IsFlatMap, size_t MaxLoadFactor100, typename Key, typename T, typename Hash,
           typename KeyEqual>
-class unordered_map
+class umap
     : public WrapHash<Hash>,
       public WrapKeyEqual<KeyEqual>,
       detail::NodeAllocator<
@@ -839,7 +839,7 @@ public:
     using hasher = Hash;
     using key_equal = KeyEqual;
     using Self =
-        unordered_map<IsFlatMap, MaxLoadFactor100, key_type, mapped_type, hasher, key_equal>;
+        umap<IsFlatMap, MaxLoadFactor100, key_type, mapped_type, hasher, key_equal>;
     static constexpr bool is_flat_map = IsFlatMap;
 
 private:
@@ -1162,7 +1162,7 @@ private:
             } while (inc == static_cast<int>(sizeof(size_t)));
         }
 
-        friend class unordered_map<IsFlatMap, MaxLoadFactor100, key_type, mapped_type, hasher,
+        friend class umap<IsFlatMap, MaxLoadFactor100, key_type, mapped_type, hasher,
                                    key_equal>;
         NodePtr mKeyVals{nullptr};
         uint8_t const* mInfo{nullptr};
@@ -1268,8 +1268,8 @@ private:
                                 mKeyVals, reinterpret_cast_no_cast_align_warning<Node*>(mInfo)));
     }
 
-    void cloneData(const unordered_map& o) {
-        Cloner<unordered_map, IsFlatMap && ROBIN_HOOD_IS_TRIVIALLY_COPYABLE(Node)>()(o, *this);
+    void cloneData(const umap& o) {
+        Cloner<umap, IsFlatMap && ROBIN_HOOD_IS_TRIVIALLY_COPYABLE(Node)>()(o, *this);
     }
 
     // inserts a keyval that is guaranteed to be new, e.g. when the hashmap is resized.
@@ -1327,7 +1327,7 @@ public:
     // payed at the first insert, and not before. Lookup of this empty map works because everybody
     // points to DummyInfoByte::b. parameter bucket_count is dictated by the standard, but we can
     // ignore it.
-    explicit unordered_map(size_t ROBIN_HOOD_UNUSED(bucket_count) /*unused*/ = 0,
+    explicit umap(size_t ROBIN_HOOD_UNUSED(bucket_count) /*unused*/ = 0,
                            const Hash& h = Hash{},
                            const KeyEqual& equal = KeyEqual{}) noexcept(noexcept(Hash(h)) &&
                                                                         noexcept(KeyEqual(equal)))
@@ -1337,7 +1337,7 @@ public:
     }
 
     template <typename Iter>
-    unordered_map(Iter first, Iter last, size_t ROBIN_HOOD_UNUSED(bucket_count) /*unused*/ = 0,
+    umap(Iter first, Iter last, size_t ROBIN_HOOD_UNUSED(bucket_count) /*unused*/ = 0,
                   const Hash& h = Hash{}, const KeyEqual& equal = KeyEqual{})
         : WHash(h)
         , WKeyEqual(equal) {
@@ -1345,7 +1345,7 @@ public:
         insert(first, last);
     }
 
-    unordered_map(std::initializer_list<value_type> initlist,
+    umap(std::initializer_list<value_type> initlist,
                   size_t ROBIN_HOOD_UNUSED(bucket_count) /*unused*/ = 0, const Hash& h = Hash{},
                   const KeyEqual& equal = KeyEqual{})
         : WHash(h)
@@ -1354,7 +1354,7 @@ public:
         insert(initlist.begin(), initlist.end());
     }
 
-    unordered_map(unordered_map&& o) noexcept
+    umap(umap&& o) noexcept
         : WHash(std::move(static_cast<WHash&>(o)))
         , WKeyEqual(std::move(static_cast<WKeyEqual&>(o)))
         , DataPool(std::move(static_cast<DataPool&>(o))) {
@@ -1372,7 +1372,7 @@ public:
         }
     }
 
-    unordered_map& operator=(unordered_map&& o) noexcept {
+    umap& operator=(umap&& o) noexcept {
         ROBIN_HOOD_TRACE(this);
         if (&o != this) {
             if (o.mMask) {
@@ -1399,7 +1399,7 @@ public:
         return *this;
     }
 
-    unordered_map(const unordered_map& o)
+    umap(const umap& o)
         : WHash(static_cast<const WHash&>(o))
         , WKeyEqual(static_cast<const WKeyEqual&>(o))
         , DataPool(static_cast<const DataPool&>(o)) {
@@ -1423,7 +1423,7 @@ public:
     }
 
     // Creates a copy of the given map. Copy constructor of each entry is used.
-    unordered_map& operator=(unordered_map const& o) {
+    umap& operator=(umap const& o) {
         ROBIN_HOOD_TRACE(this);
         if (&o == this) {
             // prevent assigning of itself
@@ -1481,7 +1481,7 @@ public:
     }
 
     // Swaps everything between the two maps.
-    void swap(unordered_map& o) {
+    void swap(umap& o) {
         ROBIN_HOOD_TRACE(this);
         using std::swap;
         swap(o, *this);
@@ -1509,13 +1509,13 @@ public:
     }
 
     // Destroys the map and all it's contents.
-    ~unordered_map() {
+    ~umap() {
         ROBIN_HOOD_TRACE(this);
         destroy();
     }
 
     // Checks if both maps contain the same entries. Order is irrelevant.
-    bool operator==(const unordered_map& other) const {
+    bool operator==(const umap& other) const {
         ROBIN_HOOD_TRACE(this);
         if (other.size() != size()) {
             return false;
@@ -1530,7 +1530,7 @@ public:
         return true;
     }
 
-    bool operator!=(const unordered_map& other) const {
+    bool operator!=(const umap& other) const {
         ROBIN_HOOD_TRACE(this);
         return !operator==(other);
     }
@@ -1928,7 +1928,7 @@ private:
             while (info == mInfo[idx]) {
                 if (WKeyEqual::operator()(keyval.getFirst(), mKeyVals[idx].getFirst())) {
                     // key already exists, do NOT insert.
-                    // see http://en.cppreference.com/w/cpp/container/unordered_map/insert
+                    // see http://en.cppreference.com/w/cpp/container/umap/insert
                     return std::make_pair<iterator, bool>(iterator(mKeyVals + idx, mInfo + idx),
                                                           false);
                 }
@@ -2061,16 +2061,16 @@ private:
 
 template <typename Key, typename T, typename Hash = hash<Key>,
           typename KeyEqual = std::equal_to<Key>, size_t MaxLoadFactor100 = 80>
-using unordered_flat_map = detail::unordered_map<true, MaxLoadFactor100, Key, T, Hash, KeyEqual>;
+using unordered_flat_map = detail::umap<true, MaxLoadFactor100, Key, T, Hash, KeyEqual>;
 
 template <typename Key, typename T, typename Hash = hash<Key>,
           typename KeyEqual = std::equal_to<Key>, size_t MaxLoadFactor100 = 80>
-using unordered_node_map = detail::unordered_map<false, MaxLoadFactor100, Key, T, Hash, KeyEqual>;
+using unordered_node_map = detail::umap<false, MaxLoadFactor100, Key, T, Hash, KeyEqual>;
 
 template <typename Key, typename T, typename Hash = hash<Key>,
           typename KeyEqual = std::equal_to<Key>, size_t MaxLoadFactor100 = 80>
-using unordered_map =
-    detail::unordered_map<sizeof(robin_hood::pair<Key, T>) <= sizeof(size_t) * 6 &&
+using umap =
+    detail::umap<sizeof(robin_hood::pair<Key, T>) <= sizeof(size_t) * 6 &&
                               std::is_nothrow_move_constructible<robin_hood::pair<Key, T>>::value &&
                               std::is_nothrow_move_assignable<robin_hood::pair<Key, T>>::value,
                           MaxLoadFactor100, Key, T, Hash, KeyEqual>;

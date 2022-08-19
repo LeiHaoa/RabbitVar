@@ -34,7 +34,8 @@ class cycleQueue
             return m_front == (m_rear + 1)%m_size;
         }   
 
-        void push(T ele)throw(std::bad_exception)
+        //void push(T ele)throw(std::bad_exception)
+        void push(T ele)
         {
             if(isFull()) {
                 throw std::bad_exception();
@@ -43,7 +44,8 @@ class cycleQueue
             m_rear = (m_rear + 1)%m_size;
         }
 
-        T pop() throw(std::bad_exception)
+        //T pop() throw(std::bad_exception)
+        T pop()
         {
             if(isEmpty())
             {

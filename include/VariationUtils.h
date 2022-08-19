@@ -20,7 +20,7 @@
 //inline bool isNotEquals(uint8_t ch1, uint8_t ch2){
 //	return !(ch1 == ch2);
 //}
-typedef unordered_map<int, char> REFTYPE;
+typedef umap<int, char> REFTYPE;
 
 inline bool isEquals(char ch1, char ch2){
 	return ch1 == ch2;
@@ -115,7 +115,7 @@ inline BaseInsertion* adjInsPos(int bi, string &ins, REFTYPE &ref) {
     return new BaseInsertion(bi, ins, bi);
 }
 
-//inline Variation* getVariation(unordered_map<int, VariationMap* > &hash,
+//inline Variation* getVariation(umap<int, VariationMap* > &hash,
 //                                     int start,
 //                                     string descriptionString) {
 //	//cout << "get variation: " << start << " ==> " << descriptionString << endl;
@@ -131,7 +131,7 @@ inline BaseInsertion* adjInsPos(int bi, string &ins, REFTYPE &ref) {
 //	if(vmap->variation_map.find(descriptionString) == vmap->variation_map.end()){
 //		variation = new Variation();
 //		//map[descriptionString] = variation;
-//		vmap->variation_map.insert(unordered_map<string, Variation*>::value_type(descriptionString, variation));
+//		vmap->variation_map.insert(umap<string, Variation*>::value_type(descriptionString, variation));
 //	}else{
 //		variation = vmap->variation_map.at(descriptionString);
 //	}
@@ -148,13 +148,13 @@ inline BaseInsertion* adjInsPos(int bi, string &ins, REFTYPE &ref) {
 //    return variation;
 //}
 
-inline Variation* getVariation(dataPool* data_pool, unordered_map<int, VariationMap* > &hash,
+inline Variation* getVariation(dataPool* data_pool, umap<int, VariationMap* > &hash,
                                      int start,
                                      string descriptionString) {
 	//cout << "get variation: " << start << " ==> " << descriptionString << endl;
 	VariationMap *vmap;
 	Variation* variation;
-	unordered_map<int, VariationMap*>::iterator itr;
+	umap<int, VariationMap*>::iterator itr;
 	if((itr = hash.find(start)) != hash.end()){
 		//map  = new VariationMap<string, Variation*>();
 		vmap = itr->second;
@@ -162,63 +162,53 @@ inline Variation* getVariation(dataPool* data_pool, unordered_map<int, Variation
 		vmap = new VariationMap();
 		//vmap = data_pool->get_variation();
 		//hash[start] = vmap;
-		hash.insert(unordered_map<int, VariationMap*>::value_type(start, vmap));
+		hash.insert(umap<int, VariationMap*>::value_type(start, vmap));
 		//hash.emplace(start, vmap);
 		//variation = new Variation();
 		variation = data_pool->get_variation();
 		//vmap->variation_map[descriptionString] = variation;
 		//vmap->variation_map.emplace(descriptionString, variation);
-		vmap->variation_map.insert(unordered_map<string, Variation*>::value_type(descriptionString, variation));
+		vmap->variation_map.insert(umap<string, Variation*>::value_type(descriptionString, variation));
 		return variation;
 	}
 
 
-	unordered_map<string, Variation*>::iterator itr2;
+	umap<string, Variation*>::iterator itr2;
 	if((itr2 = vmap->variation_map.find(descriptionString)) != vmap->variation_map.end()){
 		return itr2->second;
 	}else{
 		//variation = new Variation();
 		variation = data_pool->get_variation();
 		//map[descriptionString] = variation;
-		vmap->variation_map.insert(unordered_map<string, Variation*>::value_type(descriptionString, variation));
+		vmap->variation_map.insert(umap<string, Variation*>::value_type(descriptionString, variation));
 		//vmap->variation_map[descriptionString] = variation;
 		//vmap->variation_map.emplace(descriptionString, variation);
 		return variation;
 	}
-	//VariationMap<string, Variation> map = hash[start];
-    //if (map == NULL) {
-    //    map = new VariationMap<>();
-    //    hash.put(start, map);
-    //}
-    //Variation variation = map[descriptionString];
-    //if (variation == NULL) {
-    //    variation = new Variation();
-    //    map.put(descriptionString, variation);
-    //}
 }
-//inline Variation* getVariation(unordered_map<int, VariationMap* > &hash,
+//inline Variation* getVariation(umap<int, VariationMap* > &hash,
 //                                     int start,
 //                                     string descriptionString) {
 //	//cout << "get variation: " << start << " ==> " << descriptionString << endl;
 //	VariationMap *vmap ;//= new VariationMap();
-//	pair<unordered_map<int, VariationMap*>::iterator, bool> ret1 =
+//	pair<umap<int, VariationMap*>::iterator, bool> ret1 =
 //		hash.insert(make_pair(start, vmap));
-//	//pair<int, VariationMap*> ret1 = hash.insert(unordered_map<int, VariationMap*>::value_type(start, vmap));
+//	//pair<int, VariationMap*> ret1 = hash.insert(umap<int, VariationMap*>::value_type(start, vmap));
 //	if(ret1.second == false){
 //		vmap = ret1.first->second;
 //	}else{
 //	}
 //
 //	Variation* variation = new Variation();
-//	pair<unordered_map<string, Variation*>::iterator, bool>  ret2 =
+//	pair<umap<string, Variation*>::iterator, bool>  ret2 =
 //		vmap->variation_map.insert(make_pair(descriptionString, variation));
-//	//pair<string, Variation*> ret2 = vmap->variation_map.insert(unordered_map<string, Variation*>::value_type(descriptionString, variation));
+//	//pair<string, Variation*> ret2 = vmap->variation_map.insert(umap<string, Variation*>::value_type(descriptionString, variation));
 //	if(ret2.second == false){
 //		variation = ret2.first->second;
 //	}
 //    return variation;
 //}
-inline Variation* getVariationMaybe(unordered_map<int, VariationMap* > &hash,
+inline Variation* getVariationMaybe(umap<int, VariationMap* > &hash,
 							 int start,
 							 char refBase) {
 	if(refBase == (char)0)
@@ -231,7 +221,7 @@ inline Variation* getVariationMaybe(unordered_map<int, VariationMap* > &hash,
 	if(hash.find(start) == hash.end()){
 		return NULL;
 	}else{
-		unordered_map<string, Variation*> &vmap = hash.at(start)->variation_map;
+		umap<string, Variation*> &vmap = hash.at(start)->variation_map;
 		string s_refBase(1, refBase);
 		if(vmap.find(s_refBase) == vmap.end()){
 			return NULL;
@@ -407,7 +397,7 @@ inline string findconseq(Sclip *softClip, int dir) {
   //if (softClip->sequence != NULL) {
   //printf("findconseq: %d - %d - %s\n", softClip->nt.size(), dir,  softClip->sequence.c_str());
   //for(auto& nve : softClip->nt){
-  //    unordered_map<char, int> nv = nve.second;
+  //    umap<char, int> nv = nve.second;
   //	for(auto& ent : nv){
   //		printf("%c", ent.first);
   //	}
@@ -426,7 +416,7 @@ inline string findconseq(Sclip *softClip, int dir) {
   bool flag = false;
   for (auto& nve : softClip->nt) {
     int positionInSclip = nve.first;
-    unordered_map<char, int> nv = nve.second;
+    umap<char, int> nv = nve.second;
     int maxCount = 0; //$max
     double maxQuality = 0; //$maxq
     char chosenBase = 0; //$mnt
@@ -523,12 +513,12 @@ inline int strandBias(int forwardCount, int reverseCount, Configuration* conf){
 
 }
 
-inline Vars* getOrPutVars(unordered_map<int, Vars*> &mapv, int position){
+inline Vars* getOrPutVars(umap<int, Vars*> &mapv, int position){
   //Vars *vars = mapv[position];
   //mapv[position] = vars;
   //return vars;
   Vars *vars;
-  unordered_map<int, Vars*>::iterator itr;
+  umap<int, Vars*>::iterator itr;
   if((itr = mapv.find(position)) != mapv.end()){
     vars = itr->second;
   }else{

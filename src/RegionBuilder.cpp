@@ -6,7 +6,7 @@ BedRowFormat AMP_BED_ROW_FORMAT(0, 1, 2, 6, 7, 3);
 
 #define REGION_SIZE_MAX 10000
 
-RegionBuilder::RegionBuilder(unordered_map<string, int> chromosomesLengths, Configuration* config) {
+RegionBuilder::RegionBuilder(umap<string, int> chromosomesLengths, Configuration* config) {
 	this->chromosomesLengths = chromosomesLengths;
 	this->config = config;
 }
@@ -116,7 +116,7 @@ vector<vector<Region> > RegionBuilder::buildRegions(vector<string>& segRaws, boo
  */
 vector<vector<Region> > RegionBuilder::buildAmpRegions(vector<string>& segRaws, bool zeroBased) {
 	vector<vector<Region> > segs;// = new LinkedList<>();
-	unordered_map<string, vector<Region> > tsegs; //= new HashMap<>();
+	umap<string, vector<Region> > tsegs; //= new HashMap<>();
 	for (string str : segRaws) {
 		vector<string> split = ssplit(str, config->delimiter);
 		for(string spi: split){
@@ -146,7 +146,7 @@ vector<vector<Region> > RegionBuilder::buildAmpRegions(vector<string>& segRaws, 
 	}
 	vector<Region> *regions; 
 	int previousEnd = -1;
-	//fon (unordered_map.Entry<string, vector<Region> > entry : tsegs.entrySet()) {
+	//fon (umap.Entry<string, vector<Region> > entry : tsegs.entrySet()) {
 	//TODO: this part maybe buggy
 	for (auto& entry : tsegs) {
 		vector<Region> chrRegions = entry.second;
@@ -205,7 +205,7 @@ void RegionBuilder::buildRegionFromConfiguration(vector<vector<Region> >& segmen
  * @param chr chromosome name
  * @return corrected chromosome name
  */
-string RegionBuilder::correctChromosome(unordered_map<string, int>& chromosomesLengths, string chr) {
+string RegionBuilder::correctChromosome(umap<string, int>& chromosomesLengths, string chr) {
 	if (!chromosomesLengths.count(chr)) {
 		if (starts_with(chr, CHR_LABEL)) {
 			chr = chr.substr(CHR_LABEL.length());

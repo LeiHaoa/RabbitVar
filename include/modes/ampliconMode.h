@@ -20,7 +20,7 @@ public:
 	void process(vector<vector<Region> > &segments);
 	void interest_region_from_cmd(vector<vector<Region> > &segments);
 	void multi_regions_from_bed(vector<vector<Region> > &segments);
-	void output(Region rg, vector<unordered_map<int, Vars*> > vars, unordered_map<int, vector<pos2reg_tup> > ampliconsOnPositions, set<string> *splice);
+	void output(Region rg, vector<umap<int, Vars*> > vars, umap<int, vector<pos2reg_tup> > ampliconsOnPositions, set<string> *splice);
 	void print_out_amp_sample(Variant *variant, Region &region,
 							  vector<var2str_tup> *goodVariants, vector<var2str_tup> *badVariants, int position, int gvscnt,
 							  int noCov, bool flag);

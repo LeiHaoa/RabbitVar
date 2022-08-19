@@ -3,7 +3,7 @@
 
 #include "Configuration.h"
 #include <vector>
-//#include <unordered_map>
+//#include <umap>
 #include "./global.h"
 #include "Region.h"
 //strut bedrowformat to define a bed file format
@@ -16,16 +16,16 @@ class RegionBuilder{
 public:
 	//member fun
 	RegionBuilder();
-	RegionBuilder(unordered_map<string, int> chromosomesLengths, Configuration *config);
+	RegionBuilder(umap<string, int> chromosomesLengths, Configuration *config);
 	void buildRegionFromConfiguration(vector<vector<Region> >& segments);
 	vector<vector<Region> >  AdjustRegionSize(vector<vector<Region> > &segments);
-	string correctChromosome(unordered_map<string, int>& chromosomesLengths, string chr);
+	string correctChromosome(umap<string, int>& chromosomesLengths, string chr);
 	vector<vector<Region> > buildAmpRegions(vector<string>& segRaws, bool zeroBased);
 	vector<vector<Region> > buildRegions(vector<string>& segRaws, bool zeroBased);
 
 	//member var
 	Configuration *config;
-    unordered_map<string, int> chromosomesLengths;
+    umap<string, int> chromosomesLengths;
     string CHR_LABEL = "chr";
 
 };

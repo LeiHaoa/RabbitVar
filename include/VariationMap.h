@@ -2,16 +2,16 @@
 #define _VARIATIONMAP_H
 
 #include <string>
-//#include <unordered_map>
+//#include <umap>
 #include "global.h"
 #include <map>
 #include "Variation.h"
 
 
 //class VariationMap<K,V> extends LinkedHashMap<K,V> {
-class VariationMap{//:public unordered_map<string, Variation*>{
+class VariationMap{//:public umap<string, Variation*>{
 public:
-	unordered_map<string, Variation*> variation_map;
+	umap<string, Variation*> variation_map;
 
 };
 

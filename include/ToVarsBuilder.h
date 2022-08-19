@@ -15,7 +15,7 @@
 #include<regex>
 #include<string>
 #include<cmath>
-//#include<unordered_map>
+//#include<umap>
 #include "./global.h"
 
 class MSI{
@@ -39,14 +39,14 @@ public:
 class ToVarsBuilder {
 private:
   Region region;
-  unordered_map<int, int> *refCoverage;
-  unordered_map<int, VariationMap *> *insertionVariants;
-  unordered_map<int, VariationMap *> *nonInsertionVariants;
-  // unordered_map<int, char> ref;
+  umap<int, int> *refCoverage;
+  umap<int, VariationMap *> *insertionVariants;
+  umap<int, VariationMap *> *nonInsertionVariants;
+  // umap<int, char> ref;
   Reference *reference;
   Configuration *conf;
   double duprate;
-  unordered_map<string, string> IUPAC_AMBIGUITY_CODES = {
+  umap<string, string> IUPAC_AMBIGUITY_CODES = {
       {"M", "A"},
       {"R", "A"},
       {"W", "A"},
@@ -64,21 +64,21 @@ public:
   ~ToVarsBuilder();
   void initFromScope(Scope<RealignedVariationData> &scope);
   Scope<AlignedVarsData> *process(Scope<RealignedVariationData> &scope);
-  bool isTheSameVariationOnRef(int position, unordered_map<string, Variation *> &varsAtCurPosition);
+  bool isTheSameVariationOnRef(int position, umap<string, Variation *> &varsAtCurPosition);
   MSI *proceedVrefIsDeletion(int position, int dellen);
   MSI *proceedVrefIsInsertion(int position, string vn);
-  double collectVarsAtPosition(unordered_map<int, Vars *> &alignedVariants, int position, vector<Variant *> &var);
+  double collectVarsAtPosition(umap<int, Vars *> &alignedVariants, int position, vector<Variant *> &var);
   int createInsertion(double duprate, int position, int totalPosCoverage, vector<Variant *> &var, vector<string> &debugLines, int hicov);
-  void createVariant(double duprate, unordered_map<int, Vars *> &alignedVars, int position,
+  void createVariant(double duprate, umap<int, Vars *> &alignedVars, int position,
                      VariationMap *nonInsertionVariations, int totalPosCoverage, vector<Variant *> &var,
                      vector<string> &debugLines, vector<string> &keys, int hicov);
   void adjustVariantCounts(int p, Variant *vref);
-  int calcHicov(unordered_map<string, Variation *> *insertionVariations,
-                unordered_map<string, Variation *> &nonInsertionVariations);
+  int calcHicov(umap<string, Variation *> *insertionVariations,
+                umap<string, Variation *> &nonInsertionVariations);
   MSI *findMSI(const string &tseq1, const string &tseq2, const string &left);
   void collectReferenceVariants(int position, int totalPosCoverage, Vars *variationsAtPos, vector<string> &debugLines);
   string validateRefallele(string &refallele);
-  unordered_map<int, int>* get_refcov(){return this->refCoverage;};
+  umap<int, int>* get_refcov(){return this->refCoverage;};
   void print_result();
 };
 #endif

@@ -248,11 +248,11 @@ void AmpliconMode::interest_region_from_cmd(vector<vector<Region> > &segments){
 
 	Scope<AlignedVarsData> *avd_p;
 	for(vector<Region> &regions: segments){
-		unordered_map<int, vector<pos2reg_tup> > pos;
+		umap<int, vector<pos2reg_tup> > pos;
 		int ampliconNumber = 0;
 		Region currentRegion = regions[0];
 		set<string> splice;
-		vector<unordered_map<int, Vars*> > vars;
+		vector<umap<int, Vars*> > vars;
 		for(Region region: regions){
 			currentRegion = region;
 			for(int p = region.insertStart; p <= region.insertEnd; p++){
@@ -334,11 +334,11 @@ void AmpliconMode::multi_regions_from_bed(vector<vector<Region> > &segments){
 	for(int i = 0; i < segments.size(); i++){
 		vector<Region> regions = segments[i];
 		//reg = mRegs[i];
-		unordered_map<int, vector<pos2reg_tup> > pos;
+		umap<int, vector<pos2reg_tup> > pos;
 		set<string> splices_for_multi_thread[processor_num];
 		int j = 0;
 		Region currentRegion = regions[0];
-		vector<unordered_map<int, Vars*> > vars;
+		vector<umap<int, Vars*> > vars;
 #pragma omp parallel for default(shared) private(currentRegion, data_pool) schedule(dynamic) 
 		for(int reg_i = 0; reg_i < regions.size(); reg_i++){
 			int thread_id = omp_get_thread_num();
@@ -412,7 +412,7 @@ void AmpliconMode::process(vector<vector<Region> > &segments){
 	fclose(this->file_ptr);
 }
 
-void AmpliconMode::output(Region rg, vector<unordered_map<int, Vars*> > vars, unordered_map<int, vector<pos2reg_tup> > ampliconsOnPositions, set<string> *splice) {
+void AmpliconMode::output(Region rg, vector<umap<int, Vars*> > vars, umap<int, vector<pos2reg_tup> > ampliconsOnPositions, set<string> *splice) {
 	set<int> positions;
 	for(auto& item: ampliconsOnPositions){ positions.emplace(item.first); }
 	int lastPosition = 0;
@@ -448,7 +448,7 @@ void AmpliconMode::output(Region rg, vector<unordered_map<int, Vars*> > vars, un
 				int end = amps_region.end;
 				string region_str = chr + ":" + to_string(start) + "-" + to_string(end);
 
-				unordered_map<int, Vars*>::iterator vtmp_itr = vars[ampliconNumber].find(position);
+				umap<int, Vars*>::iterator vtmp_itr = vars[ampliconNumber].find(position);
 				const bool not_find = (vtmp_itr == vars[ampliconNumber].end());
 				vector<Variant*> *variantsOnAmplicon =  not_find ? NULL : &vtmp_itr->second->variants;
 				Variant* refAmplicon = not_find ? NULL : vtmp_itr->second->referenceVariant;
@@ -532,11 +532,11 @@ void AmpliconMode::output(Region rg, vector<unordered_map<int, Vars*> > vars, un
 							+ to_string(std::get<1>(amps).start) + "-"
 							+ to_string(std::get<1>(amps).end);
 						Vars* vtmp;
-						unordered_map<int, Vars*>::iterator vtmp_itr = vars[amps_pos].find(position);
+						umap<int, Vars*>::iterator vtmp_itr = vars[amps_pos].find(position);
 						vtmp = vtmp_itr == vars[amps_pos].end()
 							? NULL
 							: vtmp_itr -> second;
-						unordered_map<string, Variant*>::iterator variant_itr;
+						umap<string, Variant*>::iterator variant_itr;
 						Variant* variant = vtmp == NULL
 							? NULL 
 							: (variant_itr = vtmp->varDescriptionStringToVariants.find(gdnt)) == vtmp->varDescriptionStringToVariants.end()

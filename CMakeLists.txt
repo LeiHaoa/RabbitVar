@@ -24,7 +24,7 @@ message("hts dir: " ${HTS_PREFIX})
 LINK_DIRECTORIES(${HTS_PREFIX}/lib)
 #LINK_DIRECTORIES(/home/user_home/haoz/tools/lib)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "-O3 -g -ffast-math ${CMAKE_CXX_FLAGS}")
 

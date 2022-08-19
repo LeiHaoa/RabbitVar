@@ -1,6 +1,6 @@
 #ifndef _ALIGNEDVARSDATA_H
 #define  _ALIGNEDVARSDATA_H
-//#include<unordered_map>
+//#include<umap>
 #include "../global.h"
 #include "../Vars.h"
 
@@ -12,9 +12,9 @@
 class AlignedVarsData {
     public:
 		int maxReadLength;
-    	unordered_map<int, Vars*> alignedVariants;
+    	umap<int, Vars*> alignedVariants;
 
-    	AlignedVarsData(int maxReadLength, unordered_map<int, Vars*> alignedVariants) {
+    	AlignedVarsData(int maxReadLength, umap<int, Vars*> alignedVariants) {
         	this->maxReadLength = maxReadLength;
         	this->alignedVariants = alignedVariants;
     	};

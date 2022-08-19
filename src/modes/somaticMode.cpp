@@ -54,7 +54,7 @@ static Scope<AlignedVarsData>* one_region_run(Region region, Configuration* conf
 	return avd;
 }
 
-inline void add_depth_by_region(Region &region, unordered_map<int, int> *refCoverage, 
+inline void add_depth_by_region(Region &region, umap<int, int> *refCoverage, 
                                 sample_info& cov_info){
   uint64_t reg_sum_cov = 0;
   uint64_t cov_pos = 0;
@@ -304,8 +304,8 @@ string SomaticMode::output(Scope<AlignedVarsData>* scopeFromBam1, Scope<AlignedV
 	string output_string;
 	Region region = scopeFromBam1->region;
 	set<string>* splice = scopeFromBam1->splice;
-	unordered_map<int, Vars*> &variationsFromBam1 = scopeFromBam1->data->alignedVariants;
-	unordered_map<int, Vars*> &variationsFromBam2 = scopeFromBam2->data->alignedVariants;
+	umap<int, Vars*> &variationsFromBam1 = scopeFromBam1->data->alignedVariants;
+	umap<int, Vars*> &variationsFromBam2 = scopeFromBam2->data->alignedVariants;
 
 	int maxReadLength = max(scopeFromBam1->maxReadLength, scopeFromBam2->maxReadLength);
 
@@ -325,8 +325,8 @@ string SomaticMode::output(Scope<AlignedVarsData>* scopeFromBam1, Scope<AlignedV
 				continue;
 			}
 
-			unordered_map<int, Vars*>::iterator v1 = variationsFromBam1.find(position);
-			unordered_map<int, Vars*>::iterator v2 = variationsFromBam2.find(position);
+			umap<int, Vars*>::iterator v1 = variationsFromBam1.find(position);
+			umap<int, Vars*>::iterator v2 = variationsFromBam2.find(position);
 			if(v1 == variationsFromBam1.end()){ // we do not care about this sitiation in theory;
         cerr << "[debug: ] no coverage for sample1 (tumor), ignore the vaiant" << endl;
 				//output_string.append(callingForOneSample(v2->second, true, DELETION, region, splice));
@@ -405,7 +405,7 @@ string SomaticMode::printVariationsFromFirstSample(int position, Vars* v1, Vars*
 		}
 		//Variant v2nt = getVarMaybe(v2, varn, nt);
 		Variant* v2nt = NULL;
-		unordered_map<string, Variant*>::iterator v2nt_itr = v2->varDescriptionStringToVariants.find(nt);
+		umap<string, Variant*>::iterator v2nt_itr = v2->varDescriptionStringToVariants.find(nt);
 		if (v2nt_itr != v2->varDescriptionStringToVariants.end()) {
 			v2nt = v2nt_itr->second;
 			VarLabelSet label = determinateLabel(v2, vref, v2nt, splice);
@@ -655,7 +655,7 @@ CombineAnalysisData SomaticMode::combineAnalysis(Variant* variant1, Variant* var
 	AlignedVarsData *tpl = one_region_run(region, conf, trs.data_pool, merged_bamReaders, splice)->data;
 
 	maxReadLength = tpl->maxReadLength;
-	unordered_map<int, Vars*> &vars = tpl->alignedVariants;
+	umap<int, Vars*> &vars = tpl->alignedVariants;
 	//Variant *vref = getVarMaybe(vars, position, varn, descriptionString);
 	Variant* vref = vars.find(position) != vars.end()
 		? vars.at(position)->varDescriptionStringToVariants.count(descriptionString)

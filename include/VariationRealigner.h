@@ -28,7 +28,7 @@
 
 #include <map>
 #include <sstream>
-//#include <unordered_map>
+//#include <umap>
 #include "global.h"
 #include <unordered_set>
 #include <regex>
@@ -98,14 +98,14 @@ public :
 };
 class VariationRealigner {
 private:
-	unordered_map<int, vector<Sclip*> > SOFTP2SV;
-	unordered_map<int, VariationMap*> *nonInsertionVariants;
-	unordered_map<int, VariationMap*> *insertionVariants;
-	unordered_map<int, unordered_map<string, int> > *positionToInsertionCount;
-	unordered_map<int, unordered_map<string, int> > *positionToDeletionCount;
-	unordered_map<int, int> *refCoverage;
-	unordered_map<int, Sclip*> *softClips5End;
-	unordered_map<int, Sclip*> *softClips3End;
+	umap<int, vector<Sclip*> > SOFTP2SV;
+	umap<int, VariationMap*> *nonInsertionVariants;
+	umap<int, VariationMap*> *insertionVariants;
+	umap<int, umap<string, int> > *positionToInsertionCount;
+	umap<int, umap<string, int> > *positionToDeletionCount;
+	umap<int, int> *refCoverage;
+	umap<int, Sclip*> *softClips5End;
+	umap<int, Sclip*> *softClips3End;
 
     //ReferenceResource referenceResource;
     Reference *reference;
@@ -116,7 +116,7 @@ private:
     double duprate;
     vector<string> bams;
     string bam;
-    unordered_map<int, unordered_map<string, int> > *mnp;
+    umap<int, umap<string, int> > *mnp;
     //SVStructures svStructures;
     //VariantPrinter variantPrinter;
 	Configuration* conf;
@@ -144,25 +144,25 @@ public:
 	Cluster* checkCluster(vector<Mate> mates, int rlen) ;
 	void adjustMNP() ;
 	void realignIndels();
-	void realigndel(vector<string> *bamsParameter,unordered_map<int,unordered_map<string, int> > positionToDeletionCount); 
-	string realignins(unordered_map<int,unordered_map<string, int> > &positionToInsertionCount) ;
+	void realigndel(vector<string> *bamsParameter,umap<int,umap<string, int> > positionToDeletionCount); 
+	string realignins(umap<int,umap<string, int> > &positionToInsertionCount) ;
 	void realignlgdel(vector<Sclip> svfdel, vector<Sclip> svrdel) ;
 	void realignlgins30() ;
 	void realignlgins(vector<Sclip> svfdup, vector<Sclip> svrdup) ;
-	vector<SortPositionDescription*> fillAndSortTmp(unordered_map<int,unordered_map<string, int> > &changes); 
+	vector<SortPositionDescription*> fillAndSortTmp(umap<int,umap<string, int> > &changes); 
 
-	MismatchResult* findMM3(unordered_map<int, char> &ref, int p, string sanpseq);
-	MismatchResult* findMM5(unordered_map<int, char> &ref, int position, string wupseq);
+	MismatchResult* findMM3(umap<int, char> &ref, int p, string sanpseq);
+	MismatchResult* findMM5(umap<int, char> &ref, int position, string wupseq);
 	void rmCnt(Variation *vref, Variation *tv);
-	bool ismtchref(string &sequence, unordered_map<int, char> &ref, int position, int dir);
+	bool ismtchref(string &sequence, umap<int, char> &ref, int position, int dir);
 	void adjRefFactor(Variation *ref, double factor_f);
 	void adjRefCnt(Variation *tv, Variation *ref, int len);
-	bool ismatchref(string sequence, unordered_map<int, char> &ref, int position,int dir) ;
-	bool ismatchref(string sequence, unordered_map<int, char> &ref, int position,int dir, int MM) ;
+	bool ismatchref(string sequence, umap<int, char> &ref, int position,int dir) ;
+	bool ismatchref(string sequence, umap<int, char> &ref, int position,int dir, int MM) ;
 	void addVarFactor(Variation *vref, double factor_f);
-	int findbp(string &sequence, int startPosition, unordered_map<int, char> &ref, int direction, string &chr);
-	BaseInsertion* findbi(string &seq, int position, unordered_map<int, char> &ref, int dir, string &chr) ;
-	//BaseInsertion* adjInsPos(int bi, string &ins, unordered_map<int, char> &ref);
+	int findbp(string &sequence, int startPosition, umap<int, char> &ref, int direction, string &chr);
+	BaseInsertion* findbi(string &seq, int position, umap<int, char> &ref, int dir, string &chr) ;
+	//BaseInsertion* adjInsPos(int bi, string &ins, umap<int, char> &ref);
 	int count(string &str, char chr);
 	//bool islowcomplexseq(string &seq);
 	bool ismatch(string seq1, string seq2, int dir, int MM);

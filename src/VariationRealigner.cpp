@@ -203,13 +203,13 @@ public void filterAllSVStructures() {
     filterSV(svStructures.svfdup);
     filterSV(svStructures.svrdup);
 
-    for (unordered_map.Entry<string, list<Sclip> > svv : svStructures.svffus.entryset()) {
+    for (umap.Entry<string, list<Sclip> > svv : svStructures.svffus.entryset()) {
         filterSV(svv.getValue());
     }
-    for (unordered_map.Entry<string, list<Sclip> > svv : svStructures.svrfus.entryset()) {
+    for (umap.Entry<string, list<Sclip> > svv : svStructures.svrfus.entryset()) {
         filterSV(svv.getValue());
     }
-    for (unordered_map.Entry<int, list<Sclip> > entry : SOFTP2SV.entryset()) {
+    for (umap.Entry<int, list<Sclip> > entry : SOFTP2SV.entryset()) {
         int key = entry.getKey();
         list<Sclip> sclips = entry.getValue();
         sclips.sort(comparing((Sclip sclip) -> sclip.varsCount).reversed());
@@ -237,7 +237,7 @@ void filterSV(list<Sclip> svlist_sva) {
                 sv.end = cluster.end_e;
                 sv.meanPosition = cluster.pmean_rp;
                 sv.meanQuality = cluster.qmean_q;
-                sv.meanunordered_mappingQuality = cluster.Qmean_Q;
+                sv.meanumappingQuality = cluster.Qmean_Q;
                 sv.numberOfMismatches = cluster.nm;
             } else {
                 sv.used = true;
@@ -249,8 +249,8 @@ void filterSV(list<Sclip> svlist_sva) {
                 }
             }
 
-            list<unordered_map.Entry<int, int> > soft = new Arraylist<>(sv.soft.entryset());
-            soft.sort(comparing((unordered_map.Entry<int, int> entry) -> entry.getValue(), int::compareTo).reversed());
+            list<umap.Entry<int, int> > soft = new Arraylist<>(sv.soft.entryset());
+            soft.sort(comparing((umap.Entry<int, int> entry) -> entry.getValue(), int::compareTo).reversed());
 
             sv.softp = soft.size() > 0 ? soft.get(0).getKey() : 0;
             if (sv.softp != 0) {
@@ -345,7 +345,7 @@ void VariationRealigner::adjustMNP() {
       if (!nonInsertionVariants->count(position)) {
         continue;
       }
-      unordered_map<string, Variation*> varsOnPosition = nonInsertionVariants->at(position)->variation_map;
+      umap<string, Variation*> varsOnPosition = nonInsertionVariants->at(position)->variation_map;
 
       if (!varsOnPosition.count(vn)) { // The variant is likely already been used by indel realignment
         continue;
@@ -411,7 +411,7 @@ void VariationRealigner::adjustMNP() {
           //printf("nt info: \n");
           //for(auto& nve : sc3v->nt){
           //	int sc_pos = nve.first;
-          //	unordered_map<char, int> nv = nve.second;
+          //	umap<char, int> nv = nve.second;
           //	for(auto& ent : nv){
           //		printf("%d - %c - %d\n", sc_pos, ent.first, ent.second);
           //	}
@@ -486,7 +486,7 @@ void VariationRealigner::realignIndels()  {
  * @param positionToDeletionsCount deletion variants count on positions
  * @param bamsParameter BAM file list (can be NULL in few cases of running realigndel)
 */
-void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map<int, unordered_map<string, int> > positionToDeletionCount) {
+void VariationRealigner::realigndel(vector<string> *bamsParameter, umap<int, umap<string, int> > positionToDeletionCount) {
   //if(positionToDeletionCount.size() == 1){
   //	for(auto& vm: positionToDeletionCount){
   //		for(auto v: vm.second){
@@ -494,7 +494,7 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
   //		}
   //	}
   //}
-  unordered_map<int, char> &ref = reference->referenceSequences;
+  umap<int, char> &ref = reference->referenceSequences;
   vector<string> *bams;
   if (bamsParameter == NULL || bamsParameter->size() == 0) {
     bams = NULL;
@@ -782,8 +782,8 @@ void VariationRealigner::realigndel(vector<string> *bamsParameter, unordered_map
  * @param positionToInsertionCount insertion variants count on positions
  * @return insertion sequence
  */
-string VariationRealigner::realignins(unordered_map<int, unordered_map<string, int> > &positionToInsertionCount) {
-  unordered_map<int, char> &ref = reference->referenceSequences;
+string VariationRealigner::realignins(umap<int, umap<string, int> > &positionToInsertionCount) {
+  umap<int, char> &ref = reference->referenceSequences;
   vector<SortPositionDescription*> tmp = fillAndSortTmp(positionToInsertionCount);
   //cout << "tmp size: " << tmp.size() << endl;
   //for(SortPositionDescription* tpl: tmp){
@@ -1117,7 +1117,7 @@ string VariationRealigner::realignins(unordered_map<int, unordered_map<string, i
  * This will try to realign large insertions (typically larger than 30bp)
  */
 void VariationRealigner::realignlgins30() {
-  unordered_map<int, char> ref = reference->referenceSequences;
+  umap<int, char> ref = reference->referenceSequences;
 
   vector<SortPositionSclip*> tmp5;
   for (auto& ent5 : *softClips5End) {
@@ -1309,16 +1309,16 @@ void VariationRealigner::realignlgins30() {
                 && noPassingReads(chr, p5, p3, bams)) {
               adjCnt(vref, mvref, mvref);
             }
-            unordered_map<int, unordered_map<string, int> > tins;
-            unordered_map<string, int> mapp;
+            umap<int, umap<string, int> > tins;
+            umap<string, int> mapp;
             mapp[ins] = vref->varsCount;
             tins[bi] = mapp;
             realignins(tins);
           } else if (ins[0]=='-') {
             adjCnt(vref, sc3v, getVariationMaybe(*nonInsertionVariants, bi, ref[bi]));
             adjCnt(vref, sc5v);
-            unordered_map<int, unordered_map<string, int> > tdel;
-            unordered_map<string, int> mapp ;
+            umap<int, umap<string, int> > tdel;
+            umap<string, int> mapp ;
             mapp[ins]= vref->varsCount;
             tdel[bi]= mapp;
             realigndel(NULL, tdel);
@@ -1359,13 +1359,13 @@ void VariationRealigner::realignlgins30() {
  * @param changes initial hash map
  * @return tuple of (position, descriptions string and variation count).
  */
-vector<SortPositionDescription*> VariationRealigner::fillAndSortTmp(unordered_map<int, unordered_map<string, int> > &changes) {
+vector<SortPositionDescription*> VariationRealigner::fillAndSortTmp(umap<int, umap<string, int> > &changes) {
   //TODO: perl here have non-deterministic results because of hash, maybe we need to
   // make the sort in Perl more stringent (except simple sort b[2]<=>a[2]
   vector<SortPositionDescription*> tmp;
   for (auto& entry : changes) {
     int position = entry.first;
-    unordered_map<string, int> v = entry.second;
+    umap<string, int> v = entry.second;
     for (auto& entV : v) {
       string descriptionstring = entV.first;
       int cnt = entV.second;
@@ -1568,7 +1568,7 @@ int VariationRealigner::count(string &str, char chr) {
  */
 BaseInsertion* VariationRealigner::findbi(string &seq,
     int position,
-    unordered_map<int, char> &ref,
+    umap<int, char> &ref,
     int dir,
     string &chr) {
   const int maxmm = 3; // maximum mismatches allowed
@@ -1694,7 +1694,7 @@ BaseInsertion* VariationRealigner::findbi(string &seq,
  */
 int VariationRealigner::findbp(string &sequence,
     int startPosition,
-    unordered_map<int, char> &ref,
+    umap<int, char> &ref,
     int direction,
     string &chr) {
 
@@ -1854,7 +1854,7 @@ void VariationRealigner::addVarFactor(Variation *vref, double factor_f) {
  * @param wupseq sequence
  * @return MismatchResult contains mismatches lists and clipping positions
  */
-MismatchResult* VariationRealigner::findMM5(unordered_map<int, char> &ref,
+MismatchResult* VariationRealigner::findMM5(umap<int, char> &ref,
     int position,
     string wupseq) {
   string seq = regex_replace(wupseq,regex("#|\\^"), "");
@@ -1916,7 +1916,7 @@ MismatchResult* VariationRealigner::findMM5(unordered_map<int, char> &ref,
  * @param sanpseq sequence
  * @return MismatchResult contains mismatches lists and clipping positions
  */
-MismatchResult* VariationRealigner::findMM3(unordered_map<int, char> &ref,
+MismatchResult* VariationRealigner::findMM3(umap<int, char> &ref,
     int p,
     string sanpseq) {
   string seq = regex_replace(sanpseq, regex("#|\\^"), ""); // ~ s/#|\^//g;
@@ -1985,7 +1985,7 @@ MismatchResult* VariationRealigner::findMM3(unordered_map<int, char> &ref,
  * @return true if sequence is matched to reference
  */
 bool VariationRealigner::ismatchref(string sequence,
-    unordered_map<int, char> &ref,
+    umap<int, char> &ref,
     int position,
     int dir) {
   int MM = 3;
@@ -2002,7 +2002,7 @@ bool VariationRealigner::ismatchref(string sequence,
  * @return true if sequence is matched to reference
  */
 bool VariationRealigner::ismatchref(string sequence,
-    unordered_map<int, char> &ref,
+    umap<int, char> &ref,
     int position,
     int dir,
     int MM=3) {

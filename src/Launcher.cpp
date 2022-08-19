@@ -38,8 +38,8 @@ void VarDictLauncher::start(Configuration *config) {
  */
 void VarDictLauncher::initResources(Configuration *conf) {
 	//try {
-	//unordered_map<std::string, int> chrLengths;
-	unordered_map<std::string, int> chrLengths;
+	//umap<std::string, int> chrLengths;
+	umap<std::string, int> chrLengths;
 	cout << "[info] bam raw: " << conf->bam.getBamRaw() << endl;
 	readChr(conf->bam.getBamX(), chrLengths);
 	std::tuple<string, string> samples;
@@ -89,8 +89,8 @@ void VarDictLauncher::initResources(Configuration *conf) {
 	//	}
 	//}
 	//Fill adaptor maps
-	unordered_map<string, int> adaptorForward;
-	unordered_map<string, int> adaptorReverse;
+	umap<string, int> adaptorForward;
+	umap<string, int> adaptorReverse;
 	if (!conf->adaptor.size()) {
 		for(string sequence : conf->adaptor) {
 			for (int i = 0; i <= 6 && i + CONF_ADSEED < sequence.length(); i++) {
@@ -112,7 +112,7 @@ void VarDictLauncher::initResources(Configuration *conf) {
 }
 
 std::tuple<string, bool, vector<string> > VarDictLauncher::get_wgs_region(Configuration *conf){
-  unordered_map<string, int> chr2length;
+  umap<string, int> chr2length;
   vector<string> segraw;
   readChr(conf->bam.getBamX(), chr2length);
   for(auto &chrlen : chr2length){
@@ -190,7 +190,7 @@ std::tuple<string, bool, vector<string> > VarDictLauncher::readBedFile(Configura
  * @return Map of chromosome lengths. Key - chromosome name, value - length
  * @throws IOException if BAM/SAM file can't be opened
  */
-void VarDictLauncher::readChr(string bam, unordered_map<string, int> &chrs) {
+void VarDictLauncher::readChr(string bam, umap<string, int> &chrs) {
 	samFile* in = sam_open(bam.c_str(), "r");
 	if(in){
 		bam_hdr_t* header = sam_hdr_read(in);

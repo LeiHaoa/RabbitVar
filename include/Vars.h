@@ -4,7 +4,7 @@
 #include "Variation.h"
 #include "Variant.h"
 
-//#include<unordered_map>
+//#include<umap>
 #include "./global.h"
 #include<string.h>
 /**
@@ -26,7 +26,7 @@ class Vars {
      * Map of all variants except reference variant.
      * Key - variant description string, value - variant
      */
-    unordered_map<string, Variant*> varDescriptionStringToVariants;
+    umap<string, Variant*> varDescriptionStringToVariants;
 
     string sv = "";
 

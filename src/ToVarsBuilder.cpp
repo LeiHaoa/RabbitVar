@@ -97,7 +97,7 @@ void ToVarsBuilder::initFromScope(Scope<RealignedVariationData> &scope){
 Scope<AlignedVarsData>* ToVarsBuilder::process(Scope<RealignedVariationData> &scope) {
   initFromScope(scope);
   //the variant structure
-  unordered_map<int, Vars*> alignedVariants;
+  umap<int, Vars*> alignedVariants;
   int lastPosition = 0;
   //Loop over positions
   for (auto& entH : *nonInsertionVariants) {
@@ -210,7 +210,7 @@ Scope<AlignedVarsData>* ToVarsBuilder::process(Scope<RealignedVariationData> &sc
  * @param varsAtCurPosition map of description strings on variations
  * @return true if no pileup/amplicon mode/somatic mode enabled and only reference variant is on position
  */
-bool ToVarsBuilder::isTheSameVariationOnRef(int position, unordered_map<string, Variation*> &varsAtCurPosition) {
+bool ToVarsBuilder::isTheSameVariationOnRef(int position, umap<string, Variation*> &varsAtCurPosition) {
   const REFTYPE &ref = reference->referenceSequences;
   /*
      unordered_set<string> vk;
@@ -324,7 +324,7 @@ MSI* ToVarsBuilder::proceedVrefIsInsertion(int position, string vn){
  * @param var list of variants to be sorted in place
  * @return maxfreq on position
  */
-double ToVarsBuilder::collectVarsAtPosition(unordered_map<int, Vars*> &alignedVariants, int position, vector<Variant*> &var) {
+double ToVarsBuilder::collectVarsAtPosition(umap<int, Vars*> &alignedVariants, int position, vector<Variant*> &var) {
   const REFTYPE &ref = reference->referenceSequences;
   double maxfreq = 0;
   for (Variant* tvar : var) {
@@ -376,7 +376,7 @@ int ToVarsBuilder::createInsertion(double duprate, int position, int totalPosCov
   const REFTYPE &ref = reference->referenceSequences;
   if(insertionVariants->count(position)!=0){
 
-    unordered_map<string, Variation*> insertionVariations = insertionVariants->at(position)->variation_map;      
+    umap<string, Variation*> insertionVariations = insertionVariants->at(position)->variation_map;      
     vector<string> insertionDescriptionStrings;
     for(auto& key_v:insertionVariations){
       insertionDescriptionStrings.emplace_back(key_v.first);
@@ -482,7 +482,7 @@ int ToVarsBuilder::createInsertion(double duprate, int position, int totalPosCov
  * @param keys sorted list of variant description strings
  * @param hicov position coverage by high quality reads
  */
-void ToVarsBuilder::createVariant(double duprate, unordered_map<int, Vars* > &alignedVars, int position,
+void ToVarsBuilder::createVariant(double duprate, umap<int, Vars* > &alignedVars, int position,
     VariationMap* nonInsertionVariations, int totalPosCoverage, vector<Variant* > &var,
     vector<string> &debugLines, vector<string> &keys,int hicov) {
   //Loop over all variants found for the position except insertions
@@ -592,8 +592,8 @@ void ToVarsBuilder::adjustVariantCounts(int p, Variant* vref) {
  * @param nonInsertionVariations Map of description string on non-insertion variation for this position
  * @return coverage for high quality reads
  */
-int ToVarsBuilder::calcHicov(unordered_map<string, Variation*> *insertionVariations,
-    unordered_map<string, Variation*> &nonInsertionVariations) {
+int ToVarsBuilder::calcHicov(umap<string, Variation*> *insertionVariations,
+    umap<string, Variation*> &nonInsertionVariations) {
   int hicov = 0;
   for (auto& descVariantEntry : nonInsertionVariations) {
     //string keystr = descVariantEntry.first;

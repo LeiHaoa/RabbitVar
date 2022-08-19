@@ -19,8 +19,8 @@ struct LoadedRegion {
 class Reference {
 public:
 	std::vector<LoadedRegion*> loadedRegions;
-  unordered_map<int, char> referenceSequences;
-  unordered_map<std::string, std::vector<int>> seed;
+  umap<int, char> referenceSequences;
+  umap<std::string, std::vector<int>> seed;
 	int ref_start;
 	int ref_end;
 

@@ -382,12 +382,12 @@ class Configuration {
     /**
      *	some variable that used to store in instance
      */
-    unordered_map<string, int> chrLengths;
+    umap<string, int> chrLengths;
     string sample;
     string samplem;
     //PrinterType printerTypeOut;
-    unordered_map<string, int> adaptorForward;
-    unordered_map<string, int> adaptorReverse;
+    umap<string, int> adaptorForward;
+    umap<string, int> adaptorReverse;
     Patterns* patterns;
     int mempool_size = 100000;
     /**
