@@ -219,13 +219,14 @@ def call_rf(args):
   vcf['Chr'] = vcf['Chr'].astype(str)
   vcf = vcf.sort_values(by=['Chr', 'Start'])
   vcf_file = args.out_file
+  just_hard_filter = True if args.scale == '0' else False
   with open(vcf_file, 'w') as f:
     write_header(f)
     tmp = "\t".join(["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", 'Sample']) #TODO what if user not specified a sample name???
     tmp += '\n'
     f.write(tmp)
     for i, record in vcf.iterrows():
-      f.write(format_record(record) + '\n')
+      f.write(format_record(record, just_hard_filter) + '\n')
   cr_end = time.time()
   print("time of write: {} s".format(cr_end - cr_start) )
 
@@ -311,7 +312,7 @@ def call_rf_keep_all(args):
     tmp += '\n'
     f.write(tmp)
     for i, record in vcf.iterrows():
-      f.write(format_record_keep(record) + '\n')
+      f.write(format_record_keep(record, just_hard_filter) + '\n')
   cr_end = time.time()
   print("time of write: {} s".format(cr_end - cr_start) )
 
