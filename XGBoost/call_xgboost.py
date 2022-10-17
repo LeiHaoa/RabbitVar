@@ -104,7 +104,7 @@ def my_predict2(clf, data, scale):
     proba = clf.predict_proba(data)
     return np.asarray([1 if x >= scale else 0 for x in proba[:,1]])
 
-def my_predict(clf, data, scale):
+def my_predict(clf, data, scale, depth):
     start_t = time.time()
     proba = clf.predict_proba(data)[:,1]
     af = data['Var1AF'].to_numpy()
@@ -112,16 +112,18 @@ def my_predict(clf, data, scale):
     assert(len(af) == len(proba))
     #sp = float(scale.split(':')[0])
     sp, lowaf_scale, highaf_scale = [float(x) for x in scale.split(':')]
+    #lowaf_scale = 0.9 + min(0.09, 0.09 * depth / 300)
     print(f"sp: {sp}, lowaf_scale: {lowaf_scale}, highaf_scale: {highaf_scale}")
     for i in range(len(proba)):
-      if (af[i] < sp and proba[i] > lowaf_scale) or (af[i] >= sp and proba[i] > highaf_scale):
+      #if (af[i] < sp and proba[i] > lowaf_scale) or (af[i] >= sp and proba[i] > highaf_scale):
+      if (af[i] < sp and proba[i] > (1 - math.pow(0.1, 3 - af[i]*10)) ) or (af[i] >= sp and proba[i] > highaf_scale):
         res.append(1)
       else:
         res.append(0)
     end_t = time.time()
     print(f'predict time: {end_t - start_t}s')
 
-    return np.asarray(res)
+    return proba, np.asarray(res)
 
 
 def depth_normalization(data, tdepth, ndepth):
@@ -178,7 +180,8 @@ def rf_filter(args):
     inputs = snvs[som_rf_snv_input_features]
     clf = joblib.load(args.model)
     clf.verbose = False
-    snv_pred = my_predict(clf, inputs, scale)
+    snv_proba, snv_pred = my_predict(clf, inputs, scale, tdepth)
+    snvs['pred'] = snv_proba
     snv_result = snvs.loc[snv_pred == 1]
     time_end = time.time()
     print("time filter snv: {} s".format(time_end - time_start))
@@ -200,7 +203,8 @@ def rf_filter(args):
     load_time = time.time()
     print(f'load model time: {load_time - time_start}')
     clf.verbose = False
-    indel_pred = my_predict(clf, inputs, scale)
+    indel_proba, indel_pred = my_predict(clf, inputs, scale, tdepth)
+    indels['pred'] = indel_proba
     indel_result = indels.loc[indel_pred == 1]
     time_end = time.time()
     print("time filter indel: {} s, indel size: {}".format(time_end - time_start, len(indel_result)))
@@ -280,7 +284,7 @@ def call_rf_keep_all(args):
       return indels
 
     #depth normal lization
-    indels = depth_normalization(indels, tdepth, ndepth)
+    #indels = depth_normalization(indels, tdepth, ndepth)
     inputs = indels[som_rf_indel_input_features]
     print("inputs size: ", len(inputs))
     clf = joblib.load(args.model)
@@ -307,7 +311,7 @@ def call_rf_keep_all(args):
     tmp += '\n'
     f.write(tmp)
     for i, record in vcf.iterrows():
-      f.write(format_record(record) + '\n')
+      f.write(format_record_keep(record) + '\n')
   cr_end = time.time()
   print("time of write: {} s".format(cr_end - cr_start) )
 

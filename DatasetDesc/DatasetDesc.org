@@ -5,8 +5,8 @@
 | FD1    | WGS_FD_T_1        | WGS_FD_N_1        | 100%T/100%N, 100%T/95%N, 10%T/100%N |
 | IL1    | WGS_IL_T_1        | WGS_IL_N_1        | 100%T/100%N, 100%T/95%N, 10%T/100%N |
 | LL1    | WGS_LL_T_1        | WGS_LL_N_1        | 100%T/100%N, 100%T/95%N, 10%T/100%N |
-| NC1    | WGS_NC_T_1        | WGS_NC_N_1        | 100%T/100%N, 100%T/95%N,10%T/100%N  |
-| NS1    | WGS_NS_T_1        | WGS_NS_N_1        | 100%T/100%N, 100%T/95%N,10%T/100%N  |
+| NC1    | WGS_NC_T_1        | WGS_NC_N_1        | 100%T/100%N, 100%T/95%N, 10%T/100%N |
+| NS1    | WGS_NS_T_1        | WGS_NS_N_1        | 100%T/100%N, 100%T/95%N, 10%T/100%N |
 | NV1    | WGS_NV_T_1        | WGS_NV_N_1        | 100%T/100%N, 100%T/95%N, 10%T/100%N |
 | NS1-9  | WGS_NS_T_combine9 | WGS_NS_N_combine9 | 100%T/100%N, 100%T/95%N, 10%T/100%N |
 - *file path*: plt:/home/large/haoz/HCC1395_DATAS/WGS[/mix]

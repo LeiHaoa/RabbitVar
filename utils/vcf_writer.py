@@ -109,6 +109,8 @@ def format_record(record):
     print("invalide record: \n", record, "\n record length ---> ", len(record))
     exit(-1)
 
+  pred_value = record['pred']
+
   rd1 = rfwd1 + rrev1
   rd2 = rfwd2 + rrev2
   if vtype == "" :
@@ -133,7 +135,7 @@ def format_record(record):
   filters = "PASS"
   sample_nowhitespace = re.sub(r'\s', '_', sample)
 
-  pinfo2_1 = "STATUS={};SAMPLE={};TYPE={};DP={};VD={};AF={:.6f};SHIFT3={};MSI={};MSILEN={};SSF={};SOR={};LSEQ={};RSEQ={}".format(label_to_varLabel[status], sample_nowhitespace, label_to_types[vtype], dp1, vd1, af1, shift3, msi, msilen, pvalue, oddratio, lseq, rseq)
+  pinfo2_1 = "STATUS={};SAMPLE={};TYPE={};DP={};VD={};AF={:.6f};SHIFT3={};MSI={};MSILEN={};SSF={};SOR={};LSEQ={};RSEQ={};RFV={}".format(label_to_varLabel[status], sample_nowhitespace, label_to_types[vtype], dp1, vd1, af1, shift3, msi, msilen, pvalue, oddratio, lseq, rseq, pred_value)
   pinfo2_2 = "{}:{}:{}:{}:{}:{}:{:.6f}:{}:{}:{}:{}:{}:{}:{}:{}:{}:{:.6f}:{:.6f}:{}".format(gt, dp1, vd1, str(vfwd1) + "," + str(vrev1), str(rfwd1)+","+str(rrev1), str(rd1)+","+str(vd1), af1, bias1, pmean1, pstd1, qual1, qstd1, sbf1, oddratio1, mapq1, sn1, hiaf1, adjaf1, nm1)
   pinfo2_3 = "{}:{}:{}:{}:{}:{}:{:.6f}:{}:{}:{}:{}:{}:{}:{}:{}:{}:{:.6f}:{:.6f}:{}".format(gtm, dp2, vd2, str(vfwd2) + "," + str(vrev2), str(rfwd2)+","+str(rrev2), str(rd2)+","+str(vd2), af2, bias2, pmean2, pstd2, qual2, qstd2, sbf2, oddratio2, mapq2, sn2, hiaf2, adjaf2, nm2)
   pinfo2 = "\t".join([pinfo2_1, "GT:DP:VD:ALD:RD:AD:AF:BIAS:PMEAN:PSTD:QUAL:QSTD:SBF:ODDRATIO:MQ:SN:HIAF:ADJAF:NM", pinfo2_2, pinfo2_3])

@@ -63,7 +63,7 @@ def train_rf(args):
     if vartype == "SNV":
         clf = xgb.XGBClassifier(objective ='binary:logistic', scale_pos_weight = xg_w_scale, 
                                 learning_rate = 0.01, max_depth = 25, min_child_weight = 18,
-                                n_jobs = -1, n_estimators = 1300,
+                                n_jobs = -1, n_estimators = 1200,
                                 tree_method = 'gpu_hist', gpu_id = 0
                                 )
     else: # indel xgboost param
