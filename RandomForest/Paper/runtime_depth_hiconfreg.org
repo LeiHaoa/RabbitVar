@@ -1,0 +1,8 @@
+| Depth         | strelka | mutect | vardict | rabbitvar  |
+|---------------+---------+--------+---------+------------|
+| SPP_PURE_10x  | 6m      | 34m    | 31m     | 6m54.184s  |
+| SPP_PURE_30x  | 9m      | 37m    | 44m     | 10m49.841s |
+| SPP_PURE_50x  | 13m     | 49m    | 58m     | 14m19.705s |
+| SPP_PURE_80x  | 20m     | 75m    | 79m     | 19m38.030s |
+| SPP_PURE_200x | 51m     | 229m   | 176m    | 41m42.101s |
+| SPP_PURE_300x | 76m     | 403m   | 264m    | 59m35.480s |
