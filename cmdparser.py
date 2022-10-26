@@ -57,16 +57,17 @@ def detectorParam(parser):
   parser.add_argument('--CRISPR_fbp', '-j', help = "In CRISPR mode, the minimum amount in bp that a read needs to overlap with cutting site.  If a read does not meet the criteria, it will not be used for variant calling, since it is likely just a partially amplified PCR.  Default: not set, or no filtering", type=int, required = False)
   parser.add_argument('--mfreq', help = "The variant frequency threshold to determine variant as good in case of monomer MSI. Default: 0.25", type=float, required = False)
   parser.add_argument('--nmfreq', help = "The variant frequency threshold to determine variant as good in case of non-monomer MSI. Default: 0.1", type=float, required = False)
-  parser.add_argument('--out', help = "The out put file path. Default: ./out.txt", type=str, required = True, default = "./out.txt")
+  parser.add_argument('--out', help = "The out put file path. Default: ./out.txt", type=str, required = False, default = "./out.txt")
   parser.add_argument('--bed', '-i', help = "The region file to be processed", type=str, required = False)
   parser.add_argument('--version', help = "Print FastVC version information", action = 'version', version='1.1')
   parser.add_argument('--auto_resize', help = "Auto resize the bed region size for better performance", action = 'store_true')
 
 def filterParam(parser):
-  parser.add_argument("--indelmod", help = "Indel RandomForest filter path", type=str, required = False, default = os.path.join(RABBITVAR_ABSPATH, "RandomForest/models/som_indel_0527.pkl"))
-  parser.add_argument("--snvmod", help = "SNV RandomForest filter path", type=str, required = False, default = os.path.join(RABBITVAR_ABSPATH, "RandomForest/models/som_snv_0206.pkl"))
-  parser.add_argument("--snvscale", help = "Scale to filter SNV false positive", type=float, required = False, default = 0.5)
-  parser.add_argument("--indelscale", help = "Scale to filter InDel false positive", type=float, required = False, default = 0.5)
+  parser.add_argument('--just_hf', help = "Just use hard filter (no machine-learning based filter)", action = "store_true")
+  parser.add_argument("--indelmod", help = "Indel RandomForest filter path", type=str, required = False, default = os.path.join(RABBITVAR_ABSPATH, "XGBoost/models/INDEL_model.pkl"))
+  parser.add_argument("--snvmod", help = "SNV RandomForest filter path", type=str, required = False, default = os.path.join(RABBITVAR_ABSPATH, "XGBoost/models/SNV_model.pkl"))
+  parser.add_argument("--snvscale", help = "Scale to filter SNV false positive", type=str, required = False, default = 0.5)
+  parser.add_argument("--indelscale", help = "Scale to filter InDel false positive", type=str, required = False, default = 0.5)
 
 def rabbitvarParam(parser):
   parser.add_argument('--no_filter', help = "Do not perform filter step", action = "store_true")

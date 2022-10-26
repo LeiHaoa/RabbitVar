@@ -100,55 +100,75 @@ def run_rabbitvar(BIN, workspace, param):
     cmd = prepare_cmd(BIN, bed, out, param)
     #print(cmd)
     splited_info.append((bed, out))
-    subprocess.Popen(cmd, stderr=subprocess.STDOUT)
+    p = subprocess.Popen(cmd, stderr=subprocess.STDOUT)
+    p.wait()
 
   print("All process run over!")
   return splited_info
 
 def rf_filter(param, in_file):
-  #cr = list()
-  #raw = list()
-  #cr = pd.read_csv(in_file, delimiter = '\t', header = None, engine = 'c', skipinitialspace = True)
-  #cr.columns = [*features.som_features, 'None']#TODO: i should change the code of c++ to avoid the None colum
-  get_data_fromtxt(in_file, 'ALL')
+  cr = get_data_fromtxt(in_file, 'ALL')
   cr['VarLabel'] = cr['VarLabel'].map(varLabel_to_label)
   cr['VarType'] = cr['VarType'].map(type_to_label)
   cr['RefLength'] = cr['Ref'].str.len()
   cr['AltLength'] = cr['Alt'].str.len()
   #hard filter
   cr = hard_filter(cr)
+  if 'just_hf' in param: return cr, pd.DataFrame([])
 
   #snv data process 
   time_start = time.time()
-  snvs = cr[cr['VarType'] == 0]
-  inputs = snvs[[*som_selected_features, "VarLabel"]].to_numpy()
+  snvs = cr[cr['VarType'] == 0].copy()
+  inputs = snvs[som_rf_snv_input_features]
   clf = joblib.load(param['snvmod'])
   clf.verbose = False
-  scale = float(param['snvscale'])
-  snv_pred = my_predict(clf, inputs, scale)
+  scale = param['snvscale']
+  snv_proba, snv_pred = my_predict(clf, inputs, scale)
+  snvs['pred'] = snv_proba
   snv_result = snvs.loc[snv_pred == 1]
   time_end = time.time()
   print("time filter snv: {} s".format(time_end - time_start))
   
   #indel data process
   time_start = time.time()
-  indels = cr[cr['VarType'] != 0]
-  iii = ["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel"]
-  inputs = indels[["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel"]].to_numpy()
-  #clf = joblib.load(args.indel_model)
-  scale = float(param['indelscale'])
+  indels = cr[cr['VarType'] != 0].copy()
+  #iii = ["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel"]
+  inputs = indels[som_rf_indel_input_features]
+  scale = param['indelscale']
   clf = joblib.load(param['indelmod'])
   clf.verbose = False
-  indel_pred = my_predict(clf, inputs, scale)
+  indel_proba, indel_pred = my_predict(clf, inputs, scale)
+  indels['pred'] = indel_proba
   indel_result = indels.loc[indel_pred == 1]
   time_end = time.time()
   print("time filter indel: {} s".format(time_end - time_start))
 
   return snv_result, indel_result
 
-def my_predict(clf, data, scale):
+def my_predict2(clf, data, scale):
   proba = clf.predict_proba(data)
   return np.asarray([1 if x > scale else 0 for x in proba[:,1]])
+
+def my_predict(clf, data, scale):
+    start_t = time.time()
+    proba = clf.predict_proba(data)[:,1]
+    af = data['Var1AF'].to_numpy()
+    res = []
+    assert(len(af) == len(proba))
+    #sp = float(scale.split(':')[0])
+    sp, lowaf_scale, highaf_scale = [float(x) for x in scale.split(':')]
+    #lowaf_scale = 0.9 + min(0.09, 0.09 * depth / 300)
+    print(f"sp: {sp}, lowaf_scale: {lowaf_scale}, highaf_scale: {highaf_scale}")
+    for i in range(len(proba)):
+      #if (af[i] < sp and proba[i] > lowaf_scale) or (af[i] >= sp and proba[i] > highaf_scale):
+      if (af[i] < sp and proba[i] > (1 - math.pow(0.1, 3 - af[i]*10)) ) or (af[i] >= sp and proba[i] > highaf_scale):
+        res.append(1)
+      else:
+        res.append(0)
+    end_t = time.time()
+    print(f'predict time: {end_t - start_t}s')
+
+    return proba, np.asarray(res)
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description = "rabbitvar")
@@ -160,24 +180,32 @@ if __name__ == "__main__":
   filterParam(filter_parser)
   
   args = parser.parse_args()
+
   detector_param = {}
   for x in detector_parser._group_actions:
     k, v = x.dest, getattr(args, x.dest, None)
     if v:
       detector_param[k] = '' if isinstance(v, bool) else str(v)
-  print("[INFO] detector paramters: ", detector_param)
+  print("[INFO] detector parameters: ", detector_param)
   splited_info = run_rabbitvar(args.BIN, args.workspace, detector_param)
+  if 'no_filter' in detector_param:
+    print('[INFO] Do not perform filter step, just keep the txt file, now exit!')
+    exit() 
   filter_param = {}
   for x in filter_parser._group_actions:
     k, v = x.dest, getattr(args, x.dest, None)
-    print('filter parser:', k, v)
     if v:
       filter_param[k] = '' if isinstance(v, bool) else str(v)
+  print('[INFO] filter parameters:', filter_param)
 
+  just_hf = ('just_hf' in filter_param)
+  print('just hf: ', just_hf)
+  
   vcf_file = args.vcf
   vcf_list = []
   for detector_out in splited_info:
     vcf_list.extend(rf_filter(filter_param, detector_out[1]))
+  #print('vcf_list: ', len(vcf_list), '\n', vcf_list, '\n vcflist end')
   vcf = pd.concat(vcf_list)
  
   #sort and write vcf file
@@ -188,4 +216,4 @@ if __name__ == "__main__":
     tmp += '\n'
     f.write(tmp)
     for i, record in vcf.iterrows():
-      f.write(format_record(record) + '\n')
+      f.write(format_record(record, just_hf) + '\n')

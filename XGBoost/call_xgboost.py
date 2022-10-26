@@ -100,9 +100,9 @@ def format_indel_data_item(jri, fisher):
     return key, data
 
 def my_predict2(clf, data, scale):
-    start_t = time.time()
-    proba = clf.predict_proba(data)
-    return np.asarray([1 if x >= scale else 0 for x in proba[:,1]])
+    proba = clf.predict_proba(data)[:,1]
+    scale = float(scale)
+    return proba, np.asarray([1 if x >= scale else 0 for x in proba])
 
 def my_predict(clf, data, scale, depth):
     start_t = time.time()
@@ -203,7 +203,10 @@ def rf_filter(args):
     load_time = time.time()
     print(f'load model time: {load_time - time_start}')
     clf.verbose = False
-    indel_proba, indel_pred = my_predict(clf, inputs, scale, tdepth)
+    if len(scale.split(':')) == 3:
+        indel_proba, indel_pred = my_predict(clf, inputs, scale, tdepth)
+    elif len(scale.split(':')) == 1:
+        indel_proba, indel_pred = my_predict2(clf, inputs, scale)
     indels['pred'] = indel_proba
     indel_result = indels.loc[indel_pred == 1]
     time_end = time.time()
