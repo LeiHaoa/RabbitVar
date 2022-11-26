@@ -37,14 +37,14 @@ aux_source_directory(./src/modes SOURCE_LIST)
 message(${SOURCE_LIST})
 include_directories(./include ./include/modes ${HTS_PREFIX}/include)
 
-add_executable (FastVC ${SOURCE_LIST})
+add_executable (RabbitVar ${SOURCE_LIST})
 
 if(STATIC)
-	target_link_libraries(FastVC libhts.a)
+	target_link_libraries(RabbitVar libhts.a)
 else()
-	target_link_libraries(FastVC hts)
+	target_link_libraries(RabbitVar hts)
 endif()
 
 SET(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR})
-install(TARGETS FastVC DESTINATION bin)
+install(TARGETS RabbitVar DESTINATION bin)
 
