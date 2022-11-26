@@ -99,15 +99,22 @@ def format_indel_data_item(jri, fisher):
         exit(-1)
     return key, data
 
-def my_predict2(clf, data, scale):
+def my_predict_uniform(clf, data, scale):
+    tmp = list(data.columns)
+    tmp.remove('Var1AF')
+    data = data[tmp]
     proba = clf.predict_proba(data)[:,1]
     scale = float(scale)
     return proba, np.asarray([1 if x >= scale else 0 for x in proba])
 
 def my_predict(clf, data, scale, depth):
     start_t = time.time()
-    proba = clf.predict_proba(data)[:,1]
     af = data['Var1AF'].to_numpy()
+    #tmp = list(data.columns)
+    #tmp.remove('Var1AF')
+    #data = data[tmp]
+
+    proba = clf.predict_proba(data)[:,1]
     res = []
     assert(len(af) == len(proba))
     #sp = float(scale.split(':')[0])
@@ -177,10 +184,16 @@ def rf_filter(args):
     if scale == '0':
       print('Just use hard filter')
       return snvs
+    #inputs = snvs[[*som_rf_snv_input_features, "Var1AF"]]
     inputs = snvs[som_rf_snv_input_features]
     clf = joblib.load(args.model)
     clf.verbose = False
-    snv_proba, snv_pred = my_predict(clf, inputs, scale, tdepth)
+    if len(scale.split(':')) == 3:
+      snv_proba, snv_pred = my_predict(clf, inputs, scale, tdepth)
+    elif len(scale.split(':')) == 1:
+      snv_proba, snv_pred = my_predict_uniform(clf, inputs, scale)
+    else:
+      print(f"error: unsupported scale format: {scale}")
     snvs['pred'] = snv_proba
     snv_result = snvs.loc[snv_pred == 1]
     time_end = time.time()
@@ -206,7 +219,9 @@ def rf_filter(args):
     if len(scale.split(':')) == 3:
         indel_proba, indel_pred = my_predict(clf, inputs, scale, tdepth)
     elif len(scale.split(':')) == 1:
-        indel_proba, indel_pred = my_predict2(clf, inputs, scale)
+        indel_proba, indel_pred = my_predict_uniform(clf, inputs, scale)
+    else:
+        print(f"error: unsupported scale format: {scale}")
     indels['pred'] = indel_proba
     indel_result = indels.loc[indel_pred == 1]
     time_end = time.time()
