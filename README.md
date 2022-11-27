@@ -41,7 +41,7 @@ In RabbitVar, the following input are required:
   the reference file should be indexed (`.fai`).
 ## Run Example 
 
-**1. Variant Detection**
+**1. Variant Detection** #:DETECTION
 
   User can specify one region with `-r` parameter:
   ```
@@ -49,10 +49,14 @@ In RabbitVar, the following input are required:
     -R chr1:2829690-4918526  \
     -G /home/data/hg38.fa \
     -f 0.01 -N 'TUMORSMAPLE|NORMALSAMPLE' -b 'PATH_TO_TUMORSAMPLE|PATH_TONORMALSAMPLE' \
-    -c 1 -S 2 -E 3 \
+    -c 1 -S 2 -E 3 -g 4 \
+	--fisher \
     --out ./out.txt
   ```
-  *NOTE:* use '' to enclose the SAMPLE\_NAMEs and SMPALE\_PATHs to avoid redirection
+  *NOTE:* 
+  1. Use '' to enclose the SAMPLE\_NAMEs and SMPALE\_PATHs to avoid redirection
+  2. if you want to use XGBoost or RandomForest filter in next step, you must add '--fisher' parameter while runing 
+	 RabbitVar, it performs the fisher exact tests.
 
   User can also specify multi pregions with bed file:
   ```
@@ -60,7 +64,8 @@ In RabbitVar, the following input are required:
     -i /home/data/NA12878/WGSRegions.bed \
     -G /home/data/hg38.fa \
     -f 0.01 -N 'TUMORSMAPLE|NORMALSAMPLE' -b 'PATH_TO_TUMORSAMPLE|PATH_TONORMALSAMPLE' \
-    -c 1 -S 2 -E 3 \
+    -c 1 -S 2 -E 3 -g 4 \
+	--fisher \
     --out ./out.vcf
 ```
 
@@ -90,24 +95,30 @@ run_rabbitvar.py \
   -R chr1:2829690-4918526  \
   -G /home/data/hg38.fa \
   -f 0.01 -N 'TUMORSMAPLE|NORMALSAMPLE' -b 'PATH_TO_TUMORSAMPLE|PATH_TONORMALSAMPLE' \
-  -c 1 -S 2 -E 3 \
-  --indelmod ./RandomForest/models/som_indel_0108.pkl
-  --snvmod ./RandomForest/models/som_snv_0108.pkl
+  -c 1 -S 2 -E 3 -g 4 --fisher \
+  --indelmod ./XGBoost/models/INDEL_model.pkl \
+  --snvmod ./XGBoost/models/SNV_model.pkl \
   --vcf variants.vcf
 ```
 *NOTE:* use '' to enclose the SAMPLE\_NAMEs and SMPALE\_PATHs to avoid redirection
 
 
-; ## Train filter model
-; You can train your own model in python and embbing in c++ codes by [Porter](https://github.com/nok/sklearn-porter)
-; **install Poster according to porter github, **
-
+## Train filter model
+1. create .tsv file (after [detection][DETECTION])
 ``` bash
-cd RandomForest
-python3 make_data.py xxx
-python3 train_rf.py xxx
+cd XGBoost
+# DATA: the output file of RabbitVar(detect step without filter) 
+# TRUTH: ground truth file
+# VTYPE: INDEL or SNV
+./make_data_new.py --in_file ${DATA} --truth_file ${TRUTH} --var_type "${VTYPE}" --tsv data_${prefix}.tsv
 ```
-
+2. train SNV or INDEL 
+``` bash
+ python train_rf.py \
+ 50   --tsv data_${prefix}.tsv \
+ 51   --var_type "INDEL" \
+ 52   --out_model ./models/train_${prefix}.pkl
+```
 
 ## Usage 
 ```
