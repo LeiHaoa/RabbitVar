@@ -39,9 +39,10 @@ In RabbitVar, the following input are required:
 - Genome reference file `.fa` or `.fasta`, like hg19.fa or hg38.fa. 
 
   the reference file should be indexed (`.fai`).
+
 ## Run Example 
 
-**1. Variant Detection** #:DETECTION
+### 1. Variant Detection
 
   User can specify one region with `-r` parameter:
   ```
@@ -69,7 +70,7 @@ In RabbitVar, the following input are required:
     --out ./out.vcf
 ```
 
-**2. Machine-learning based Filter**
+### 2. Machine-learning based Filter
 
   This script filtering SNV or INDEL variants separatly: 
 
@@ -104,7 +105,7 @@ run_rabbitvar.py \
 
 
 ## Train filter model
-1. create .tsv file (after [detection][DETECTION])
+1. create .tsv file (after [detection](#1. Variant Detection))
 ``` bash
 cd XGBoost
 # DATA: the output file of RabbitVar(detect step without filter) 
