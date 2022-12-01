@@ -115,44 +115,53 @@ def rf_filter(param, in_file):
   cr['AltLength'] = cr['Alt'].str.len()
   #hard filter
   cr = hard_filter(cr)
-  if 'just_hf' in param: return cr, pd.DataFrame([])
+  if 'just_hf' in param: return cr, pd.DataFrame([])  
 
-  #snv data process 
-  time_start = time.time()
   snvs = cr[cr['VarType'] == 0].copy()
-  inputs = snvs[som_rf_snv_input_features]
-  clf = joblib.load(param['snvmod'])
-  clf.verbose = False
-  scale = param['snvscale']
-  if len(scale.split(':')) == 3:
-    snv_proba, snv_pred = my_predict(clf, inputs, scale)
-  elif len(scale.split(':')) == 1:
-    snv_proba, snv_pred = my_predict_uniform(clf, inputs, scale)
+  #snv data process
+  if os.path.exists(param['snvmod']):
+    time_start = time.time()
+    inputs = snvs[som_rf_snv_input_features]
+    clf = joblib.load(param['snvmod'])
+    clf.verbose = False
+    scale = param['snvscale']
+    if len(scale.split(':')) == 3:
+      snv_proba, snv_pred = my_predict(clf, inputs, scale)
+    elif len(scale.split(':')) == 1:
+      snv_proba, snv_pred = my_predict_uniform(clf, inputs, scale)
+    else:
+      print(f"error: unsupported scale format: {scale}")
+    snvs['pred'] = snv_proba
+    snv_result = snvs.loc[snv_pred == 1]
+    time_end = time.time()
+    print("time filter snv: {} s".format(time_end - time_start))
   else:
-    print(f"error: unsupported scale format: {scale}")
-  snvs['pred'] = snv_proba
-  snv_result = snvs.loc[snv_pred == 1]
-  time_end = time.time()
-  print("time filter snv: {} s".format(time_end - time_start))
-  
+    print('[Warning] SNV model: {} not found!'.format(param['snvmod']))
+    snv_result = snvs
+
+
   #indel data process
-  time_start = time.time()
   indels = cr[cr['VarType'] != 0].copy()
-  #iii = ["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel"]
-  inputs = indels[som_rf_indel_input_features]
-  scale = param['indelscale']
-  clf = joblib.load(param['indelmod'])
-  clf.verbose = False
-  if len(scale.split(':')) == 3:
-    indel_proba, indel_pred = my_predict(clf, inputs, scale)
-  elif len(scale.split(':')) == 1:
-    indel_proba, indel_pred = my_predict_uniform(clf, inputs, scale)
+  if os.path.exists(param['indelmod']):
+    #iii = ["RefLength", "AltLength", "VarType", *som_selected_features, "VarLabel"]
+    time_start = time.time()
+    inputs = indels[som_rf_indel_input_features]
+    scale = param['indelscale']
+    clf = joblib.load(param['indelmod'])
+    clf.verbose = False
+    if len(scale.split(':')) == 3:
+      indel_proba, indel_pred = my_predict(clf, inputs, scale)
+    elif len(scale.split(':')) == 1:
+      indel_proba, indel_pred = my_predict_uniform(clf, inputs, scale)
+    else:
+      print(f"error: unsupported scale format: {scale}")
+    indels['pred'] = indel_proba
+    indel_result = indels.loc[indel_pred == 1]
+    time_end = time.time()
+    print("time filter indel: {} s".format(time_end - time_start))
   else:
-    print(f"error: unsupported scale format: {scale}")
-  indels['pred'] = indel_proba
-  indel_result = indels.loc[indel_pred == 1]
-  time_end = time.time()
-  print("time filter indel: {} s".format(time_end - time_start))
+    print('[Warning] indel model: {} not found!'.format(param['indelmod']))
+    indel_result = indels
 
   return snv_result, indel_result
 
