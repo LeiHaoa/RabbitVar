@@ -100,8 +100,8 @@ def format_indel_data_item(jri, fisher):
     return key, data
 
 def my_predict_uniform(clf, data, scale):
-    tmp = list(data.columns)
-    tmp.remove('Var1AF')
+    # tmp = list(data.columns)
+    # tmp.remove('Var1AF')
     data = data[tmp]
     proba = clf.predict_proba(data)[:,1]
     scale = float(scale)

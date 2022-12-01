@@ -72,12 +72,13 @@ def split_bed(beds, parts, workspace):
 def run_rabbitvar(BIN, workspace, param):
   socks = get_socks()
   splited_info = list()
-  if not os.path.exists(workspace):
-    os.mkdir(workspace)
-  if socks > 1:
+
+  if socks > 1 and ('Region' not in param):
     #re-distribure bed file
     #beds = pybedtools.example_bedtool(param['bed'])
     #sorted(beds)
+    if not os.path.exists(workspace):
+      os.mkdir(workspace)
     beds = list()
     with open(param['bed'], 'r') as f:
       for line in f:
@@ -123,7 +124,12 @@ def rf_filter(param, in_file):
   clf = joblib.load(param['snvmod'])
   clf.verbose = False
   scale = param['snvscale']
-  snv_proba, snv_pred = my_predict(clf, inputs, scale)
+  if len(scale.split(':')) == 3:
+    snv_proba, snv_pred = my_predict(clf, inputs, scale)
+  elif len(scale.split(':')) == 1:
+    snv_proba, snv_pred = my_predict_uniform(clf, inputs, scale)
+  else:
+    print(f"error: unsupported scale format: {scale}")
   snvs['pred'] = snv_proba
   snv_result = snvs.loc[snv_pred == 1]
   time_end = time.time()
@@ -137,7 +143,12 @@ def rf_filter(param, in_file):
   scale = param['indelscale']
   clf = joblib.load(param['indelmod'])
   clf.verbose = False
-  indel_proba, indel_pred = my_predict(clf, inputs, scale)
+  if len(scale.split(':')) == 3:
+    indel_proba, indel_pred = my_predict(clf, inputs, scale)
+  elif len(scale.split(':')) == 1:
+    indel_proba, indel_pred = my_predict_uniform(clf, inputs, scale)
+  else:
+    print(f"error: unsupported scale format: {scale}")
   indels['pred'] = indel_proba
   indel_result = indels.loc[indel_pred == 1]
   time_end = time.time()
@@ -145,30 +156,35 @@ def rf_filter(param, in_file):
 
   return snv_result, indel_result
 
-def my_predict2(clf, data, scale):
-  proba = clf.predict_proba(data)
-  return np.asarray([1 if x > scale else 0 for x in proba[:,1]])
+def my_predict_uniform(clf, data, scale):
+  tmp = list(data.columns)
+  data = data[tmp]
+  proba = clf.predict_proba(data)[:,1]
+  scale = float(scale)
+  return proba, np.asarray([1 if x >= scale else 0 for x in proba])
 
 def my_predict(clf, data, scale):
-    start_t = time.time()
-    proba = clf.predict_proba(data)[:,1]
-    af = data['Var1AF'].to_numpy()
-    res = []
-    assert(len(af) == len(proba))
-    #sp = float(scale.split(':')[0])
-    sp, lowaf_scale, highaf_scale = [float(x) for x in scale.split(':')]
-    #lowaf_scale = 0.9 + min(0.09, 0.09 * depth / 300)
-    print(f"sp: {sp}, lowaf_scale: {lowaf_scale}, highaf_scale: {highaf_scale}")
-    for i in range(len(proba)):
-      #if (af[i] < sp and proba[i] > lowaf_scale) or (af[i] >= sp and proba[i] > highaf_scale):
-      if (af[i] < sp and proba[i] > (1 - math.pow(0.1, 3 - af[i]*10)) ) or (af[i] >= sp and proba[i] > highaf_scale):
-        res.append(1)
-      else:
-        res.append(0)
-    end_t = time.time()
-    print(f'predict time: {end_t - start_t}s')
+  start_t = time.time()
+  af = data['Var1AF'].to_numpy()
 
-    return proba, np.asarray(res)
+  proba = clf.predict_proba(data)[:,1]
+  res = []
+  assert(len(af) == len(proba))
+  #sp = float(scale.split(':')[0])
+  sp, lowaf_scale, highaf_scale = [float(x) for x in scale.split(':')]
+  #lowaf_scale = 0.9 + min(0.09, 0.09 * depth / 300)
+  print(f"sp: {sp}, lowaf_scale: {lowaf_scale}, highaf_scale: {highaf_scale}")
+  for i in range(len(proba)):
+    #if (af[i] < sp and proba[i] > lowaf_scale) or (af[i] >= sp and proba[i] > highaf_scale):
+    if (af[i] < sp and proba[i] > (1 - math.pow(0.1, 3 - af[i]*10)) ) or (af[i] >= sp and proba[i] > highaf_scale):
+      res.append(1)
+    else:
+      res.append(0)
+  end_t = time.time()
+  print(f'predict time: {end_t - start_t}s')
+
+  return proba, np.asarray(res)
+  
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description = "rabbitvar")
@@ -180,6 +196,11 @@ if __name__ == "__main__":
   filterParam(filter_parser)
   
   args = parser.parse_args()
+  # if out file directory is created?
+  vcf_file = args.vcf
+  if not os.path.exists(os.path.dirname(vcf_file)):
+    print(f"output vcf path directory {os.path.dirname(vcf_file)} not exists!!")
+    exit(-1)
 
   detector_param = {}
   for x in detector_parser._group_actions:
@@ -201,10 +222,10 @@ if __name__ == "__main__":
   just_hf = ('just_hf' in filter_param)
   print('just hf: ', just_hf)
   
-  vcf_file = args.vcf
+    
   vcf_list = []
-  for detector_out in splited_info:
-    vcf_list.extend(rf_filter(filter_param, detector_out[1]))
+  for si_bed, si_out in splited_info:
+    vcf_list.extend(rf_filter(filter_param, si_out))
   #print('vcf_list: ', len(vcf_list), '\n', vcf_list, '\n vcflist end')
   vcf = pd.concat(vcf_list)
  
