@@ -116,9 +116,9 @@ cd XGBoost
 2. train SNV or INDEL 
 ``` bash
  python train_rf.py \
- 50   --tsv data_${prefix}.tsv \
- 51   --var_type "INDEL" \
- 52   --out_model ./models/train_${prefix}.pkl
+    --tsv data_${prefix}.tsv \
+    --var_type "INDEL" \
+    --out_model ./models/train_${prefix}.pkl
 ```
 
 ## Usage 
