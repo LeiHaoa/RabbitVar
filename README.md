@@ -4,14 +4,21 @@ RabbitVar is a high-performance and versatile mutation detection tool, which  di
 ## Dependency
 - [htslib](https://github.com/samtools/htslib)
 - [zlib (included with most Linuxes)](http://www.zlib.net)
+- If you want to use XGBoost based filter, it need Python3.8 enviorment, we recommend [conda](https://docs.conda.io/en/latest/) enviorment:
+```bash
+conda create -n rabbitvar python=3.8
+conda activate rabbitvar
+```
 
+<!--
 ## Installation of binaries
 The easiest way to use RabbitVar is to grab a binary from [here](https://github.com/LeiHaoa/RabbitVar/releases). We provide dependency-free(zlib required) binaries for x86_64 Linux.
+-->
 
 ## Installation from source code
 RabbitVar is written in c++ for Linux platforms, you can download the source code and RabbitVar use some features supported by std-c++-11.
 So, c++ 11 or higher version is required.
-For better performance, ICPC is used as the default compiler. 
+If you do not want the XGBoost based filter, 
 Just Comipile RabbitVar with CMake:
 ```
 $ mkdir build && cd build
@@ -21,6 +28,17 @@ $ make install
 ```
 Then the binary file of RabbitVar will be installed as `bin/RabbitVar` if CMAKE_INSTALL_PREFIX not specified.
 
+
+If you want to use XGBoost based filter, it need Python3.8 enviorment, we recommend [conda](https://docs.conda.io/en/latest/) enviorment:
+```bash
+conda create -n rabbitvar python=3.8
+conda activate rabbitvar
+./install.sh
+```
+if you have the python3.8 enviorment locally, just run:
+```bash
+./install.sh
+```
 
 ## Testing dataset
 
@@ -76,11 +94,11 @@ In RabbitVar, the following input are required:
 
   ``` bash
   time python PATH_TO_RABBITVAR/XGBoost/call_xgboost.py \
-  --in_file  ${IN_FILE}\
-  --model ${MODEL} \
-  --scale "0.5" \
-  --var_type ${VTYPE} \ 
-  --out_file ./${OUT}
+    --in_file  ${IN_FILE}\
+    --model ${MODEL} \
+    --scale "0.5" \
+    --var_type ${VTYPE} \ 
+    --out_file ./${OUT}
   ```
   ${VTYPE} is "SNV" or "INDEL"
 
