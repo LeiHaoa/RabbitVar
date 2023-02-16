@@ -42,7 +42,7 @@ htslib_install()
     git submodule update --init --recursive
     mkdir build
     autoreconf -i
-    ./configure --prefix=$(pwd)/build
+    ./configure --prefix=$(pwd)/build --disable-lzma
     make
     make install
 }

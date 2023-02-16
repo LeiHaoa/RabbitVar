@@ -4,11 +4,15 @@ RabbitVar is a high-performance and versatile mutation detection tool, which  di
 ## Dependency
 - [htslib](https://github.com/samtools/htslib)
 - [zlib (included with most Linuxes)](http://www.zlib.net)
-- If you want to use XGBoost based filter, it need Python3.8 enviorment, we recommend [conda](https://docs.conda.io/en/latest/) enviorment:
-```bash
-conda create -n rabbitvar python=3.8
-conda activate rabbitvar
-```
+  ```bash
+  yum install bzip2-devel
+  yum install zlib
+  ```
+- If you want to use XGBoost based filter, you should download the XGBoost model([pretrained-model](https://mailsdueducn-my.sharepoint.com/:f:/g/personal/zekun_yin_mail_sdu_edu_cn/Ek7hc7rLNsBBoqHmmntiL7sB3WFZ8tMxJ8nt1LtnO1Amvw?e=gdnvaP)). Besides, it also needs Python3.8 enviorment, we recommend [conda](https://docs.conda.io/en/latest/) enviorment:
+  ```bash
+  conda create -n rabbitvar python=3.8
+  conda activate rabbitvar
+  ```
 
 <!--
 ## Installation of binaries
