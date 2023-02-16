@@ -114,14 +114,14 @@ A simple example is:
 
 ``` python3
 run_rabbitvar.py \
-  --bin ./bin/RabbitVar
+  --BIN ./build/RabbitVar \
   -R chr1:2829690-4918526  \
   -G /home/data/hg38.fa \
   -f 0.01 -N 'TUMORSMAPLE|NORMALSAMPLE' -b 'PATH_TO_TUMORSAMPLE|PATH_TONORMALSAMPLE' \
   -c 1 -S 2 -E 3 -g 4 --fisher \
   --indelmod ./XGBoost/models/INDEL_model.pkl \
   --snvmod ./XGBoost/models/SNV_model.pkl \
-  --vcf variants.vcf
+  --vcf ./variants.vcf
 ```
 *NOTE:* use '' to enclose the SAMPLE\_NAMEs and SMPALE\_PATHs to avoid redirection
 
