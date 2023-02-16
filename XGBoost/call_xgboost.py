@@ -102,7 +102,7 @@ def format_indel_data_item(jri, fisher):
 def my_predict_uniform(clf, data, scale):
     # tmp = list(data.columns)
     # tmp.remove('Var1AF')
-    data = data[tmp]
+    # data = data[tmp]
     proba = clf.predict_proba(data)[:,1]
     scale = float(scale)
     return proba, np.asarray([1 if x >= scale else 0 for x in proba])
@@ -344,8 +344,8 @@ if __name__ == "__main__":
     parser.add_argument('--nthreads', help = "number of thread", type=int, default=20)
     parser.add_argument('--model', help = "random forest model", type=str, required = True)
     parser.add_argument('--out_file', help = "file to output", type=str, required = True)
-    parser.add_argument('--tdepth', help = "tdepth", type=int, required = True)
-    parser.add_argument('--ndepth', help = "ndepth", type=int, required = True)
+    parser.add_argument('--tdepth', help = "tdepth", type=int, required = False)
+    parser.add_argument('--ndepth', help = "ndepth", type=int, required = False)
     args = parser.parse_args()
     call_rf(args)
     #call_rf_keep_all(args)

@@ -101,7 +101,7 @@ In RabbitVar, the following input are required:
     --in_file  ${IN_FILE}\
     --model ${MODEL} \
     --scale "0.5" \
-    --var_type ${VTYPE} \ 
+    --var_type ${VTYPE} \
     --out_file ./${OUT}
   ```
   ${VTYPE} is "SNV" or "INDEL"
