@@ -228,7 +228,7 @@ options:
       --out                   The out put file path.
                               Default: ./out.txt (string [=./out.txt])
   -i, --bed                   The region file to be processed (string [=])
-      --version               Print FastVC version information
+      --version               Print RabbitVar version information
       --auto_resize           Auto resize the bed region size for better performance	  
 ```
 

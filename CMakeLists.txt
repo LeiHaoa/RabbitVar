@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(FastVC)
+project(RabbitVar)
 option(STATIC "build dependency-free binary" OFF)
 
 #openmp
