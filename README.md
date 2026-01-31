@@ -56,7 +56,7 @@ In RabbitVar, the following input are required:
 
   The `.bam` file should be sorted and indexed.
 
-- Region file `.bed`, or specify the region by -R parameter
+- Region file `.bed`, or specify the region by -R parameter. The `.bed` file must be UTF-8 encoded. Using other encodings (e.g., UTF-16) may lead to parsing errors or unexpected behavior.
 
 - Genome reference file `.fa` or `.fasta`, like hg19.fa or hg38.fa. 
 
