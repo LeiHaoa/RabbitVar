@@ -21,7 +21,7 @@ The easiest way to use RabbitVar is to grab a binary from [here](https://github.
 
 ## Installation from source code
 RabbitVar is written in c++ for Linux platforms, you can download the source code and RabbitVar use some features supported by std-c++-11.
-So, c++ 11 or higher version is required.
+So, c++ 11 or higher version is required. The codebase is fully compatible with modern GCC and Clang compiler toolchains.
 If you do not want the XGBoost based filter, 
 Just Comipile RabbitVar with CMake:
 ```
@@ -54,7 +54,7 @@ In RabbitVar, the following input are required:
 
 - Alignment `.bam` files. 
 
-  The `.bam` file should be sorted and indexed.
+  The `.bam` file should be sorted and indexed. Furthermore, the BAM files must contain required auxiliary tags (such as MD tags, which are used for mismatch computation) for correct execution.
 
 - Region file `.bed`, or specify the region by -R parameter. The `.bed` file must be UTF-8 encoded. Using other encodings (e.g., UTF-16) may lead to parsing errors or unexpected behavior.
 
